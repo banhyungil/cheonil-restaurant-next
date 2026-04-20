@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/*
+ * Tailwind v4 ↔ PrimeVue 토큰 브릿지
+ *
+ * PrimeVue 가 런타임에 주입하는 CSS 변수(--p-*)를 Tailwind 의 테마 토큰(--color-*)
+ * 으로 미러링하여 동일한 이름 체계(primary/surface/severity)로 사용.
+ *
+ * 마크업 사용 예:
+ *   <div class="bg-primary-500 text-white">...</div>
+ *   <div class="border-status-danger">...</div>
+ */
+@theme {
+  /* Brand primary (Cheonil green) */
+  --color-primary-50: var(--p-primary-50);
+  --color-primary-100: var(--p-primary-100);
+  --color-primary-200: var(--p-primary-200);
+  --color-primary-300: var(--p-primary-300);
+  --color-primary-400: var(--p-primary-400);
+  --color-primary-500: var(--p-primary-500);
+  --color-primary-600: var(--p-primary-600);
+  --color-primary-700: var(--p-primary-700);
+  --color-primary-800: var(--p-primary-800);
+  --color-primary-900: var(--p-primary-900);
+  --color-primary-950: var(--p-primary-950);
+
+  /* Neutral surface */
+  --color-surface-0: var(--p-surface-0);
+  --color-surface-50: var(--p-surface-50);
+  --color-surface-100: var(--p-surface-100);
+  --color-surface-200: var(--p-surface-200);
+  --color-surface-300: var(--p-surface-300);
+  --color-surface-400: var(--p-surface-400);
+  --color-surface-500: var(--p-surface-500);
+  --color-surface-600: var(--p-surface-600);
+  --color-surface-700: var(--p-surface-700);
+  --color-surface-800: var(--p-surface-800);
+  --color-surface-900: var(--p-surface-900);
+  --color-surface-950: var(--p-surface-950);
+
+  /* Severity palettes — Aura 기본값 재사용 */
+  --color-red-50: var(--p-red-50);
+  --color-red-500: var(--p-red-500);
+  --color-red-600: var(--p-red-600);
+  --color-amber-50: var(--p-amber-50);
+  --color-amber-500: var(--p-amber-500);
+  --color-orange-50: var(--p-orange-50);
+  --color-orange-500: var(--p-orange-500);
+  --color-blue-50: var(--p-blue-50);
+  --color-blue-500: var(--p-blue-500);
+  --color-emerald-500: var(--p-emerald-500);
+
+  /* Domain alias — 주문 경과시간 상태 (OrderStateView ELPASED_MINUES_INFO 기준)
+     caution 15분+, warning 25분+, danger 35분+ */
+  --color-status-caution: var(--p-amber-500);
+  --color-status-warning: var(--p-orange-500);
+  --color-status-danger: var(--p-red-500);
+}
