@@ -1,5 +1,5 @@
-import { DUMMY_STORE_CATEGORIES, DUMMY_STORES } from '@/data/dummy/stores'
-import type { Store, StoreCategory } from '@/types/store'
+import { DUMMY_STORES } from '@/data/dummy/stores'
+import type { Store } from '@/types/store'
 
 // import { api } from './api'
 
@@ -16,12 +16,6 @@ export async function fetchList(): Promise<Store[]> {
 export async function fetchById(seq: number): Promise<Store | null> {
   // return api.get<Store>(`/stores/${seq}`).then((r) => r.data)
   return DUMMY_STORES.find((s) => s.seq === seq) ?? null
-}
-
-/** 매장 카테고리 전체 조회. */
-export async function fetchCategoryList(): Promise<StoreCategory[]> {
-  // return api.get<StoreCategory[]>('/store-categories').then((r) => r.data)
-  return [...DUMMY_STORE_CATEGORIES]
 }
 
 // 2차 구현 예정

@@ -19,6 +19,8 @@
   "dependencies": {
     "@primeuix/themes": "^2.0.3",
     "@primevue/forms": "^4.5.5",
+    "@tanstack/vue-query": "^5.99.2",
+    "@tanstack/vue-query-devtools": "^6.1.18",
     "@vueuse/core": "^14.2.1",
     "axios": "^1.15.0",
     "clsx": "^2.1.1",

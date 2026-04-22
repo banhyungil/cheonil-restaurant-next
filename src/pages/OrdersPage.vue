@@ -5,16 +5,16 @@
          v-show 로 둘 다 마운트 유지 → 매장 재선택 시 MenuGrid 내부 filter/search state 보존 -->
     <StoreGrid
       v-show="selStore == null"
-      :stores="DUMMY_STORES"
-      :categories="DUMMY_STORE_CATEGORIES"
+      :stores="stores ?? []"
+      :categories="storeCategories ?? []"
       :active="selStore == null"
       class="flex-1"
       @select="onSelectStore"
     />
     <MenuGrid
       v-show="selStore != null"
-      :menus="DUMMY_MENUS"
-      :categories="DUMMY_MENU_CATEGORIES"
+      :menus="menus ?? []"
+      :categories="menuCategories ?? []"
       :active="selStore != null"
       class="flex-1"
       @add="onAddMenu"
@@ -37,17 +37,26 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { DUMMY_MENU_CATEGORIES, DUMMY_MENUS } from '@/data/dummy/menus'
-import { DUMMY_STORE_CATEGORIES, DUMMY_STORES } from '@/data/dummy/stores'
+import { useMenuCtgsQuery } from '@/queries/menuCtgsQuery'
+import { useMenusQuery } from '@/queries/menusQuery'
+import { useStoreCtgsQuery } from '@/queries/storeCtgsQuery'
+import { useStoresQuery } from '@/queries/storesQuery'
 import type { CartItem } from '@/types/cart'
 import type { Store } from '@/types/store'
 
+// 서버 데이터 — vue-query 가 캐싱·재검증·dedup 자동 처리
+const { data: menus } = useMenusQuery()
+const { data: menuCategories } = useMenuCtgsQuery()
+const { data: stores } = useStoresQuery()
+const { data: storeCategories } = useStoreCtgsQuery()
+
+// 주문 작성 상태 (OrdersPage 전용 — Pinia 승격 안 함)
 const selStore = ref<Store | null>(null)
 const cart = ref<CartItem[]>([])
 const memo = ref('')
 
 function onSelectStore(storeSeq: number) {
-  const store = DUMMY_STORES.find((s) => s.seq === storeSeq)
+  const store = stores.value?.find((s) => s.seq === storeSeq)
   if (!store) return
   selStore.value = store
 }
@@ -63,7 +72,7 @@ function onAddMenu(menuSeq: number) {
     existing.cnt++
     return
   }
-  const menu = DUMMY_MENUS.find((m) => m.seq === menuSeq)
+  const menu = menus.value?.find((m) => m.seq === menuSeq)
   if (!menu) return
   cart.value.push({ menuSeq: menu.seq, nm: menu.nm, price: menu.price, cnt: 1 })
 }

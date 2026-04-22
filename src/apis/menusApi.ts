@@ -1,5 +1,5 @@
-import { DUMMY_MENU_CATEGORIES, DUMMY_MENUS } from '@/data/dummy/menus'
-import type { Menu, MenuCategory } from '@/types/menu'
+import { DUMMY_MENUS } from '@/data/dummy/menus'
+import type { Menu } from '@/types/menu'
 
 // import { api } from './api'
 
@@ -16,12 +16,6 @@ export async function fetchList(): Promise<Menu[]> {
 export async function fetchById(seq: number): Promise<Menu | null> {
   // return api.get<Menu>(`/menus/${seq}`).then((r) => r.data)
   return DUMMY_MENUS.find((m) => m.seq === seq) ?? null
-}
-
-/** 메뉴 카테고리 전체 조회. */
-export async function fetchCategoryList(): Promise<MenuCategory[]> {
-  // return api.get<MenuCategory[]>('/menu-categories').then((r) => r.data)
-  return [...DUMMY_MENU_CATEGORIES]
 }
 
 // 2차 구현 예정
