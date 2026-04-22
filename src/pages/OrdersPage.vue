@@ -1,22 +1,34 @@
 <!-- 주문 -->
 <template>
   <div class="orders-page flex h-full gap-6 bg-surface-50 px-8 py-6">
-    <!-- Left: 메뉴 검색 + 카테고리 탭 + 카드 그리드 -->
+    <!-- Left: 매장 미선택 → StoreGrid, 선택됨 → MenuGrid
+         v-show 로 둘 다 마운트 유지 → 매장 재선택 시 MenuGrid 내부 filter/search state 보존 -->
+    <StoreGrid
+      v-show="selStore == null"
+      :stores="DUMMY_STORES"
+      :categories="DUMMY_STORE_CATEGORIES"
+      :active="selStore == null"
+      class="flex-1"
+      @select="onSelectStore"
+    />
     <MenuGrid
+      v-show="selStore != null"
       :menus="DUMMY_MENUS"
       :categories="DUMMY_MENU_CATEGORIES"
+      :active="selStore != null"
       class="flex-1"
       @add="onAddMenu"
     />
 
-    <!-- Right: 카트 패널 -->
+    <!-- Right: 카트 패널 (상태별 자동 분기) -->
     <OrderCartPanel
       v-model:memo="memo"
       :store="selStore"
       :items="cart"
       @increment="onIncrement"
       @decrement="onDecrement"
-      @reset="onResetCart"
+      @change-store="onChangeStore"
+      @reset="onResetAll"
       @checkout="onCheckout"
     />
   </div>
@@ -26,15 +38,24 @@
 import { ref } from 'vue'
 
 import { DUMMY_MENU_CATEGORIES, DUMMY_MENUS } from '@/data/dummy/menus'
-import { DUMMY_STORES } from '@/data/dummy/stores'
+import { DUMMY_STORE_CATEGORIES, DUMMY_STORES } from '@/data/dummy/stores'
 import type { CartItem } from '@/types/cart'
+import type { Store } from '@/types/store'
 
-const selStore = ref(DUMMY_STORES[0]!)
-const cart = ref<CartItem[]>([
-  { menuSeq: 1, nm: '돈까스', price: 8000, cnt: 1 },
-  { menuSeq: 2, nm: '제육', price: 8000, cnt: 1 },
-])
+const selStore = ref<Store | null>(null)
+const cart = ref<CartItem[]>([])
 const memo = ref('')
+
+function onSelectStore(storeSeq: number) {
+  const store = DUMMY_STORES.find((s) => s.seq === storeSeq)
+  if (!store) return
+  selStore.value = store
+}
+
+function onChangeStore() {
+  // 매장만 다시 고르는 모드 — cart·memo 유지
+  selStore.value = null
+}
 
 function onAddMenu(menuSeq: number) {
   const existing = cart.value.find((i) => i.menuSeq === menuSeq)
@@ -59,7 +80,8 @@ function onDecrement(menuSeq: number) {
   if (cart.value[idx]!.cnt <= 0) cart.value.splice(idx, 1)
 }
 
-function onResetCart() {
+function onResetAll() {
+  selStore.value = null
   cart.value = []
   memo.value = ''
 }
