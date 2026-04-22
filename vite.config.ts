@@ -12,11 +12,13 @@ import { PrimeVueResolver } from '@primevue/auto-import-resolver'
 export default defineConfig({
   plugins: [
     vue(),
-    vueDevTools(),
+    vueDevTools({
+      componentInspector: true,
+    }),
     tailwindcss(),
     AutoImport({
       imports: ['vue', 'vue-router', 'pinia', '@vueuse/core'],
-      dirs: ['src/apis', 'src/composables', 'src/stores'],
+      dirs: ['src/composables', 'src/stores'],
       dts: 'src/auto-imports.d.ts',
       vueTemplate: true,
 
