@@ -55,4 +55,15 @@
   --color-status-caution: var(--p-amber-500);
   --color-status-warning: var(--p-orange-500);
   --color-status-danger: var(--p-red-500);
+
+  /*
+   * 텍스트 스케일 (5단계)
+   * POS 정보밀도를 반영해 Tailwind 기본값을 override.
+   * 상세 규칙: docs/DESIGN_TOKENS.md
+   */
+  --text-xs: 0.625rem;    /* 10 — 캡션, 푸터 보조 */
+  --text-sm: 0.75rem;     /* 12 — 작은 본문, 뱃지, 그룹 헤더 */
+  --text-base: 0.8125rem; /* 13 — 리스트/네비 기본 */
+  --text-lg: 1rem;        /* 16 — 강조 본문, 브랜드, 큰 아이콘 */
+  --text-xl: 1.125rem;    /* 18 — 섹션 타이틀 */
 }

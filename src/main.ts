@@ -5,7 +5,6 @@ import ToastService from "primevue/toastservice";
 import ConfirmationService from "primevue/confirmationservice";
 import { CheonilPreset } from "./style/preset";
 import "./style/theme.css";
-import "primeicons/primeicons.css";
 
 import App from "./App.vue";
 import router from "./router";
