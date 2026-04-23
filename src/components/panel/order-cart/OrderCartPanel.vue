@@ -31,6 +31,7 @@
         :item="item"
         @increment="(seq: number) => emit('increment', seq)"
         @decrement="(seq: number) => emit('decrement', seq)"
+        @update-cnt="(seq: number, cnt: number) => emit('update-cnt', seq, cnt)"
       />
     </div>
 
@@ -89,6 +90,7 @@ const emit = defineEmits<{
   'update:memo': [value: string]
   increment: [menuSeq: number]
   decrement: [menuSeq: number]
+  'update-cnt': [menuSeq: number, cnt: number]
   'change-store': []
   reset: []
   checkout: []

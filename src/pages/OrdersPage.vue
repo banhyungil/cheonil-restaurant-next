@@ -27,6 +27,7 @@
       :items="cart"
       @increment="onIncrement"
       @decrement="onDecrement"
+      @update-cnt="onUpdateCnt"
       @change-store="onChangeStore"
       @reset="onResetAll"
       @checkout="onCheckout"
@@ -87,6 +88,11 @@ function onDecrement(menuSeq: number) {
   if (idx === -1) return
   cart.value[idx]!.cnt--
   if (cart.value[idx]!.cnt <= 0) cart.value.splice(idx, 1)
+}
+
+function onUpdateCnt(menuSeq: number, cnt: number) {
+  const item = cart.value.find((i) => i.menuSeq === menuSeq)
+  if (item) item.cnt = cnt
 }
 
 function onResetAll() {

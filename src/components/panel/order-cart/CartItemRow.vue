@@ -15,11 +15,17 @@
     >
       <Minus :size="14" />
     </BButton>
-    <div
-      class="flex h-8.5 w-11 items-center justify-center rounded-md border-[1.5px] border-primary-500 bg-primary-50 text-base font-bold text-primary-700"
-    >
-      {{ item.cnt }}
-    </div>
+    <InputNumber
+      :model-value="item.cnt"
+      :min="1"
+      :show-buttons="false"
+      :allow-empty="false"
+      aria-label="수량 입력"
+      class="cart-item-row__cnt h-8.5 w-11"
+      input-class="h-8.5! w-11! rounded-md! border-[1.5px]! border-primary-500! bg-primary-50! px-0! text-center! text-base! font-bold! text-primary-700!"
+      @update:model-value="onChangeCnt"
+      @focus="($event.target as HTMLInputElement).select()"
+    />
     <BButton
       color="primary"
       size="sm"
@@ -30,7 +36,7 @@
     </BButton>
     <div class="ml-auto flex h-8.5 w-17.5 items-center justify-end">
       <span class="text-base font-semibold text-surface-900">
-        {{ cSubTotal.toLocaleString('ko-KR') }}
+        {{ formatWon(cSubTotal) }}
       </span>
     </div>
   </div>
@@ -50,7 +56,14 @@ const props = defineProps<{
 const emit = defineEmits<{
   increment: [menuSeq: number]
   decrement: [menuSeq: number]
+  'update-cnt': [menuSeq: number, cnt: number]
 }>()
 
 const cSubTotal = computed(() => props.item.price * props.item.cnt)
+
+function onChangeCnt(value: number | null | undefined) {
+  if (value == null || !Number.isFinite(value) || value < 1) return
+  if (value === props.item.cnt) return
+  emit('update-cnt', props.item.menuSeq, value)
+}
 </script>
