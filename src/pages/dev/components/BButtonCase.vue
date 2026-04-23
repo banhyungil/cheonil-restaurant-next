@@ -13,6 +13,7 @@
             :variant="variant"
             :color="color"
             :aria-label="`${color}-${variant}`"
+            v-tooltip="`${color}-${variant}`"
           >
             <Plus :size="16" />
           </BButton>
