@@ -12,17 +12,15 @@
         <UtensilsCrossed :size="22" class="text-primary-500" />
         <span class="text-lg font-bold text-primary-500">천일식당</span>
       </div>
-      <Button
-        severity="secondary"
-        :size="collapsed ? undefined : 'small'"
+      <BButton
+        color="secondary"
+        :size="collapsed ? undefined : 'sm'"
         :aria-label="collapsed ? '사이드바 펼치기' : '사이드바 접기'"
         @click="collapsed = !collapsed"
       >
-        <template #icon>
-          <Menu v-if="collapsed" :size="18" />
-          <ChevronsLeft v-else :size="16" />
-        </template>
-      </Button>
+        <Menu v-if="collapsed" :size="18" />
+        <ChevronsLeft v-else :size="16" />
+      </BButton>
     </div>
 
     <div class="h-6 shrink-0" />
