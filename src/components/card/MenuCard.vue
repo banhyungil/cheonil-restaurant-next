@@ -1,7 +1,8 @@
 <template>
   <BButton
-    tone="card"
-    class="menu-card h-27.5 flex-col items-center justify-center gap-1.5 px-3.5 py-4"
+    variant="outlined"
+    color="primary"
+    class="menu-card h-27.5! w-full! flex-col items-center justify-center gap-1.5 px-3.5! py-4!"
     @click="emit('click', menu.seq)"
   >
     <span class="text-lg font-semibold text-surface-900">{{ menu.nm }}</span>

@@ -28,7 +28,7 @@ export default defineConfig({
       },
     }),
     Components({
-      dirs: ['src/components'],
+      dirs: ['src/components', 'src/base-components'],
       extensions: ['vue'],
       deep: true,
       resolvers: [PrimeVueResolver()],

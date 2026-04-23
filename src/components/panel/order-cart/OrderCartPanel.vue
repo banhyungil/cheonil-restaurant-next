@@ -55,7 +55,7 @@
 
     <!-- CTA: 상태별 label -->
     <BButton
-      tone="primary"
+      color="primary"
       size="lg"
       class="flex-col gap-0.5"
       :disabled="cState !== 'has-items'"

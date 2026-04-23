@@ -7,7 +7,8 @@
       <span class="text-sm text-surface-500">{{ formatWon(item.price) }}</span>
     </div>
     <BButton
-      tone="outlined"
+      variant="outlined"
+      color="secondary"
       size="sm"
       aria-label="수량 감소"
       @click="emit('decrement', item.menuSeq)"
@@ -20,7 +21,7 @@
       {{ item.cnt }}
     </div>
     <BButton
-      tone="primary"
+      color="primary"
       size="sm"
       aria-label="수량 증가"
       @click="emit('increment', item.menuSeq)"

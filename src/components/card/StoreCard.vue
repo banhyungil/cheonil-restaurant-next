@@ -1,7 +1,8 @@
 <template>
   <BButton
-    tone="card"
-    class="store-card h-24 items-center justify-between px-5 py-3.5"
+    variant="outlined"
+    color="primary"
+    class="store-card h-24! w-full! items-center justify-between px-5! py-3.5!"
     @click="emit('click', store.seq)"
   >
     <div>

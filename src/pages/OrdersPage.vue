@@ -50,7 +50,7 @@ const { data: menuCategories } = useMenuCtgsQuery()
 const { data: stores } = useStoresQuery()
 const { data: storeCategories } = useStoreCtgsQuery()
 
-// 주문 작성 상태 (OrdersPage 전용 — Pinia 승격 안 함)
+// 주문 작성 상태
 const selStore = ref<Store | null>(null)
 const cart = ref<CartItem[]>([])
 const memo = ref('')

@@ -21,7 +21,8 @@
       </span>
     </button>
     <BButton
-      tone="outlined"
+      variant="outlined"
+      color="secondary"
       size="md"
       class="shrink-0 border-surface-200 text-surface-500"
       aria-label="매장 선택 초기화"

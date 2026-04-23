@@ -15,7 +15,7 @@
     </IconField>
 
     <!-- 카테고리 탭 -->
-    <CategoryTabs v-model="selCtg" :categories="cCategoriesAll" />
+    <BTabs v-model="selCtg" :options="cCategoriesAll" />
 
     <!-- 카드 그리드 -->
     <div class="grid grid-cols-5 gap-5">
