@@ -7,4 +7,5 @@ export const QUERY_KEYS = {
   menuCtgs: ['menuCtgs'] as const,
   stores: ['stores'] as const,
   storeCtgs: ['storeCtgs'] as const,
+  orders: ['orders'] as const,
 } as const

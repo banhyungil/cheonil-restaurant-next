@@ -43,7 +43,7 @@ export default defineConfig({
      * rewrite 기능을 쓰면 요청 경로와 무관하게 다른 경로로도 맵핑 가능
      */
     proxy: {
-      '/api': 'http://localhost:8010',
+      '/api': 'http://localhost:8080',
     },
   },
   resolve: {

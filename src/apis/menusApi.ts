@@ -1,21 +1,15 @@
-import { DUMMY_MENUS } from '@/data/dummy/menus'
 import type { Menu } from '@/types/menu'
 
-// import { api } from './api'
+import { api } from './api'
 
-/**
- * 메뉴 전체 조회.
- * @todo 백엔드 구현 후 dummy 반환부를 axios 호출로 교체
- */
+/** 메뉴 전체 조회. */
 export async function fetchList(): Promise<Menu[]> {
-  // return api.get<Menu[]>('/menus').then((r) => r.data)
-  return [...DUMMY_MENUS]
+  return api.get<Menu[]>('/menus').then((r) => r.data)
 }
 
 /** 메뉴 단건 조회. */
 export async function fetchById(seq: number): Promise<Menu | null> {
-  // return api.get<Menu>(`/menus/${seq}`).then((r) => r.data)
-  return DUMMY_MENUS.find((m) => m.seq === seq) ?? null
+  return api.get<Menu>(`/menus/${seq}`).then((r) => r.data)
 }
 
 // 2차 구현 예정

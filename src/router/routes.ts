@@ -129,4 +129,9 @@ export const routes: RouteRecordRaw[] = [
     name: 'example-form',
     component: () => import('@/pages/examples/FormExamplePage.vue'),
   },
+  {
+    path: '/examples/css',
+    name: 'example-css',
+    component: () => import('@/pages/examples/CssExamplePage.vue'),
+  },
 ]

@@ -1,21 +1,15 @@
-import { DUMMY_STORES } from '@/data/dummy/stores'
 import type { Store } from '@/types/store'
 
-// import { api } from './api'
+import { api } from './api'
 
-/**
- * 매장 전체 조회.
- * @todo 백엔드 구현 후 dummy 반환부를 axios 호출로 교체
- */
+/** 매장 전체 조회. */
 export async function fetchList(): Promise<Store[]> {
-  // return api.get<Store[]>('/stores').then((r) => r.data)
-  return [...DUMMY_STORES]
+  return api.get<Store[]>('/stores').then((r) => r.data)
 }
 
 /** 매장 단건 조회. */
 export async function fetchById(seq: number): Promise<Store | null> {
-  // return api.get<Store>(`/stores/${seq}`).then((r) => r.data)
-  return DUMMY_STORES.find((s) => s.seq === seq) ?? null
+  return api.get<Store>(`/stores/${seq}`).then((r) => r.data)
 }
 
 // 2차 구현 예정
