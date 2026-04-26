@@ -8,6 +8,8 @@
 
     <div class="flex-1 overflow-auto rounded-xl border border-surface-200 bg-surface-0 p-8">
       <ResponsiveGridCase v-if="selCase === CASE_GRID" />
+      <AutoFillVsAutoFitCase v-else-if="selCase === CASE_AUTO_FILL_FIT" />
+      <GridRowStretchCase v-else-if="selCase === CASE_ROW_STRETCH" />
       <FlexColumnFillCase v-else-if="selCase === CASE_FLEX_FILL" />
     </div>
   </div>
@@ -16,14 +18,20 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+import AutoFillVsAutoFitCase from './css/AutoFillVsAutoFitCase.vue'
 import FlexColumnFillCase from './css/FlexColumnFillCase.vue'
+import GridRowStretchCase from './css/GridRowStretchCase.vue'
 import ResponsiveGridCase from './css/ResponsiveGridCase.vue'
 
 const CASE_GRID = 1
-const CASE_FLEX_FILL = 2
+const CASE_AUTO_FILL_FIT = 2
+const CASE_ROW_STRETCH = 3
+const CASE_FLEX_FILL = 4
 
 const CASES = [
   { seq: CASE_GRID, nm: '반응형 그리드' },
+  { seq: CASE_AUTO_FILL_FIT, nm: 'auto-fill vs auto-fit' },
+  { seq: CASE_ROW_STRETCH, nm: 'Grid 행 stretch' },
   { seq: CASE_FLEX_FILL, nm: 'Flex 높이 채우기' },
 ] as const
 
