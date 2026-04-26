@@ -1,5 +1,5 @@
 <template>
-  <section class="store-grid flex flex-col gap-5">
+  <section class="store-grid flex flex-col gap-5 overflow-auto">
     <!-- 매장 검색 -->
     <IconField class="w-60">
       <InputIcon class="text-surface-500">

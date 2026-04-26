@@ -33,7 +33,7 @@
       </div>
 
       <!-- 주문완료 목록 -->
-      <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-3 min-h-48">
         <div class="flex h-7 items-center gap-2.5">
           <span class="size-2 rounded bg-primary-500" />
           <h2 class="text-lg font-bold text-surface-900">처리완료 목록 (최근)</h2>
@@ -60,7 +60,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { useOrdersQuery, useOrderStatusMutation } from '@/queries/ordersQuery'
+import { useOrdersMonitorQuery, useOrderStatusMutation } from '@/queries/ordersQuery'
 
 const MODE_ALL = 1
 const MODE_KITCHEN = 2
@@ -73,10 +73,16 @@ const MODE_OPTIONS = [
 const selMode = ref<number>(MODE_ALL)
 const cMode = computed<'all' | 'kitchen'>(() => (selMode.value === MODE_ALL ? 'all' : 'kitchen'))
 
-const { data: orders } = useOrdersQuery()
+const { data: orders } = useOrdersMonitorQuery()
 
 const cReadyOrders = computed(() => orders.value?.filter((o) => o.status === 'READY') ?? [])
-const cCookedOrders = computed(() => orders.value?.filter((o) => o.status === 'COOKED') ?? [])
+const cCookedOrders = computed(
+  () =>
+    // 내림차순 정렬
+    orders.value
+      ?.filter((o) => o.status === 'COOKED')
+      .sort((a, b) => b.cookedAt!.localeCompare(a.cookedAt!)) ?? [],
+)
 
 const { mutate: updateStatus } = useOrderStatusMutation()
 

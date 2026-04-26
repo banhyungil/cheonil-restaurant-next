@@ -60,7 +60,7 @@
       size="lg"
       class="flex-col gap-0.5"
       :disabled="cState !== 'has-items'"
-      @click="emit('checkout')"
+      @click="emit('order')"
     >
       <span>주문완료</span>
       <span v-if="cState === 'no-store'" class="text-xs font-medium opacity-85">
@@ -93,7 +93,7 @@ const emit = defineEmits<{
   'update-cnt': [menuSeq: number, cnt: number]
   'change-store': []
   reset: []
-  checkout: []
+  order: []
 }>()
 
 const cState = computed<'no-store' | 'no-menu' | 'has-items'>(() =>

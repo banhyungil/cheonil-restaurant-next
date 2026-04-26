@@ -30,16 +30,19 @@
       @update-cnt="onUpdateCnt"
       @change-store="onChangeStore"
       @reset="onResetAll"
-      @checkout="onCheckout"
+      @order="onOrder"
     />
   </div>
 </template>
 
 <script setup lang="ts">
+import { useToast } from 'primevue/usetoast'
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import { useMenuCtgsQuery } from '@/queries/menuCtgsQuery'
 import { useMenusQuery } from '@/queries/menusQuery'
+import { useOrderCreateMutation } from '@/queries/ordersQuery'
 import { useStoreCtgsQuery } from '@/queries/storeCtgsQuery'
 import { useStoresQuery } from '@/queries/storesQuery'
 import type { CartItem } from '@/types/cart'
@@ -55,6 +58,11 @@ const { data: storeCategories } = useStoreCtgsQuery()
 const selStore = ref<Store | null>(null)
 const cart = ref<CartItem[]>([])
 const memo = ref('')
+
+// 주문 생성 — WS 도입 후엔 mutation은 호출만 하고 캐시 갱신은 WS 핸들러가 담당
+const router = useRouter()
+const toast = useToast()
+const { mutate: createOrder } = useOrderCreateMutation()
 
 function onSelectStore(storeSeq: number) {
   const store = stores.value?.find((s) => s.seq === storeSeq)
@@ -101,11 +109,29 @@ function onResetAll() {
   memo.value = ''
 }
 
-function onCheckout() {
-  console.log('checkout', {
-    store: selStore.value,
-    cart: cart.value,
-    memo: memo.value,
-  })
+function onOrder() {
+  if (!selStore.value || cart.value.length === 0) return
+  createOrder(
+    {
+      storeSeq: selStore.value.seq,
+      cmt: memo.value || undefined,
+      menus: cart.value.map(({ menuSeq, price, cnt }) => ({ menuSeq, price, cnt })),
+    },
+    {
+      onSuccess: () => {
+        onResetAll()
+        toast.add({ severity: 'success', summary: '주문 접수', life: 2000 })
+        // router.push('/orders/monitor')
+      },
+      onError: () => {
+        toast.add({
+          severity: 'error',
+          summary: '주문 실패',
+          detail: '잠시 후 다시 시도해주세요',
+          life: 3000,
+        })
+      },
+    },
+  )
 }
 </script>

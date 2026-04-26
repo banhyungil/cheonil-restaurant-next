@@ -1,5 +1,5 @@
 <template>
-  <section class="menu-grid flex flex-col gap-5">
+  <section class="menu-grid flex flex-col gap-5 overflow-auto">
     <!-- 메뉴 검색 -->
     <IconField class="w-60">
       <InputIcon class="text-surface-500">
@@ -19,12 +19,7 @@
 
     <!-- 카드 그리드 -->
     <div class="grid grid-cols-5 gap-5">
-      <MenuCard
-        v-for="menu in cFilteredMenus"
-        :key="menu.seq"
-        :menu="menu"
-        @click="onSelect"
-      />
+      <MenuCard v-for="menu in cFilteredMenus" :key="menu.seq" :menu="menu" @click="onSelect" />
     </div>
   </section>
 </template>

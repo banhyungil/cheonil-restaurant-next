@@ -85,6 +85,7 @@ import { computed, ref } from 'vue'
 
 import { STATUS_CLASSES, useElapsedTime } from '@/composables/useElapsedTime'
 import type { OrderExt } from '@/types/order'
+import type { MenuItem } from 'primevue/menuitem'
 
 const props = withDefaults(
   defineProps<{
@@ -107,7 +108,7 @@ const cElapsed = useElapsedTime(() => props.order.orderAt)
 
 const eltMenu = ref<{ toggle: (e: Event) => void } | null>(null)
 
-const cMenuItems = computed(() => [
+const cMenuItems = computed<MenuItem[]>(() => [
   { label: '수정', command: () => emit('edit', props.order.seq) },
   { label: '삭제', command: () => emit('remove', props.order.seq) },
 ])

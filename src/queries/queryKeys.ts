@@ -8,4 +8,5 @@ export const QUERY_KEYS = {
   stores: ['stores'] as const,
   storeCtgs: ['storeCtgs'] as const,
   orders: ['orders'] as const,
+  ordersMonitor: ['orders', 'monitor'] as const,
 } as const
