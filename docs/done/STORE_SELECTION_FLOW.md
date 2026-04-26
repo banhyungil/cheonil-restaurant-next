@@ -44,13 +44,13 @@
 
 ### 주요 전이
 
-| 트리거                      | 효과                                                                |
-| --------------------------- | ------------------------------------------------------------------- |
-| 매장 카드 click             | `selStore = 선택매장`. Step1 → Step2 (cart·memo 항상 유지)          |
-| **헤더 매장명 click**       | `selStore = null`. Step2/Step3 → Step1. **cart·memo 유지**          |
-| 메뉴 카드 click             | cart 에 추가. Step2 → Step3                                         |
-| 카트 아이템 `−` 로 전부 삭제 | cart = []. Step3 → Step2                                            |
-| 리셋 버튼 click (`↺`)       | **완전 초기화**: selStore = null + cart = [] + memo = ''. → Step1   |
+| 트리거                       | 효과                                                              |
+| ---------------------------- | ----------------------------------------------------------------- |
+| 매장 카드 click              | `selStore = 선택매장`. Step1 → Step2 (cart·memo 항상 유지)        |
+| **헤더 매장명 click**        | `selStore = null`. Step2/Step3 → Step1. **cart·memo 유지**        |
+| 메뉴 카드 click              | cart 에 추가. Step2 → Step3                                       |
+| 카트 아이템 `−` 로 전부 삭제 | cart = []. Step3 → Step2                                          |
+| 리셋 버튼 click (`↺`)        | **완전 초기화**: selStore = null + cart = [] + memo = ''. → Step1 |
 
 **헤더 클릭 vs 리셋 구분**:
 
@@ -320,17 +320,17 @@ store: Pick<Store, "seq" | "nm"> | null;
 
 ## 6. 결정 기록
 
-| 항목                         | 결정                                    | 대안                          | 사유                                                                     |
-| ---------------------------- | --------------------------------------- | ----------------------------- | ------------------------------------------------------------------------ |
-| 매장 선택 후 전환            | **자동** (selStore 값 변경 → v-if)      | 버튼으로 명시 전환            | POS UX 원칙 — 클릭 하나로 진행                                           |
+| 항목                         | 결정                                         | 대안                          | 사유                                                                     |
+| ---------------------------- | -------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------ |
+| 매장 선택 후 전환            | **자동** (selStore 값 변경 → v-if)           | 버튼으로 명시 전환            | POS UX 원칙 — 클릭 하나로 진행                                           |
 | 헤더 매장명 클릭             | **매장 재선택 모드** (Step1 복귀, cart 유지) | 완전 초기화 (리셋과 동일)     | 리셋과 구분, 비파괴적 네비게이션                                         |
-| 매장 재선택 시 cart 처리     | **항상 유지** (매장만 변경)             | 다른 매장이면 cart 비움       | 매장 변경이 cart 를 건드리지 않는다는 단순한 멘탈 모델                   |
-| 리셋 버튼 동작               | **완전 초기화** (매장 + cart + memo)    | 카트만 비움                   | 리셋 = "처음부터 다시" 멘탈 모델                                         |
-| StoreCard 배지 색            | 1차는 단일 `surface` 색                 | 카테고리별 색 매핑            | 복잡도 낮춤, 카테고리 색은 2차 (`getStoreCategoryBadgeTone` 유틸로 분리) |
-| empty state 컴포넌트         | **공통 `CartEmptyState`**               | 상태별 다른 컴포넌트          | 메시지/아이콘만 다르고 레이아웃 동일                                     |
-| CTA 2-line disabled          | **PrimeVue Button default slot** 커스텀 | 별도 컴포넌트                 | 한 곳에서만 쓰이는 variant                                               |
-| `selStore` 타입              | `Store \| null`                         | default Store 로 항상 값 유지 | `null` 이 "미선택" 을 명확히 표현                                        |
-| StoreGrid vs MenuGrid 공통화 | **별도 컴포넌트로 유지**                | 제네릭 `SelectionGrid<T>`     | 내부 상태/emit 이름이 서로 달라 분기 가시성 ↑                            |
+| 매장 재선택 시 cart 처리     | **항상 유지** (매장만 변경)                  | 다른 매장이면 cart 비움       | 매장 변경이 cart 를 건드리지 않는다는 단순한 멘탈 모델                   |
+| 리셋 버튼 동작               | **완전 초기화** (매장 + cart + memo)         | 카트만 비움                   | 리셋 = "처음부터 다시" 멘탈 모델                                         |
+| StoreCard 배지 색            | 1차는 단일 `surface` 색                      | 카테고리별 색 매핑            | 복잡도 낮춤, 카테고리 색은 2차 (`getStoreCategoryBadgeTone` 유틸로 분리) |
+| empty state 컴포넌트         | **공통 `CartEmptyState`**                    | 상태별 다른 컴포넌트          | 메시지/아이콘만 다르고 레이아웃 동일                                     |
+| CTA 2-line disabled          | **PrimeVue Button default slot** 커스텀      | 별도 컴포넌트                 | 한 곳에서만 쓰이는 variant                                               |
+| `selStore` 타입              | `Store \| null`                              | default Store 로 항상 값 유지 | `null` 이 "미선택" 을 명확히 표현                                        |
+| StoreGrid vs MenuGrid 공통화 | **별도 컴포넌트로 유지**                     | 제네릭 `SelectionGrid<T>`     | 내부 상태/emit 이름이 서로 달라 분기 가시성 ↑                            |
 
 ---
 
@@ -339,4 +339,4 @@ store: Pick<Store, "seq" | "nm"> | null;
 - 매장 카테고리별 배지 색상 매핑 (`getStoreCategoryBadgeTone`)
 - 매장 카드 hover tooltip (Figma `2004:106 store_tooltip_example`) — ⓘ 아이콘 hover
 - 매장 검색 input 실제 필터링 로직
-- Pinia `useOrderDraftStore` 로 selStore + cart + memo 승격 (라우트 이동 후 복귀 시 유지)
+- Pinia `useOrderCartStore` 로 selStore + cart + memo 승격 (라우트 이동 후 복귀 시 유지)

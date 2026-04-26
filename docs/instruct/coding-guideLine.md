@@ -6,6 +6,11 @@
   - 알파벳 순으로 정렬
 - 각 그룹별로 공백 한 칸 씩
 
+## Unplugin 적용 사항
+
+- unplugin-auto-import, unplugin-vue-components 적용 됨
+- vite.config.ts 참조
+
 ## store, composable 사용
 
 - script 최 상단에서 선언 후 사용
@@ -55,11 +60,11 @@ export function remove() {...}
 
 서로 책임이 다른 3개 레이어를 혼동하지 않도록 역할/네이밍 규칙을 분리한다.
 
-| 레이어          | 책임                                             | 파일 네이밍         | 네이밍 방식       |
-| --------------- | ------------------------------------------------ | ------------------- | ----------------- |
-| `apis/`         | HTTP 호출 — 서버와의 데이터 송수신               | `<resource>Api.ts`  | resource-oriented |
-| `queries/`      | TanStack Query 훅, 캐싱·변형·조합·mutation 관리  | `<resource>Query.ts` | resource-oriented |
-| `composables/`  | UI/DOM 관련 재사용 훅 (포커스, 이벤트 리스너 등) | `use<기능>.ts`      | hook-oriented     |
+| 레이어         | 책임                                             | 파일 네이밍          | 네이밍 방식       |
+| -------------- | ------------------------------------------------ | -------------------- | ----------------- |
+| `apis/`        | HTTP 호출 — 서버와의 데이터 송수신               | `<resource>Api.ts`   | resource-oriented |
+| `queries/`     | TanStack Query 훅, 캐싱·변형·조합·mutation 관리  | `<resource>Query.ts` | resource-oriented |
+| `composables/` | UI/DOM 관련 재사용 훅 (포커스, 이벤트 리스너 등) | `use<기능>.ts`       | hook-oriented     |
 
 **핵심 구분**
 
