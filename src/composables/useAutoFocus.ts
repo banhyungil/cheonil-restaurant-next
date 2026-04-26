@@ -1,4 +1,4 @@
-import { nextTick, watch, type Ref } from 'vue'
+import { watch, type Ref } from 'vue'
 
 /**
  * Focus 대상 — 네이티브 HTMLElement 또는 `$el` 을 노출하는 컴포넌트 인스턴스.
@@ -18,17 +18,25 @@ export function useAutoFocus(
   elt: Ref<FocusableTarget>,
   isActive: Ref<boolean | undefined> | (() => boolean | undefined),
 ) {
+  function doFocus() {
+    nextTick(() => {
+      const v = elt.value
+      if (!v) return
+
+      const target = v instanceof HTMLElement ? v : v.$el
+      target?.focus()
+    })
+  }
   watch(
     isActive,
     (active) => {
       if (!active) return
-      nextTick(() => {
-        const v = elt.value
-        if (!v) return
-        const target = v instanceof HTMLElement ? v : v.$el
-        target?.focus()
-      })
+      doFocus()
     },
     { immediate: true },
   )
+
+  onActivated(() => {
+    if (toValue(isActive)) doFocus()
+  })
 }
