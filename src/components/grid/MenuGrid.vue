@@ -1,5 +1,5 @@
 <template>
-  <section class="menu-grid flex flex-col gap-5 overflow-auto">
+  <section class="menu-grid flex flex-col gap-5">
     <!-- 메뉴 검색 -->
     <IconField class="w-60">
       <InputIcon class="text-surface-500">
@@ -18,7 +18,7 @@
     <BTabs v-model="selCtg" :options="cCategoriesAll" />
 
     <!-- 카드 그리드 -->
-    <div class="grid grid-cols-5 gap-5">
+    <div class="grid grid-cols-5 gap-5 overflow-auto">
       <MenuCard v-for="menu in cFilteredMenus" :key="menu.seq" :menu="menu" @click="onSelect" />
     </div>
   </section>
