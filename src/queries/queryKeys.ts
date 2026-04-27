@@ -11,4 +11,8 @@ export const QUERY_KEYS = {
   // 계층 키(hierarchical key) 패턴
   // 상위 키('orders') invalidate 시 하위 모두 갱신 — 도메인 단위 일괄 refresh 용도
   ordersMonitor: ['orders', 'monitor'] as const,
+  orderRsvs: ['orderRsvs'] as const,
+  /** 진행 중 + 1시간 이내 처리 이력. dayMode(TODAY/ALL) 가 키 suffix 로 붙음. */
+  orderRsvsMonitor: ['orderRsvs', 'monitor'] as const,
+  orderRsvTmpls: ['orderRsvTmpls'] as const,
 } as const

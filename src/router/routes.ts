@@ -53,7 +53,7 @@ export const routes: RouteRecordRaw[] = [
         },
       },
       {
-        path: 'reservations',
+        path: 'order-rsvs',
         name: 'order-rsvs',
         component: () => import('@/pages/OrderRsvsPage.vue'),
         meta: {
@@ -65,6 +65,11 @@ export const routes: RouteRecordRaw[] = [
             badge: 3,
           },
         },
+      },
+      {
+        path: 'order-rsvs/edit',
+        name: 'order-rsvs-edit',
+        component: () => import('@/pages/OrderRsvsEditPage.vue'),
       },
       {
         path: 'settlement',

@@ -31,7 +31,7 @@ import type { SelectButtonPassThroughOptions } from 'primevue/selectbutton'
 
 type TabOption = { val: T; label: string }
 
-type Variant = 'segmented' // 차후 'underline' | 'card'
+type Variant = 'segmented' | 'outline' // 차후 'underline' | 'card'
 type Color = 'primary' // 차후 'secondary' | 'danger'
 type Size = 'md' // 차후 'sm' | 'lg'
 
@@ -70,10 +70,20 @@ const TAB_SIZE: Record<Size, string> = {
   md: 'h-10 w-23 rounded-lg text-base',
 }
 
-/** color 별 active 상태 — data-p-checked='true' 일 때만 적용 */
-const ACTIVE_BY_COLOR: Record<Color, string> = {
-  primary:
-    'data-[p-checked=true]:border-transparent data-[p-checked=true]:bg-primary-500 data-[p-checked=true]:font-semibold data-[p-checked=true]:text-white',
+/**
+ * variant × color 별 active 상태 — data-p-checked='true' 일 때만 적용.
+ * - segmented: 활성 = primary fill (강조 ↑) — 메인 모드 전환용
+ * - outline: 활성 = border + text 만 primary, fill 없음 (강조 ↓) — CTA 와 위계 구분이 필요한 필터용
+ */
+const ACTIVE_BY_VARIANT_COLOR: Record<Variant, Record<Color, string>> = {
+  segmented: {
+    primary:
+      'data-[p-checked=true]:border-transparent data-[p-checked=true]:bg-primary-500 data-[p-checked=true]:font-semibold data-[p-checked=true]:text-white',
+  },
+  outline: {
+    primary:
+      'data-[p-checked=true]:border-primary-500 data-[p-checked=true]:bg-transparent data-[p-checked=true]:font-semibold data-[p-checked=true]:text-primary-600',
+  },
 }
 
 const INACTIVE_STYLE =
@@ -95,7 +105,7 @@ const cPt = computed<SelectButtonPassThroughOptions>(() => ({
         'flex items-center justify-center transition-colors',
         TAB_SIZE[props.size],
         INACTIVE_STYLE,
-        ACTIVE_BY_COLOR[props.color],
+        ACTIVE_BY_VARIANT_COLOR[props.variant][props.color],
       ),
     },
     // PrimeVue 내부 content span 이 자체 bg 를 가지므로 투명화해서 root bg 가 보이게 함
