@@ -27,23 +27,22 @@
           <label for="tmpl-nm" class="text-sm font-semibold text-surface-900">
             📝 템플릿명 <span class="text-red-500">*</span>
           </label>
-          <InputText
-            id="tmpl-nm"
-            :model-value="nm"
-            placeholder="세림정식, 보승아침 등"
-            @update:model-value="(v) => emit('update:nm', String(v ?? ''))"
-          />
+          <InputText id="tmpl-nm" v-model="nm" placeholder="템플릿 명을 입력하세요" />
         </div>
 
         <!-- 반복 요일 -->
-        <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-semibold text-surface-900">
-            📅 반복 요일 <span class="text-red-500">*</span>
-          </label>
-          <DayTypeSelector
-            :model-value="dayTypes"
-            @update:model-value="(v: DayType[]) => emit('update:dayTypes', v)"
-          />
+        <div class="flex items-center justify-between">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-semibold text-surface-900">
+              📅 반복 요일 <span class="text-red-500">*</span>
+            </label>
+            <DayTypeSelector v-model="dayTypes" />
+          </div>
+          <!-- active 토글 -->
+          <div class="flex flex-col">
+            <label class="text-sm font-semibold text-surface-900">활성</label>
+            <ToggleSwitch v-model="active" />
+          </div>
         </div>
 
         <!-- 예약 시각 + 시작일 -->
@@ -53,24 +52,18 @@
               🕐 예약 시각 <span class="text-red-500">*</span>
             </label>
             <DatePicker
-              :model-value="cRsvTime"
+              v-model="mRsvTime"
               time-only
               hour-format="24"
               show-icon
               icon-display="input"
-              @update:model-value="onUpdateRsvTime"
             />
           </div>
           <div class="flex flex-1 flex-col gap-1.5">
             <label class="text-sm font-semibold text-surface-900">
               📆 시작일 <span class="text-red-500">*</span>
             </label>
-            <DatePicker
-              :model-value="cStartDt"
-              date-format="yy-mm-dd"
-              show-icon
-              @update:model-value="onUpdateStartDt"
-            />
+            <DatePicker v-model="mStartDt" :min-date="MIN_TODAY" date-format="yy-mm-dd" show-icon />
           </div>
         </div>
 
@@ -79,27 +72,18 @@
           <label class="text-sm font-semibold text-surface-900">📆 종료일</label>
           <div class="flex items-center gap-2">
             <DatePicker
-              :model-value="cEndDt"
-              :disabled="cIsEndless"
+              v-model="mEndDt"
+              :min-date="cEndMinDate"
+              :disabled="mIsEndless"
               date-format="yy-mm-dd"
               show-icon
               class="flex-1"
-              @update:model-value="onUpdateEndDt"
             />
             <label class="flex items-center gap-1.5 text-sm">
-              <Checkbox :model-value="cIsEndless" binary @update:model-value="onToggleEndless" />
+              <Checkbox v-model="mIsEndless" binary />
               무기한
             </label>
           </div>
-        </div>
-
-        <!-- active 토글 -->
-        <div class="flex items-center justify-between">
-          <label class="text-sm font-semibold text-surface-900">활성</label>
-          <ToggleSwitch
-            :model-value="active"
-            @update:model-value="(v: boolean) => emit('update:active', v)"
-          />
         </div>
       </div>
 
@@ -131,11 +115,10 @@
         <label for="tmpl-cmt" class="text-sm font-semibold text-surface-900">비고</label>
         <Textarea
           id="tmpl-cmt"
-          :model-value="cmt"
+          v-model="cmt"
           rows="2"
           placeholder="요청사항…"
           class="resize-none text-sm"
-          @update:model-value="(v) => emit('update:cmt', String(v ?? ''))"
         />
       </div>
     </template>
@@ -156,14 +139,10 @@
 </template>
 
 <script setup lang="ts">
+import { format } from 'date-fns'
 import _ from 'lodash'
-import { computed } from 'vue'
 
-import DayTypeSelector from '@/components/order-rsvs/DayTypeSelector.vue'
-import CartEmptyState from '@/components/panel/order-cart/CartEmptyState.vue'
-import CartItemRow from '@/components/panel/order-cart/CartItemRow.vue'
-import CartSummary from '@/components/panel/order-cart/CartSummary.vue'
-import StoreSelectHeader from '@/components/panel/order-cart/StoreSelectHeader.vue'
+import { useDateModel } from '@/composables/useDateModel'
 import type { CartItem } from '@/types/cart'
 import type { DayType } from '@/types/orderRsv'
 import type { Store } from '@/types/store'
@@ -171,28 +150,32 @@ import type { Store } from '@/types/store'
 const props = defineProps<{
   store: Pick<Store, 'seq' | 'nm'> | null
   items: CartItem[]
-  nm: string
-  dayTypes: DayType[]
-  /** 'HH:mm:ss'. */
-  rsvTime: string
-  /** 'YYYY-MM-DD'. 필수. */
-  startDt: string
-  /** 'YYYY-MM-DD'. null = 무기한. */
-  endDt: string | null
-  cmt: string
-  active: boolean
   /** 수정 모드 — true면 CTA 라벨이 "수정 완료" 로 바뀜. */
   isEditing?: boolean
 }>()
 
+const nm = defineModel<string>('nm', { required: true })
+const dayTypes = defineModel<DayType[]>('dayTypes', { required: true })
+/** 'HH:mm:ss'. */
+const rsvTime = defineModel<string>('rsvTime', { required: true })
+/** 'YYYY-MM-DD'. 필수. */
+const startDt = defineModel<string>('startDt', { required: true })
+/** 'YYYY-MM-DD'. null = 무기한. */
+const endDt = defineModel<string | null>('endDt', { required: true })
+const cmt = defineModel<string>('cmt', { required: true })
+const active = defineModel<boolean>('active', { required: true })
+
+watch(
+  () => props.store?.nm,
+  (newStoreNm, oldStoreNm) => {
+    // 매장 선택했고, 템플릿 명에 이전 매장명이 포함되어있으면 갱신
+    if (newStoreNm && (oldStoreNm == null || oldStoreNm.includes(oldStoreNm))) {
+      nm.value = `${newStoreNm} ${rsvTime.value}`
+    }
+  },
+)
+
 const emit = defineEmits<{
-  'update:nm': [value: string]
-  'update:dayTypes': [value: DayType[]]
-  'update:rsvTime': [value: string]
-  'update:startDt': [value: string]
-  'update:endDt': [value: string | null]
-  'update:cmt': [value: string]
-  'update:active': [value: boolean]
   increment: [menuSeq: number]
   decrement: [menuSeq: number]
   'update-cnt': [menuSeq: number, cnt: number]
@@ -203,7 +186,11 @@ const emit = defineEmits<{
 }>()
 
 const cState = computed<'no-store' | 'no-menu' | 'has-items'>(() =>
-  props.store == null ? 'no-store' : props.items.length === 0 ? 'no-menu' : 'has-items',
+  props.store == null && props.items.length === 0
+    ? 'no-store'
+    : props.items.length === 0
+      ? 'no-menu'
+      : 'has-items',
 )
 
 const cTotalCount = computed(() => _.sumBy(props.items, 'cnt'))
@@ -214,52 +201,35 @@ const cCanSave = computed(
   () =>
     props.store != null &&
     props.items.length > 0 &&
-    props.nm.trim().length > 0 &&
-    props.dayTypes.length > 0 &&
-    props.rsvTime !== '' &&
-    props.startDt !== '',
+    nm.value.trim().length > 0 &&
+    dayTypes.value.length > 0 &&
+    rsvTime.value !== '' &&
+    startDt.value !== '',
 )
 
-// === DatePicker ↔ string 변환 ===
+// === DatePicker / Checkbox 와 v-model 연결 (writable computed) ===
 
-/** rsvTime 'HH:mm:ss' → Date. */
-const cRsvTime = computed(() => {
-  if (!props.rsvTime) return null
-  const [h, m] = props.rsvTime.split(':').map(Number)
+const DATE_FMT = 'yyyy-MM-dd'
+
+/** 시작일 최소값 — 페이지 mount 시점의 오늘 0시. */
+const MIN_TODAY = (() => {
   const d = new Date()
-  d.setHours(h ?? 0, m ?? 0, 0, 0)
+  d.setHours(0, 0, 0, 0)
   return d
+})()
+
+const mRsvTime = useDateModel(rsvTime, 'HH:mm:ss', false)
+const mStartDt = useDateModel(startDt, DATE_FMT, false)
+const mEndDt = useDateModel(endDt, DATE_FMT)
+
+/** 종료일 최소값 — 시작일 (없으면 오늘). */
+const cEndMinDate = computed(() => mStartDt.value ?? MIN_TODAY)
+
+/** "무기한" 체크박스 — endDt nullable 의 의미적 wrapper. */
+const mIsEndless = computed<boolean>({
+  get: () => endDt.value == null,
+  set: (v) => {
+    endDt.value = v ? null : format(new Date(), DATE_FMT)
+  },
 })
-
-const cStartDt = computed(() => (props.startDt ? new Date(`${props.startDt}T00:00:00`) : null))
-const cEndDt = computed(() => (props.endDt ? new Date(`${props.endDt}T00:00:00`) : null))
-const cIsEndless = computed(() => props.endDt == null)
-
-function onUpdateRsvTime(t: Date | Date[] | (Date | null)[] | null | undefined) {
-  if (!(t instanceof Date)) return
-  const hh = String(t.getHours()).padStart(2, '0')
-  const mm = String(t.getMinutes()).padStart(2, '0')
-  emit('update:rsvTime', `${hh}:${mm}:00`)
-}
-
-function onUpdateStartDt(d: Date | Date[] | (Date | null)[] | null | undefined) {
-  if (!(d instanceof Date)) return
-  emit('update:startDt', toDateString(d))
-}
-
-function onUpdateEndDt(d: Date | Date[] | (Date | null)[] | null | undefined) {
-  if (!(d instanceof Date)) return
-  emit('update:endDt', toDateString(d))
-}
-
-function onToggleEndless(v: boolean) {
-  emit('update:endDt', v ? null : toDateString(new Date()))
-}
-
-function toDateString(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
 </script>

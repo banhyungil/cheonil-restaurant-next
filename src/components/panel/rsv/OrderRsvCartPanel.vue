@@ -71,11 +71,10 @@
         <label for="rsv-memo" class="text-sm font-semibold text-surface-900">비고</label>
         <Textarea
           id="rsv-memo"
-          :model-value="memo"
+          v-model="memo"
           rows="3"
           placeholder="알림톡, 포장 여부 등 요청사항…"
           class="h-20 resize-none text-sm"
-          @update:model-value="(v) => emit('update:memo', String(v ?? ''))"
         />
       </div>
     </template>
@@ -102,28 +101,22 @@
 
 <script setup lang="ts">
 import _ from 'lodash'
-import { computed } from 'vue'
 
-import CartEmptyState from '@/components/panel/order-cart/CartEmptyState.vue'
-import CartItemRow from '@/components/panel/order-cart/CartItemRow.vue'
-import CartSummary from '@/components/panel/order-cart/CartSummary.vue'
-import StoreSelectHeader from '@/components/panel/order-cart/StoreSelectHeader.vue'
 import type { CartItem } from '@/types/cart'
 import type { Store } from '@/types/store'
 
 const props = defineProps<{
   store: Pick<Store, 'seq' | 'nm'> | null
   items: CartItem[]
-  memo: string
-  /** ISO. 빈 문자열이면 미설정 (CTA 비활성). */
-  rsvAt: string
   /** 수정 모드 — true면 CTA 라벨이 "수정 완료" 로 바뀜. */
   isEditing?: boolean
 }>()
 
+const memo = defineModel<string>('memo', { required: true })
+/** ISO. 빈 문자열이면 미설정 (CTA 비활성). */
+const rsvAt = defineModel<string>('rsvAt', { required: true })
+
 const emit = defineEmits<{
-  'update:memo': [value: string]
-  'update:rsvAt': [value: string]
   increment: [menuSeq: number]
   decrement: [menuSeq: number]
   'update-cnt': [menuSeq: number, cnt: number]
@@ -141,21 +134,21 @@ const cTotalCount = computed(() => _.sumBy(props.items, 'cnt'))
 const cTotalAmount = computed(() => _.sumBy(props.items, (i) => i.price * i.cnt))
 
 /** rsvAt 의 날짜 부분만 — DatePicker 가 Date 객체를 요구. */
-const cRsvAtDate = computed(() => (props.rsvAt ? new Date(props.rsvAt) : null))
+const cRsvAtDate = computed(() => (rsvAt.value ? new Date(rsvAt.value) : null))
 /** rsvAt 의 시간 부분 — DatePicker time-only 도 동일 Date 객체 사용. */
-const cRsvAtTime = computed(() => (props.rsvAt ? new Date(props.rsvAt) : null))
+const cRsvAtTime = computed(() => (rsvAt.value ? new Date(rsvAt.value) : null))
 
 function onUpdateDate(d: Date | Date[] | (Date | null)[] | null | undefined) {
   if (!(d instanceof Date)) return
-  const cur = props.rsvAt ? new Date(props.rsvAt) : new Date()
+  const cur = rsvAt.value ? new Date(rsvAt.value) : new Date()
   cur.setFullYear(d.getFullYear(), d.getMonth(), d.getDate())
-  emit('update:rsvAt', cur.toISOString())
+  rsvAt.value = cur.toISOString()
 }
 
 function onUpdateTime(t: Date | Date[] | (Date | null)[] | null | undefined) {
   if (!(t instanceof Date)) return
-  const cur = props.rsvAt ? new Date(props.rsvAt) : new Date()
+  const cur = rsvAt.value ? new Date(rsvAt.value) : new Date()
   cur.setHours(t.getHours(), t.getMinutes(), 0, 0)
-  emit('update:rsvAt', cur.toISOString())
+  rsvAt.value = cur.toISOString()
 }
 </script>
