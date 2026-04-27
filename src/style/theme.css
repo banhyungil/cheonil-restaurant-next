@@ -69,10 +69,10 @@
 }
 
 /*
- * floating-vue — cheonil-tooltip 테마
- * 우리 디자인 토큰에 맞춘 tooltip 커스텀.
+ * floating-vue — default tooltip 테마 (cheonil 디자인 토큰 적용)
+ * floating-vue 의 빌트인 'tooltip' 테마를 override — v-tooltip 호출부에서 theme 명시 불필요.
  */
-.v-popper--theme-cheonil-tooltip .v-popper__inner {
+.v-popper--theme-tooltip .v-popper__inner {
   background: var(--color-surface-0);
   color: var(--color-surface-900);
   border: 1px solid var(--color-surface-200);
@@ -84,10 +84,10 @@
   max-width: 20rem;
 }
 
-.v-popper--theme-cheonil-tooltip .v-popper__arrow-outer {
+.v-popper--theme-tooltip .v-popper__arrow-outer {
   border-color: var(--color-surface-200);
 }
 
-.v-popper--theme-cheonil-tooltip .v-popper__arrow-inner {
+.v-popper--theme-tooltip .v-popper__arrow-inner {
   border-color: var(--color-surface-0);
 }

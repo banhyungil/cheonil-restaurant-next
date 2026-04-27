@@ -9,7 +9,7 @@
       <span class="text-xl font-bold text-surface-900">{{ store.nm }}</span>
     </div>
     <div class="flex items-center gap-2">
-      <VTooltip v-if="store.cmt" theme="cheonil-tooltip">
+      <VTooltip v-if="store.cmt">
         <span
           class="flex size-5 cursor-help items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-600"
           tabindex="0"

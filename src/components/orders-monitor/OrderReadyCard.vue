@@ -9,7 +9,7 @@
     <!-- 헤더: 매장명 + ⓘ tooltip + ⋮ more menu -->
     <div class="flex h-7 items-center gap-2">
       <span class="text-lg font-bold text-surface-900">{{ order.storeNm }}</span>
-      <vTooltip v-if="cIsAll && order.storeCmt" theme="cheonil-tooltip">
+      <vTooltip v-if="cIsAll && order.storeCmt">
         <span
           class="flex size-5 cursor-help items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-600"
           tabindex="0"
