@@ -2,8 +2,8 @@
   <SelectButton
     :model-value="modelValue"
     :options="[...options]"
-    option-value="seq"
-    option-label="nm"
+    option-value="val"
+    option-label="label"
     :allow-empty="false"
     :pt="cPt"
     v-bind="cOtherAttrs"
@@ -11,7 +11,7 @@
   />
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends string | number">
 import type { ClassValue } from 'clsx'
 import _ from 'lodash'
 import { computed, useAttrs } from 'vue'
@@ -29,7 +29,7 @@ import type { SelectButtonPassThroughOptions } from 'primevue/selectbutton'
  * Tailwind `data-[p-checked=true]:...` variant 로 감지해서 스타일 분기.
  */
 
-type TabOption = { seq: number; nm: string }
+type TabOption = { val: T; label: string }
 
 type Variant = 'segmented' // 차후 'underline' | 'card'
 type Color = 'primary' // 차후 'secondary' | 'danger'
@@ -39,8 +39,8 @@ defineOptions({ inheritAttrs: false })
 
 const props = withDefaults(
   defineProps<{
-    options: readonly TabOption[]
-    modelValue: number
+    options: readonly TabOption[] | readonly string[]
+    modelValue: T
     variant?: Variant
     color?: Color
     size?: Size
@@ -53,11 +53,12 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  'update:modelValue': [seq: number]
+  'update:modelValue': [val: T]
 }>()
 
-function onChange(v: unknown) {
-  if (typeof v === 'number') emit('update:modelValue', v)
+function onChange(v: T) {
+  // SelectButton 은 우리가 넘긴 options.val 중 하나만 emit → 곧바로 T로 받음
+  emit('update:modelValue', v)
 }
 
 /** size 별 컨테이너 / 탭 치수 */

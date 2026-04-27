@@ -8,5 +8,7 @@ export const QUERY_KEYS = {
   stores: ['stores'] as const,
   storeCtgs: ['storeCtgs'] as const,
   orders: ['orders'] as const,
+  // 계층 키(hierarchical key) 패턴
+  // 상위 키('orders') invalidate 시 하위 모두 갱신 — 도메인 단위 일괄 refresh 용도
   ordersMonitor: ['orders', 'monitor'] as const,
 } as const

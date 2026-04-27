@@ -26,14 +26,16 @@
             v-for="order in cReadyOrders"
             :key="order.seq"
             :order="order"
-            :mode="cMode"
+            :mode="selMode"
             @complete="onComplete"
+            @edit="onEdit"
+            @remove="onRemove"
           />
         </div>
       </div>
 
       <!-- 주문완료 목록 -->
-      <div class="flex flex-col gap-3 min-h-48">
+      <div v-if="selMode === 'ALL'" class="flex flex-col gap-3 min-h-48">
         <div class="flex h-7 items-center gap-2.5">
           <span class="size-2 rounded bg-primary-500" />
           <h2 class="text-lg font-bold text-surface-900">처리완료 목록 (최근)</h2>
@@ -48,7 +50,6 @@
             v-for="order in cCookedOrders"
             :key="order.seq"
             :order="order"
-            :mode="cMode"
             @cancel="onCancel"
           />
         </div>
@@ -58,22 +59,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-
-import { useOrdersMonitorQuery, useOrderStatusMutation } from '@/queries/ordersQuery'
-
-const MODE_ALL = 1
-const MODE_KITCHEN = 2
+import { useStoresQuery } from '@/queries/storesQuery'
+import {
+  useOrderRemoveMutation,
+  useOrdersMonitorQuery,
+  useOrderStatusMutation,
+} from '@/queries/ordersQuery'
+import { useOrderCartStore } from '@/stores/orderCartStore'
+import { useToast } from 'primevue/usetoast'
 
 const MODE_OPTIONS = [
-  { seq: MODE_ALL, nm: '전체 보기' },
-  { seq: MODE_KITCHEN, nm: '주방용' },
+  { val: 'ALL', label: '전체 보기' },
+  { val: 'KITCHEN', label: '주방용' },
 ] as const
+// Indexed Access Type
+// 배열/튜플 타입에서 number는 "유효한 모든 인덱스"를 의미
+type ModeVal = (typeof MODE_OPTIONS)[number]['val']
 
-const selMode = ref<number>(MODE_ALL)
-const cMode = computed<'all' | 'kitchen'>(() => (selMode.value === MODE_ALL ? 'all' : 'kitchen'))
+const selMode = ref<ModeVal>('ALL')
 
 const { data: orders } = useOrdersMonitorQuery()
+const { data: stores } = useStoresQuery()
 
 const cReadyOrders = computed(() => orders.value?.filter((o) => o.status === 'READY') ?? [])
 const cCookedOrders = computed(
@@ -85,6 +91,11 @@ const cCookedOrders = computed(
 )
 
 const { mutate: updateStatus } = useOrderStatusMutation()
+const { mutate: removeOrder } = useOrderRemoveMutation()
+
+const router = useRouter()
+const toast = useToast()
+const orderCartStore = useOrderCartStore()
 
 function onComplete(seq: number) {
   updateStatus({ seq, status: 'COOKED' })
@@ -92,5 +103,24 @@ function onComplete(seq: number) {
 
 function onCancel(seq: number) {
   updateStatus({ seq, status: 'READY' })
+}
+
+/** 수정 — draft 스토어에 hydrate 후 OrdersPage로 이동. KeepAlive 캐시는 store reactive로 자동 반영. */
+function onEdit(seq: number) {
+  const order = orders.value?.find((o) => o.seq === seq)
+  if (!order) return
+  const store = stores.value?.find((s) => s.seq === order.storeSeq)
+  if (!store) return
+  orderCartStore.loadFromOrder(order, store)
+  router.push('/orders')
+}
+
+/** 삭제 — 즉시 호출 (confirm 없음). 캐시 갱신은 WS 담당. */
+function onRemove(seq: number) {
+  removeOrder(seq, {
+    onSuccess: () => {
+      toast.add({ severity: 'success', summary: '주문 삭제', life: 2000 })
+    },
+  })
 }
 </script>

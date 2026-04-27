@@ -29,10 +29,10 @@ const CASE_ROW_STRETCH = 3
 const CASE_FLEX_FILL = 4
 
 const CASES = [
-  { seq: CASE_GRID, nm: '반응형 그리드' },
-  { seq: CASE_AUTO_FILL_FIT, nm: 'auto-fill vs auto-fit' },
-  { seq: CASE_ROW_STRETCH, nm: 'Grid 행 stretch' },
-  { seq: CASE_FLEX_FILL, nm: 'Flex 높이 채우기' },
+  { val: CASE_GRID, label: '반응형 그리드' },
+  { val: CASE_AUTO_FILL_FIT, label: 'auto-fill vs auto-fit' },
+  { val: CASE_ROW_STRETCH, label: 'Grid 행 stretch' },
+  { val: CASE_FLEX_FILL, label: 'Flex 높이 채우기' },
 ] as const
 
 const selCase = ref<number>(CASE_GRID)

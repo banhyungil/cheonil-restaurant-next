@@ -56,7 +56,10 @@ const searchKeyword = ref('')
 const selCtg = ref(ALL_CTG_SEQ)
 const eltInput = ref<{ $el?: HTMLInputElement }>()
 
-const cCategoriesAll = computed(() => [{ seq: ALL_CTG_SEQ, nm: '전체' }, ...props.categories])
+const cCategoriesAll = computed(() => [
+  { val: ALL_CTG_SEQ, label: '전체' },
+  ...props.categories.map((ctg) => ({ val: ctg.seq, label: ctg.nm })),
+])
 
 const cByCategory = computed(() =>
   selCtg.value === ALL_CTG_SEQ

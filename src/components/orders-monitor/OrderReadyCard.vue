@@ -2,14 +2,14 @@
 <template>
   <div
     :class="[
-      'order-ready-card flex flex-col gap-3 rounded-xl border-2 bg-white p-4',
+      'order-ready-card flex flex-col gap-4 rounded-xl border-2 bg-white p-4',
       STATUS_CLASSES[cElapsed.status].border,
     ]"
   >
     <!-- 헤더: 매장명 + ⓘ tooltip + ⋮ more menu -->
     <div class="flex h-7 items-center gap-2">
       <span class="text-lg font-bold text-surface-900">{{ order.storeNm }}</span>
-      <VTooltip v-if="isAll && order.storeCmt" theme="cheonil-tooltip">
+      <vTooltip v-if="cIsAll && order.storeCmt" theme="cheonil-tooltip">
         <span
           class="flex size-5 cursor-help items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-600"
           tabindex="0"
@@ -19,9 +19,9 @@
         <template #popper>
           <p class="whitespace-pre-wrap text-base text-surface-900">{{ order.storeCmt }}</p>
         </template>
-      </VTooltip>
+      </vTooltip>
       <div class="flex-1" />
-      <template v-if="isAll">
+      <template v-if="cIsAll">
         <BButton
           variant="text"
           color="secondary"
@@ -47,7 +47,7 @@
     <!-- 메뉴 리스트 (자동 n열) -->
     <!-- 그리드 자식요소 크기는 row의 max-content 크기로 자동으로 설정됨 (align-items: stretch) -->
     <div
-      class="grid flex-1 grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-y-2 gap-x-3 content-start"
+      class="grid flex-1 grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-y-2 gap-x-3 content-start mb-2"
     >
       <div v-for="item in order.menus" :key="item.menuSeq" class="flex h-8 items-center gap-2">
         <span class="truncate text-lg font-semibold text-surface-900">{{ item.menuNm }}</span>
@@ -68,7 +68,7 @@
 
     <!-- 완료 버튼 -->
     <BButton
-      v-if="isAll"
+      v-if="cIsAll"
       color="primary"
       class="h-12! w-full! gap-1.5 text-base!"
       @click="emit('complete', order.seq)"
@@ -86,14 +86,15 @@ import { computed, ref } from 'vue'
 import { STATUS_CLASSES, useElapsedTime } from '@/composables/useElapsedTime'
 import type { OrderExt } from '@/types/order'
 import type { MenuItem } from 'primevue/menuitem'
+import { vTooltip } from 'floating-vue'
 
 const props = withDefaults(
   defineProps<{
     order: OrderExt
     /** 전체보기 = 액션 포함 / 주방용 = 읽기전용 */
-    mode?: 'all' | 'kitchen'
+    mode?: 'ALL' | 'KITCHEN'
   }>(),
-  { mode: 'all' },
+  { mode: 'ALL' },
 )
 
 const emit = defineEmits<{
@@ -102,7 +103,7 @@ const emit = defineEmits<{
   remove: [seq: number]
 }>()
 
-const isAll = computed(() => props.mode === 'all')
+const cIsAll = computed(() => props.mode === 'ALL')
 
 const cElapsed = useElapsedTime(() => props.order.orderAt)
 

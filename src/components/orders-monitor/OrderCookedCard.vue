@@ -22,7 +22,6 @@
 
     <!-- 완료 취소 버튼 -->
     <BButton
-      v-if="isAll"
       variant="outlined"
       color="secondary"
       class="h-10! w-full! text-sm!"
@@ -40,20 +39,13 @@ import { computed } from 'vue'
 
 import type { OrderExt } from '@/types/order'
 
-const props = withDefaults(
-  defineProps<{
-    order: OrderExt
-    /** 전체보기 = 취소 버튼 표시 / 주방용 = 읽기전용 */
-    mode?: 'all' | 'kitchen'
-  }>(),
-  { mode: 'all' },
-)
+const props = defineProps<{
+  order: OrderExt
+}>()
 
 const emit = defineEmits<{
   cancel: [seq: number]
 }>()
-
-const isAll = computed(() => props.mode === 'all')
 
 const cCookedTime = computed(() =>
   props.order.cookedAt ? format(new Date(props.order.cookedAt), 'hh:mm a') : '',

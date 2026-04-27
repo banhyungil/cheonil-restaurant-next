@@ -25,11 +25,12 @@
       v-model:memo="memo"
       :store="selStore"
       :items="cart"
-      @increment="onIncrement"
-      @decrement="onDecrement"
-      @update-cnt="onUpdateCnt"
-      @change-store="onChangeStore"
-      @reset="onResetAll"
+      :is-editing="isEditing"
+      @increment="orderCartStore.increment"
+      @decrement="orderCartStore.decrement"
+      @update-cnt="orderCartStore.setCnt"
+      @change-store="orderCartStore.changeStore"
+      @reset="orderCartStore.reset"
       @order="onOrder"
     />
   </div>
@@ -37,16 +38,13 @@
 
 <script setup lang="ts">
 import { useToast } from 'primevue/usetoast'
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 
 import { useMenuCtgsQuery } from '@/queries/menuCtgsQuery'
 import { useMenusQuery } from '@/queries/menusQuery'
-import { useOrderCreateMutation } from '@/queries/ordersQuery'
+import { useOrderCreateMutation, useOrderUpdateMutation } from '@/queries/ordersQuery'
 import { useStoreCtgsQuery } from '@/queries/storeCtgsQuery'
 import { useStoresQuery } from '@/queries/storesQuery'
-import type { CartItem } from '@/types/cart'
-import type { Store } from '@/types/store'
+import { useOrderCartStore } from '@/stores/orderCartStore'
 
 // 서버 데이터 — vue-query 가 캐싱·재검증·dedup 자동 처리
 const { data: menus } = useMenusQuery()
@@ -54,84 +52,72 @@ const { data: menuCategories } = useMenuCtgsQuery()
 const { data: stores } = useStoresQuery()
 const { data: storeCategories } = useStoreCtgsQuery()
 
-// 주문 작성 상태
-const selStore = ref<Store | null>(null)
-const cart = ref<CartItem[]>([])
-const memo = ref('')
+// 주문 작성 draft — Pinia로 상태 보존 (수정 모드 진입 시 다른 페이지에서 hydrate)
+const orderCartStore = useOrderCartStore()
+const { selStore, cart, memo, isEditing, editingSeq } = storeToRefs(orderCartStore)
 
-// 주문 생성 — WS 도입 후엔 mutation은 호출만 하고 캐시 갱신은 WS 핸들러가 담당
+// 주문 생성/수정 — WS 도입 후엔 mutation은 호출만, 캐시 갱신은 WS 담당
 const router = useRouter()
 const toast = useToast()
 const { mutate: createOrder } = useOrderCreateMutation()
+const { mutate: updateOrder } = useOrderUpdateMutation()
 
 function onSelectStore(storeSeq: number) {
   const store = stores.value?.find((s) => s.seq === storeSeq)
   if (!store) return
-  selStore.value = store
-}
-
-function onChangeStore() {
-  // 매장만 다시 고르는 모드 — cart·memo 유지
-  selStore.value = null
+  orderCartStore.setStore(store)
 }
 
 function onAddMenu(menuSeq: number) {
-  const existing = cart.value.find((i) => i.menuSeq === menuSeq)
-  if (existing) {
-    existing.cnt++
-    return
-  }
   const menu = menus.value?.find((m) => m.seq === menuSeq)
   if (!menu) return
-  cart.value.push({ menuSeq: menu.seq, nm: menu.nm, price: menu.price, cnt: 1 })
-}
-
-function onIncrement(menuSeq: number) {
-  const item = cart.value.find((i) => i.menuSeq === menuSeq)
-  if (item) item.cnt++
-}
-
-function onDecrement(menuSeq: number) {
-  const idx = cart.value.findIndex((i) => i.menuSeq === menuSeq)
-  if (idx === -1) return
-  cart.value[idx]!.cnt--
-  if (cart.value[idx]!.cnt <= 0) cart.value.splice(idx, 1)
-}
-
-function onUpdateCnt(menuSeq: number, cnt: number) {
-  const item = cart.value.find((i) => i.menuSeq === menuSeq)
-  if (item) item.cnt = cnt
-}
-
-function onResetAll() {
-  selStore.value = null
-  cart.value = []
-  memo.value = ''
+  orderCartStore.addItem(menu)
 }
 
 function onOrder() {
   if (!selStore.value || cart.value.length === 0) return
-  createOrder(
-    {
-      storeSeq: selStore.value.seq,
-      cmt: memo.value || undefined,
-      menus: cart.value.map(({ menuSeq, price, cnt }) => ({ menuSeq, price, cnt })),
-    },
-    {
-      onSuccess: () => {
-        onResetAll()
-        toast.add({ severity: 'success', summary: '주문 접수', life: 2000 })
-        // router.push('/orders/monitor')
+  const payload = {
+    storeSeq: selStore.value.seq,
+    cmt: memo.value || undefined,
+    menus: cart.value.map(({ menuSeq, price, cnt }) => ({ menuSeq, price, cnt })),
+  }
+
+  if (isEditing.value && editingSeq.value != null) {
+    updateOrder(
+      { seq: editingSeq.value, payload },
+      {
+        onSuccess: () => {
+          orderCartStore.reset()
+          toast.add({ severity: 'success', summary: '주문 수정 완료', life: 2000 })
+          router.push('/orders/monitor')
+        },
+        onError: () => {
+          toast.add({
+            severity: 'error',
+            summary: '수정 실패',
+            detail: '잠시 후 다시 시도해주세요',
+            life: 3000,
+          })
+        },
       },
-      onError: () => {
-        toast.add({
-          severity: 'error',
-          summary: '주문 실패',
-          detail: '잠시 후 다시 시도해주세요',
-          life: 3000,
-        })
-      },
+    )
+    return
+  }
+
+  createOrder(payload, {
+    onSuccess: () => {
+      orderCartStore.reset()
+      toast.add({ severity: 'success', summary: '주문 접수', life: 2000 })
+      // router.push('/orders/monitor')
     },
-  )
+    onError: () => {
+      toast.add({
+        severity: 'error',
+        summary: '주문 실패',
+        detail: '잠시 후 다시 시도해주세요',
+        life: 3000,
+      })
+    },
+  })
 }
 </script>

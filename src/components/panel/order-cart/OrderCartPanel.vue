@@ -54,7 +54,7 @@
     <!-- 총액 -->
     <CartSummary :total-count="cTotalCount" :total-amount="cTotalAmount" />
 
-    <!-- CTA: 상태별 label -->
+    <!-- CTA: 상태별 label + 수정 모드 분기 -->
     <BButton
       color="primary"
       size="lg"
@@ -62,7 +62,7 @@
       :disabled="cState !== 'has-items'"
       @click="emit('order')"
     >
-      <span>주문완료</span>
+      <span>{{ isEditing ? '수정완료' : '주문완료' }}</span>
       <span v-if="cState === 'no-store'" class="text-xs font-medium opacity-85">
         매장을 선택해주세요
       </span>
@@ -84,6 +84,8 @@ const props = defineProps<{
   store: Pick<Store, 'seq' | 'nm'> | null
   items: CartItem[]
   memo: string
+  /** 수정 모드 — true면 CTA 라벨이 "수정완료" 로 바뀜. */
+  isEditing?: boolean
 }>()
 
 const emit = defineEmits<{
