@@ -3,7 +3,7 @@ import OrdersPage from '@/pages/OrdersPage.vue'
 
 // prettier-ignore
 import {
-  BookOpen, Calculator, CalendarClock, CalendarDays, ClipboardList, Package, ReceiptText, Settings, Store, Utensils, Wallet,
+  Blocks, BookOpen, Calculator, CalendarClock, CalendarDays, ClipboardList, Package, ReceiptText, Settings, Store, Utensils, Wallet,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import type { RouteRecordRaw } from 'vue-router'
@@ -12,6 +12,7 @@ export const NAV_GROUPS = {
   SALES: '영업',
   SETTLEMENT: '정산',
   MANAGE: '관리',
+  DEV: '개발',
 } as const
 export type NavGroup = (typeof NAV_GROUPS)[keyof typeof NAV_GROUPS]
 
@@ -115,11 +116,22 @@ export const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/MasterPage.vue'),
         meta: { nav: { group: NAV_GROUPS.MANAGE, label: '마스터 관리', icon: Settings, order: 7 } },
       },
+      {
+        path: 'dev/components',
+        name: 'dev-components',
+        component: () => import('@/pages/dev/ComponentsPage.vue'),
+        meta: { nav: { group: NAV_GROUPS.DEV, label: '공통 컴포넌트', icon: Blocks, order: 1 } },
+      },
     ],
   },
   {
     path: '/examples/form',
     name: 'example-form',
     component: () => import('@/pages/examples/FormExamplePage.vue'),
+  },
+  {
+    path: '/examples/css',
+    name: 'example-css',
+    component: () => import('@/pages/examples/CssExamplePage.vue'),
   },
 ]

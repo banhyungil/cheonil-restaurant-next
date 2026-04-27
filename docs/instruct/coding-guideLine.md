@@ -6,6 +6,11 @@
   - 알파벳 순으로 정렬
 - 각 그룹별로 공백 한 칸 씩
 
+## Unplugin 적용 사항
+
+- unplugin-auto-import, unplugin-vue-components 적용 됨
+- vite.config.ts 참조
+
 ## store, composable 사용
 
 - script 최 상단에서 선언 후 사용
@@ -49,6 +54,47 @@ export function fetchById() {...}
 export function create() {...}
 export function update() {...}
 export function remove() {...}
+```
+
+### API / Query / Composable 레이어 구분
+
+서로 책임이 다른 3개 레이어를 혼동하지 않도록 역할/네이밍 규칙을 분리한다.
+
+| 레이어         | 책임                                             | 파일 네이밍          | 네이밍 방식       |
+| -------------- | ------------------------------------------------ | -------------------- | ----------------- |
+| `apis/`        | HTTP 호출 — 서버와의 데이터 송수신               | `<resource>Api.ts`   | resource-oriented |
+| `queries/`     | TanStack Query 훅, 캐싱·변형·조합·mutation 관리  | `<resource>Query.ts` | resource-oriented |
+| `composables/` | UI/DOM 관련 재사용 훅 (포커스, 이벤트 리스너 등) | `use<기능>.ts`       | hook-oriented     |
+
+**핵심 구분**
+
+- `apis/` = "서버와 말함" (fetch, axios 호출)
+- `queries/` = "앱 안에서 서버 데이터 관리" (invalidate, select, mutation 부수효과)
+- `composables/` = "UI 동작 추상화" (서버 무관)
+
+**네이밍 컨벤션**
+
+- `apis/` / `queries/` — **resource-oriented**. 한 파일에 여러 훅/함수 공존 가능.
+  - `menusQuery.ts` 안에 `useMenusQuery`, `useMenuUpdateMutation` 등 같이 둠.
+- `composables/` — **hook-oriented**. 1 파일 1 훅 원칙.
+  - `useAutoFocus.ts`, `useSearchFilter.ts` 처럼 파일명 = 훅 이름.
+
+**예시**
+
+```typescript
+// src/apis/menusApi.ts  — HTTP 호출만
+export async function fetchList(): Promise<Menu[]> { /* axios */ }
+
+// src/queries/menusQuery.ts  — useQuery 래핑 + 부가 로직
+export function useMenusQuery() {
+  return useQuery({ queryKey: QUERY_KEYS.menus, queryFn: () => menusApi.fetchList() })
+}
+export function useMenuUpdateMutation() {
+  return useMutation({ mutationFn: ..., onSuccess: () => invalidate() })
+}
+
+// src/composables/useAutoFocus.ts  — UI 훅
+export function useAutoFocus(elRef, activeRef) { /* watch + focus */ }
 ```
 
 ### Components
@@ -158,6 +204,10 @@ const dPlace = _.keyBy(places, 'placeId');_
 | Ref   | Reference     |
 | Res   | Response      |
 | Req   | Request       |
+| Ctg   | Category      |
+| Cmt   | Comment       |
+| Tmpl  | Template      |
+| Rsv   | Reservation   |
 
 ## css
 

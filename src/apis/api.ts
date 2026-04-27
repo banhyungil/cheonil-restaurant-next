@@ -1,8 +1,11 @@
 import axios from 'axios'
+import qs from 'qs'
 
 /**
  * 1. jwt 토큰 관리
  * 2. 공통 에러 처리
+ * 3. query string 직렬화 — 배열은 콤마 join (Spring 의 List 바인딩 친화적)
+ *    예: { statuses: ['READY','COOKED'] } → ?statuses=READY,COOKED
  */
 
 /** singleton api 인스턴스 */
@@ -11,6 +14,10 @@ export const api = axios.create({
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
+  },
+  paramsSerializer: {
+    serialize: (params) =>
+      qs.stringify(params, { arrayFormat: 'comma', skipNulls: true }),
   },
 })
 
