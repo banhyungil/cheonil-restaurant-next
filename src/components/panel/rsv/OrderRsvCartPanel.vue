@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="rsv-info-panel flex h-full w-130 shrink-0 flex-col gap-4 rounded-xl border border-surface-200 bg-surface-0 p-6"
+    class="order-rsv-cart-panel flex h-full w-130 shrink-0 flex-col gap-4 rounded-xl border border-surface-200 bg-surface-0 p-6"
   >
     <!-- 매장 헤더 (order-cart 의 StoreSelectHeader 재사용) -->
     <StoreSelectHeader
@@ -43,24 +43,12 @@
             />
           </div>
         </div>
-
-        <div class="flex flex-col gap-1.5">
-          <label for="rsv-memo" class="text-sm font-semibold text-surface-900">비고</label>
-          <Textarea
-            id="rsv-memo"
-            :model-value="memo"
-            rows="3"
-            placeholder="알림톡, 포장 여부 등 요청사항…"
-            class="h-20 resize-none text-sm"
-            @update:model-value="(v) => emit('update:memo', String(v ?? ''))"
-          />
-        </div>
       </div>
 
       <div class="h-px w-full bg-surface-200" />
 
       <!-- 담긴 메뉴 -->
-      <div class="flex flex-col gap-1.5">
+      <div class="flex flex-1 flex-col gap-1.5 overflow-auto">
         <label class="text-sm font-semibold text-surface-900">🧾 담긴 메뉴</label>
         <CartEmptyState
           v-if="cState === 'no-menu'"
@@ -79,6 +67,17 @@
           />
         </div>
       </div>
+      <div class="flex flex-col gap-1.5">
+        <label for="rsv-memo" class="text-sm font-semibold text-surface-900">비고</label>
+        <Textarea
+          id="rsv-memo"
+          :model-value="memo"
+          rows="3"
+          placeholder="알림톡, 포장 여부 등 요청사항…"
+          class="h-20 resize-none text-sm"
+          @update:model-value="(v) => emit('update:memo', String(v ?? ''))"
+        />
+      </div>
     </template>
 
     <!-- 합계 -->
@@ -86,12 +85,7 @@
 
     <!-- CTA: [취소] [예약 등록 / 수정 완료] -->
     <div class="flex gap-2">
-      <BButton
-        variant="outlined"
-        color="secondary"
-        class="h-12! flex-1!"
-        @click="emit('cancel')"
-      >
+      <BButton variant="outlined" color="secondary" class="h-12! flex-1!" @click="emit('cancel')">
         취소
       </BButton>
       <BButton
@@ -140,11 +134,7 @@ const emit = defineEmits<{
 }>()
 
 const cState = computed<'no-store' | 'no-menu' | 'has-items'>(() =>
-  props.store == null
-    ? 'no-store'
-    : props.items.length === 0
-      ? 'no-menu'
-      : 'has-items',
+  props.store == null ? 'no-store' : props.items.length === 0 ? 'no-menu' : 'has-items',
 )
 
 const cTotalCount = computed(() => _.sumBy(props.items, 'cnt'))

@@ -96,12 +96,17 @@ export const routes: RouteRecordRaw[] = [
         meta: { nav: { group: NAV_GROUPS.MANAGE, label: '제품 관리', icon: Package, order: 3 } },
       },
       {
-        path: 'reservation-templates',
+        path: 'order-rsv-tmpls',
         name: 'order-rsv-tmpls',
         component: () => import('@/pages/OrderRsvTmplsPage.vue'),
         meta: {
           nav: { group: NAV_GROUPS.MANAGE, label: '예약 템플릿', icon: CalendarClock, order: 4 },
         },
+      },
+      {
+        path: 'order-rsv-tmpls/edit',
+        name: 'order-rsv-tmpls-edit',
+        component: () => import('@/pages/OrderRsvTmplsEditPage.vue'),
       },
       {
         path: 'menus',

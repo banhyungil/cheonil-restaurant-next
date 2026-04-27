@@ -22,12 +22,23 @@ const HISTORY_WINDOW_MINUTES = 60
 /**
  * 예약 메인 페이지용 쿼리 — RESERVED 전체 + 1시간 이내 COMPLETED/CANCELED.
  * select 에서 ready/history 로 분리해 페이지의 computed 부담을 줄임.
- * dayMode 변경 시 자동 refetch.
+ * dayMode / storeSeq 변경 시 자동 refetch.
  */
-export function useOrderRsvsMonitorQuery(dayMode: MaybeRefOrGetter<'TODAY' | 'ALL'>) {
+export function useOrderRsvsMonitorQuery(
+  dayMode: MaybeRefOrGetter<'TODAY' | 'ALL'>,
+  storeSeq?: MaybeRefOrGetter<number | null>,
+) {
   return useQuery({
-    queryKey: computed(() => [...QUERY_KEYS.orderRsvsMonitor, toValue(dayMode)] as const),
-    queryFn: () => orderRsvsApi.fetchList({ dayMode: toValue(dayMode) }),
+    queryKey: computed(
+      () => [...QUERY_KEYS.orderRsvsMonitor, toValue(dayMode), toValue(storeSeq) ?? null] as const,
+    ),
+    queryFn: () => {
+      const seq = toValue(storeSeq)
+      return orderRsvsApi.fetchList({
+        dayMode: toValue(dayMode),
+        ...(seq != null && { storeSeq: seq }),
+      })
+    },
     select: (list) => {
       const cutoff = subMinutes(new Date(), HISTORY_WINDOW_MINUTES).toISOString()
       return {

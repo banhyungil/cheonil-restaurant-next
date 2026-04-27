@@ -28,8 +28,8 @@ export interface RsvTmplCreatePayload {
   /** 'HH:mm:ss'. */
   rsvTime: string
   dayTypes: DayType[]
-  /** 'YYYY-MM-DD'. */
-  startDt?: string
+  /** 'YYYY-MM-DD'. 필수 — 미입력 시 백엔드 default = today 가 적용되긴 하지만 클라이언트가 명시. */
+  startDt: string
   /** 'YYYY-MM-DD'. null = 무기한. */
   endDt?: string | null
   cmt?: string
@@ -95,7 +95,7 @@ export async function create(payload: RsvTmplCreatePayload): Promise<OrderRsvTmp
     dayTypes: payload.dayTypes,
     cmt: payload.cmt ?? null,
     active: payload.active,
-    startDt: payload.startDt ?? null,
+    startDt: payload.startDt,
     endDt: payload.endDt ?? null,
     regAt: now,
     modAt: now,
@@ -121,7 +121,7 @@ export async function update(seq: number, payload: RsvTmplUpdatePayload): Promis
     dayTypes: payload.dayTypes,
     cmt: payload.cmt ?? null,
     active: payload.active,
-    startDt: payload.startDt ?? null,
+    startDt: payload.startDt,
     endDt: payload.endDt ?? null,
     amount,
     modAt: new Date().toISOString(),

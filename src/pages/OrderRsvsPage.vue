@@ -7,8 +7,19 @@
       <span class="text-base text-surface-500">· 당일 예약 · 실시간 동기화</span>
       <div class="flex-1" />
       <BTabs v-model="selDayMode" :options="DAY_MODE_OPTIONS" variant="outline" />
-      <!-- TODO 매장 필터 — storesQuery 연결 -->
-      <Select v-model="selStoreSeq" :options="[]" placeholder="매장 전체" class="w-40" />
+      <Select
+        v-model="selStoreSeq"
+        :options="cStoresWithSearch"
+        option-label="nm"
+        option-value="seq"
+        :filter-fields="['_searchKey']"
+        placeholder="매장 전체"
+        show-clear
+        filter
+        filter-placeholder="매장 검색 (초성 가능)"
+        auto-filter-focus
+        class="w-40"
+      />
       <BButton color="primary" class="w-fit! px-2!" @click="onAdd">
         <Plus :size="16" />
         예약 추가
@@ -81,6 +92,7 @@
 </template>
 
 <script setup lang="ts">
+import { getChoseong } from 'hangul-util'
 import { Plus } from 'lucide-vue-next'
 import { useToast } from 'primevue/usetoast'
 
@@ -101,8 +113,16 @@ type DayModeVal = (typeof DAY_MODE_OPTIONS)[number]['val']
 const selDayMode = ref<DayModeVal>('TODAY')
 const selStoreSeq = ref<number | null>(null)
 
-const { data: monitor } = useOrderRsvsMonitorQuery(selDayMode)
+const { data: monitor } = useOrderRsvsMonitorQuery(selDayMode, selStoreSeq)
 const { data: stores } = useStoresQuery()
+
+/** 매장명 + 초성을 합친 검색용 필드 추가 — Select 의 filter-fields 가 contains 매칭 */
+const cStoresWithSearch = computed(() =>
+  (stores.value ?? []).map((s) => ({
+    ...s,
+    _searchKey: `${s.nm} ${getChoseong(s.nm)}`,
+  })),
+)
 
 const cReadyRsvs = computed(() => monitor.value?.ready ?? [])
 const cHistoryRsvs = computed(() => monitor.value?.history ?? [])
