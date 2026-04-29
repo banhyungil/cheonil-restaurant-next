@@ -165,15 +165,12 @@ const endDt = defineModel<string | null>('endDt', { required: true })
 const cmt = defineModel<string>('cmt', { required: true })
 const active = defineModel<boolean>('active', { required: true })
 
-watch(
-  () => props.store?.nm,
-  (newStoreNm, oldStoreNm) => {
-    // 매장 선택했고, 템플릿 명에 이전 매장명이 포함되어있으면 갱신
-    if (newStoreNm && (oldStoreNm == null || oldStoreNm.includes(oldStoreNm))) {
-      nm.value = `${newStoreNm} ${rsvTime.value}`
-    }
-  },
-)
+watch([() => props.store?.nm, rsvTime], ([newStoreNm], [oldStoreNm]) => {
+  // 매장 선택했고, 템플릿 명에 이전 매장명이 포함되어있으면 갱신
+  if (newStoreNm && (oldStoreNm == null || oldStoreNm.includes(oldStoreNm))) {
+    nm.value = `${newStoreNm} ${rsvTime.value.slice(0, 5)}`
+  }
+})
 
 const emit = defineEmits<{
   increment: [menuSeq: number]
