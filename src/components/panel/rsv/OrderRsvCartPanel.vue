@@ -27,19 +27,13 @@
           <div class="flex gap-2">
             <DatePicker
               :model-value="cRsvAtDate"
+              :min-date="new Date()"
               date-format="yy-mm-dd"
               show-icon
+              show-time
+              hour-format="12"
               class="flex-1"
               @update:model-value="onUpdateDate"
-            />
-            <DatePicker
-              :model-value="cRsvAtTime"
-              time-only
-              hour-format="24"
-              show-icon
-              icon-display="input"
-              class="flex-1"
-              @update:model-value="onUpdateTime"
             />
           </div>
         </div>
@@ -114,7 +108,9 @@ const props = defineProps<{
 
 const memo = defineModel<string>('memo', { required: true })
 /** ISO. 빈 문자열이면 미설정 (CTA 비활성). */
-const rsvAt = defineModel<string>('rsvAt', { required: true })
+const rsvAt = defineModel<string>('rsvAt', {
+  required: true,
+})
 
 const emit = defineEmits<{
   increment: [menuSeq: number]
@@ -135,20 +131,11 @@ const cTotalAmount = computed(() => _.sumBy(props.items, (i) => i.price * i.cnt)
 
 /** rsvAt 의 날짜 부분만 — DatePicker 가 Date 객체를 요구. */
 const cRsvAtDate = computed(() => (rsvAt.value ? new Date(rsvAt.value) : null))
-/** rsvAt 의 시간 부분 — DatePicker time-only 도 동일 Date 객체 사용. */
-const cRsvAtTime = computed(() => (rsvAt.value ? new Date(rsvAt.value) : null))
 
 function onUpdateDate(d: Date | Date[] | (Date | null)[] | null | undefined) {
   if (!(d instanceof Date)) return
   const cur = rsvAt.value ? new Date(rsvAt.value) : new Date()
   cur.setFullYear(d.getFullYear(), d.getMonth(), d.getDate())
-  rsvAt.value = cur.toISOString()
-}
-
-function onUpdateTime(t: Date | Date[] | (Date | null)[] | null | undefined) {
-  if (!(t instanceof Date)) return
-  const cur = rsvAt.value ? new Date(rsvAt.value) : new Date()
-  cur.setHours(t.getHours(), t.getMinutes(), 0, 0)
   rsvAt.value = cur.toISOString()
 }
 </script>
