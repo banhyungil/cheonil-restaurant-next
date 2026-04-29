@@ -10,9 +10,7 @@
     <div class="flex items-center gap-2">
       <span class="text-lg font-bold text-surface-900">{{ rsv.storeNm }}</span>
       <div class="flex-1" />
-      <span class="text-lg font-bold text-surface-900">{{
-        format(new Date(rsv.rsvAt), 'HH:mm')
-      }}</span>
+      <span class="text-lg font-bold text-surface-900">{{ cRsvAtLabel }}</span>
       <BButton
         variant="text"
         color="secondary"
@@ -91,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { format } from 'date-fns'
+import { format, isSameDay } from 'date-fns'
 import { Check, EllipsisVertical } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 
@@ -112,6 +110,12 @@ const emit = defineEmits<{
 }>()
 
 const cRemaining = useRsvRemainingTime(() => props.rsv.rsvAt)
+
+/** 헤더 시각 — 당일이면 'HH:mm' / 비당일이면 'MM/dd HH:mm'. */
+const cRsvAtLabel = computed(() => {
+  const d = new Date(props.rsv.rsvAt)
+  return isSameDay(d, new Date()) ? format(d, 'HH:mm') : format(d, 'MM.dd HH:mm')
+})
 
 const eltMenu = ref<{ toggle: (e: Event) => void } | null>(null)
 

@@ -24,10 +24,24 @@ export function useRsvRemainingTime(rsvAt: MaybeRefOrGetter<string>) {
     const minutes = Math.floor(diffMs / 60_000)
     const status: RemainingStatus =
       minutes <= 20 ? 'danger' : minutes <= 30 ? 'warning' : 'fresh'
-    const label =
-      minutes === 0 ? '지금' : minutes > 0 ? `${minutes}분 후` : `${-minutes}분 전`
-    return { minutes, label, status }
+    return { minutes, label: formatRemainingLabel(minutes), status }
   })
+}
+
+/**
+ * 남은 분 → 한글 라벨. 단일 단위로 단순화 (분 / 시간 / 일).
+ *   1분 후 / 30분 후 / 1시간 후 / 5시간 후 / 1일 후 / 3일 후
+ *   1분 전 / 2시간 전 / 1일 전
+ *   0분이면 "지금".
+ */
+function formatRemainingLabel(minutes: number): string {
+  if (minutes === 0) return '지금'
+  const abs = Math.abs(minutes)
+  const suffix = minutes > 0 ? '후' : '전'
+
+  if (abs < 60) return `${abs}분 ${suffix}`
+  if (abs < 60 * 24) return `${Math.floor(abs / 60)}시간 ${suffix}`
+  return `${Math.floor(abs / (60 * 24))}일 ${suffix}`
 }
 
 /** 카드 border / 배지 색상 매핑 (피그마: 여유=파랑 / 30분↓=주황 / 20분↓=빨강). */
