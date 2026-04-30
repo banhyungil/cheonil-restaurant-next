@@ -50,8 +50,8 @@ app.use(ConfirmationService)
 //SECTION - FloatingVue (tooltip / popover)
 app.use(FloatingVue, {
   themes: {
-    'cheonil-tooltip': {
-      $extend: 'tooltip',
+    // 빌트인 'tooltip' 옵션 override — 모든 v-tooltip 이 별도 theme 명시 없이 cheonil 스타일 사용
+    tooltip: {
       placement: 'top',
       triggers: ['hover', 'focus'],
       delay: { show: 200, hide: 0 },

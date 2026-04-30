@@ -57,10 +57,12 @@ const cVariant = computed(() => (props.variant === 'filled' ? undefined : props.
 /**
  * size 토큰 — 프로젝트 Figma 기준 정확 치수.
  * `!` 로 PrimeVue 내부 CSS 를 오버라이드 (cn() 으로 caller class 가 또 덮을 수 있음).
+ *
+ * `min-w-N` 으로 아이콘 전용 시 정사각형 보장 + 텍스트(+아이콘) 시 width 자유 확장.
  */
 const SIZE_CLASSES: Record<Size, string> = {
-  sm: 'size-8.5! rounded-md! p-0!',
-  md: 'size-10! rounded-lg! p-0!',
+  sm: 'h-8.5! min-w-8.5! rounded-md! px-2!',
+  md: 'h-10! min-w-10! rounded-lg! px-3!',
   lg: 'h-15! rounded-[10px]! px-5! text-lg! font-bold!',
 }
 

@@ -6,10 +6,17 @@
       STATUS_CLASSES[cElapsed.status].border,
     ]"
   >
-    <!-- 헤더: 매장명 + ⓘ tooltip + ⋮ more menu -->
+    <!-- 헤더: 매장명 + 예약 배지 + ⓘ tooltip + ⋮ more menu -->
     <div class="flex h-7 items-center gap-2">
       <span class="text-lg font-bold text-surface-900">{{ order.storeNm }}</span>
-      <vTooltip v-if="cIsAll && order.storeCmt" theme="cheonil-tooltip">
+      <span
+        v-if="order.rsvSeq != null"
+        class="flex items-center gap-1 rounded-md bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-700"
+        v-tooltip.right="'예약주문'"
+      >
+        <CalendarCheck :size="12" />
+      </span>
+      <vTooltip v-if="cIsAll && order.storeCmt">
         <span
           class="flex size-5 cursor-help items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-600"
           tabindex="0"
@@ -80,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { Check, EllipsisVertical } from 'lucide-vue-next'
+import { CalendarCheck, Check, EllipsisVertical } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 
 import { STATUS_CLASSES, useElapsedTime } from '@/composables/useElapsedTime'
