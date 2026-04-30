@@ -40,14 +40,21 @@ export interface MenuCreatePayload {
 
 export type MenuUpdatePayload = MenuCreatePayload
 
-/** 메뉴 생성. */
-export async function create(payload: MenuCreatePayload): Promise<Menu> {
-  return api.post<Menu>('/menus', payload).then((r) => r.data)
+/** 메뉴 생성. config 로 silent 등 axios 옵션 전달 가능. */
+export async function create(
+  payload: MenuCreatePayload,
+  config?: { silent?: boolean },
+): Promise<Menu> {
+  return api.post<Menu>('/menus', payload, config).then((r) => r.data)
 }
 
 /** 메뉴 전체 수정 (PUT 교체). */
-export async function update(seq: number, payload: MenuUpdatePayload): Promise<Menu> {
-  return api.put<Menu>(`/menus/${seq}`, payload).then((r) => r.data)
+export async function update(
+  seq: number,
+  payload: MenuUpdatePayload,
+  config?: { silent?: boolean },
+): Promise<Menu> {
+  return api.put<Menu>(`/menus/${seq}`, payload, config).then((r) => r.data)
 }
 
 /** 메뉴 삭제. */

@@ -26,21 +26,23 @@ export function useMenuQuery(seq: MaybeRefOrGetter<number | null>) {
   })
 }
 
-/** 메뉴 생성. */
+/**
+ * 메뉴 생성 — silent 로 글로벌 토스트 skip. 페이지 onError 에서 status 별 처리 (409 inline 등).
+ */
 export function useMenuCreateMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (payload: MenuCreatePayload) => menusApi.create(payload),
+    mutationFn: (payload: MenuCreatePayload) => menusApi.create(payload, { silent: true }),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.menus }),
   })
 }
 
-/** 메뉴 전체 수정 (PUT 교체). */
+/** 메뉴 전체 수정 (PUT 교체) — silent. */
 export function useMenuUpdateMutation() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ seq, payload }: { seq: number; payload: MenuUpdatePayload }) =>
-      menusApi.update(seq, payload),
+      menusApi.update(seq, payload, { silent: true }),
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.menus }),
   })
 }
