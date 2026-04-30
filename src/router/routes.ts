@@ -28,6 +28,14 @@ export interface NavMeta {
 declare module 'vue-router' {
   interface RouteMeta {
     nav?: NavMeta
+    /**
+     * 이 라우트 활성 시 KeepAlive 유지할 페이지 컴포넌트명.
+     * - 메인 페이지의 meta: 자기 자신 (예: '/menus' → 'MenusPage')
+     * - edit 등 sub route 의 meta: 부모 페이지 (예: '/menus/edit' → 'MenusPage')
+     *
+     * 메인/edit 둘 다 같은 값을 가리켜서 진입부터 복귀까지 일관 cache 유지.
+     */
+    keepAlive?: string
   }
 }
 
@@ -64,12 +72,14 @@ export const routes: RouteRecordRaw[] = [
             order: 3,
             badge: 3,
           },
+          keepAlive: 'OrderRsvsPage',
         },
       },
       {
         path: 'order-rsvs/edit',
         name: 'order-rsvs-edit',
         component: () => import('@/pages/OrderRsvsEditPage.vue'),
+        meta: { keepAlive: 'OrderRsvsPage' },
       },
       {
         path: 'settlement',
@@ -101,18 +111,29 @@ export const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/OrderRsvTmplsPage.vue'),
         meta: {
           nav: { group: NAV_GROUPS.MANAGE, label: '예약 템플릿', icon: CalendarClock, order: 4 },
+          keepAlive: 'OrderRsvTmplsPage',
         },
       },
       {
         path: 'order-rsv-tmpls/edit',
         name: 'order-rsv-tmpls-edit',
         component: () => import('@/pages/OrderRsvTmplsEditPage.vue'),
+        meta: { keepAlive: 'OrderRsvTmplsPage' },
       },
       {
         path: 'menus',
         name: 'menus',
         component: () => import('@/pages/MenusPage.vue'),
-        meta: { nav: { group: NAV_GROUPS.MANAGE, label: '메뉴 관리', icon: BookOpen, order: 5 } },
+        meta: {
+          nav: { group: NAV_GROUPS.MANAGE, label: '메뉴 관리', icon: BookOpen, order: 5 },
+          keepAlive: 'MenusPage',
+        },
+      },
+      {
+        path: 'menus/edit',
+        name: 'menus-edit',
+        component: () => import('@/pages/MenusEditPage.vue'),
+        meta: { keepAlive: 'MenusPage' },
       },
       {
         path: 'stores',
