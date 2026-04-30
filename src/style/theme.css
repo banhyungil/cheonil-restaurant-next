@@ -91,3 +91,38 @@
 .v-popper--theme-tooltip .v-popper__arrow-inner {
   border-color: var(--color-surface-0);
 }
+
+/*
+ * PrimeVue Toast — 시각 강조 (border-left 색상 막대 + 진한 shadow + 큰 아이콘)
+ * 기본 스타일이 평이해서 작업 결과 인지가 약함 → 페이지 위에 떠있는 느낌 강화.
+ */
+.p-toast .p-toast-message {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  border-left-width: 6px;
+  border-left-style: solid;
+  padding: 1rem 1.25rem;
+}
+
+.p-toast .p-toast-message-success {
+  border-left-color: var(--color-emerald-500);
+}
+.p-toast .p-toast-message-error {
+  border-left-color: var(--color-red-500);
+}
+.p-toast .p-toast-message-info {
+  border-left-color: var(--color-blue-500);
+}
+.p-toast .p-toast-message-warn {
+  border-left-color: var(--color-amber-500);
+}
+
+.p-toast .p-toast-message-icon,
+.p-toast .p-toast-icon-svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.p-toast .p-toast-summary {
+  font-weight: 600;
+  font-size: 1rem;
+}
