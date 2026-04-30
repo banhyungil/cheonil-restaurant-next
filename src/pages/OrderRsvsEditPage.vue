@@ -111,13 +111,7 @@ function onSave() {
           toast.add({ severity: 'success', summary: '예약 수정 완료', life: 2000 })
           router.push('/order-rsvs')
         },
-        onError: () =>
-          toast.add({
-            severity: 'error',
-            summary: '수정 실패',
-            detail: '잠시 후 다시 시도해주세요',
-            life: 3000,
-          }),
+        // onError: 글로벌 인터셉터가 자동 토스트
       },
     )
     return
@@ -129,13 +123,7 @@ function onSave() {
       toast.add({ severity: 'success', summary: '예약 등록', life: 2000 })
       router.push('/order-rsvs')
     },
-    onError: () =>
-      toast.add({
-        severity: 'error',
-        summary: '등록 실패',
-        detail: '잠시 후 다시 시도해주세요',
-        life: 3000,
-      }),
+    // onError: 글로벌 인터셉터가 자동 토스트
   })
 }
 

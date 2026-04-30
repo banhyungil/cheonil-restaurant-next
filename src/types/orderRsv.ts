@@ -10,6 +10,7 @@ export interface OrderRsv {
   storeSeq: number
   /** 템플릿 유래일 때만 값 존재. null = 일회성. */
   rsvTmplSeq?: number | null
+  orderSeq?: number | null
   amount: number
   /** 예약 일시 (ISO). */
   rsvAt: string

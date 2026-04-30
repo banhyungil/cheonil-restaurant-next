@@ -144,13 +144,7 @@ function onAccept(seq: number) {
     {
       onSuccess: () =>
         toast.add({ severity: 'success', summary: '예약 접수 (주문 생성)', life: 2000 }),
-      onError: () =>
-        toast.add({
-          severity: 'error',
-          summary: '접수 실패',
-          detail: '잠시 후 다시 시도해주세요',
-          life: 3000,
-        }),
+      // onError: 글로벌 인터셉터가 자동 토스트 (backend message 표시)
     },
   )
 }
