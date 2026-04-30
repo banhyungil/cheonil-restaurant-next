@@ -16,6 +16,8 @@ export interface Store {
   cmt?: string | null
   latitude?: number | null
   longitude?: number | null
+  /** 활성 여부 — false 면 영업 그리드에 노출 X. */
+  active: boolean
   options?: Record<string, unknown> | null
   regAt?: string
   modAt?: string
