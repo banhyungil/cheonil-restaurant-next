@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 
 import * as menusApi from '@/apis/menusApi'
+import type { MenuCreatePayload, MenuUpdatePayload } from '@/apis/menusApi'
 
 import { QUERY_KEYS } from './queryKeys'
 
@@ -11,12 +12,45 @@ import { QUERY_KEYS } from './queryKeys'
  */
 export function useMenusQuery(includeInactive?: MaybeRefOrGetter<boolean>) {
   return useQuery({
-    queryKey: computed<unknown[]>(() => [
-      ...QUERY_KEYS.menus,
-      toValue(includeInactive) ?? false,
-    ]),
-    queryFn: () =>
-      menusApi.fetchList({ includeInactive: toValue(includeInactive) ?? false }),
+    queryKey: computed<unknown[]>(() => [...QUERY_KEYS.menus, toValue(includeInactive) ?? false]),
+    queryFn: () => menusApi.fetchList({ includeInactive: toValue(includeInactive) ?? false }),
+  })
+}
+
+/** 메뉴 단건 조회 — 편집 페이지 hydrate 보조 (목록 데이터로 충분하면 호출 불필요). */
+export function useMenuQuery(seq: MaybeRefOrGetter<number | null>) {
+  return useQuery({
+    queryKey: computed<unknown[]>(() => [...QUERY_KEYS.menus, toValue(seq)]),
+    queryFn: () => menusApi.fetchById(toValue(seq)!),
+    enabled: computed(() => toValue(seq) != null),
+  })
+}
+
+/** 메뉴 생성. */
+export function useMenuCreateMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: MenuCreatePayload) => menusApi.create(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.menus }),
+  })
+}
+
+/** 메뉴 전체 수정 (PUT 교체). */
+export function useMenuUpdateMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ seq, payload }: { seq: number; payload: MenuUpdatePayload }) =>
+      menusApi.update(seq, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.menus }),
+  })
+}
+
+/** 메뉴 삭제. */
+export function useMenuRemoveMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (seq: number) => menusApi.remove(seq),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.menus }),
   })
 }
 
