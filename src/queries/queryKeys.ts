@@ -15,4 +15,5 @@ export const QUERY_KEYS = {
   /** 진행 중 + 1시간 이내 처리 이력. dayMode(TODAY/ALL) 가 키 suffix 로 붙음. */
   orderRsvsMonitor: ['orderRsvs', 'monitor'] as const,
   orderRsvTmpls: ['orderRsvTmpls'] as const,
+  settings: ['settings'] as const,
 } as const
