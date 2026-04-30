@@ -139,7 +139,16 @@ export const routes: RouteRecordRaw[] = [
         path: 'stores',
         name: 'stores',
         component: () => import('@/pages/StoresPage.vue'),
-        meta: { nav: { group: NAV_GROUPS.MANAGE, label: '매장 관리', icon: Store, order: 6 } },
+        meta: {
+          nav: { group: NAV_GROUPS.MANAGE, label: '매장 관리', icon: Store, order: 6 },
+          keepAlive: 'StoresPage',
+        },
+      },
+      {
+        path: 'stores/edit',
+        name: 'stores-edit',
+        component: () => import('@/pages/StoresEditPage.vue'),
+        meta: { keepAlive: 'StoresPage' },
       },
       {
         path: 'master',
