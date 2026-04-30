@@ -22,16 +22,16 @@
     <div class="flex min-h-0 flex-1 gap-6">
       <StoreGrid
         v-show="selStore == null"
-        :stores="stores ?? []"
-        :categories="storeCategories ?? []"
+        :stores="cSortedStores"
+        :categories="cSortedStoreCtgs"
         :active="selStore == null"
         class="flex-1"
         @select="onSelectStore"
       />
       <MenuGrid
         v-show="selStore != null"
-        :menus="menus ?? []"
-        :categories="menuCategories ?? []"
+        :menus="cSortedMenus"
+        :categories="cSortedMenuCtgs"
         :active="selStore != null"
         class="flex-1"
         @add="onAddMenu"
@@ -59,17 +59,38 @@
 import { ArrowLeft, ChevronRight } from 'lucide-vue-next'
 import { useToast } from 'primevue/usetoast'
 
+import { useSortedItems } from '@/composables/useSortedItems'
 import { useMenuCtgsQuery } from '@/queries/menuCtgsQuery'
 import { useMenusQuery } from '@/queries/menusQuery'
 import { useOrderRsvCreateMutation, useOrderRsvUpdateMutation } from '@/queries/orderRsvsQuery'
+import { useSettingsQuery } from '@/queries/settingsQuery'
 import { useStoreCtgsQuery } from '@/queries/storeCtgsQuery'
 import { useStoresQuery } from '@/queries/storesQuery'
 import { useOrderRsvCartStore } from '@/stores/orderRsvCartStore'
+import type { Setting } from '@/types/setting'
 
 const { data: menus } = useMenusQuery()
 const { data: menuCategories } = useMenuCtgsQuery()
 const { data: stores } = useStoresQuery()
 const { data: storeCategories } = useStoreCtgsQuery()
+const { data: settings } = useSettingsQuery()
+
+// 정렬: settings 의 *_ORDER 적용 — 매장/메뉴/카테고리 4종
+const cOrderOf = <C extends 'STORE_ORDER' | 'MENU_ORDER' | 'STORE_CATEGORY_ORDER' | 'MENU_CATEGORY_ORDER'>(
+  code: C,
+) =>
+  computed(
+    () =>
+      (settings.value?.find((s): s is Setting<C> => s.code === code)?.effectiveConfig.order as
+        | number[]
+        | undefined) ?? [],
+  )
+
+// 정렬은 read-only — 변경은 영업 페이지(OrdersPage)에서만 가능
+const cSortedStores = useSortedItems(stores, cOrderOf('STORE_ORDER'))
+const cSortedMenus = useSortedItems(menus, cOrderOf('MENU_ORDER'))
+const cSortedStoreCtgs = useSortedItems(storeCategories, cOrderOf('STORE_CATEGORY_ORDER'))
+const cSortedMenuCtgs = useSortedItems(menuCategories, cOrderOf('MENU_CATEGORY_ORDER'))
 
 const orderRsvCartStore = useOrderRsvCartStore()
 const { selStore, cart, memo, rsvAt, isEditing, editingSeq } = storeToRefs(orderRsvCartStore)

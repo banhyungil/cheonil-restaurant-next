@@ -126,3 +126,13 @@
   font-weight: 600;
   font-size: 1rem;
 }
+
+/*
+ * PrimeVue Button — secondary outlined hover 보강.
+ * Aura preset 기본 hover 가 surface-50 톤이라 시각 변화 거의 없음 → surface-100/300 으로 강화.
+ */
+.p-button.p-button-outlined.p-button-secondary:hover:not(:disabled) {
+  background: var(--color-surface-100);
+  border-color: var(--color-surface-300);
+  color: var(--color-surface-700);
+}
