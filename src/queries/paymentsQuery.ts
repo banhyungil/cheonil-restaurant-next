@@ -1,7 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 
 import * as paymentsApi from '@/apis/paymentsApi'
-import type { PaymentCreatePayload, PaymentSplitPayload } from '@/apis/paymentsApi'
+import type {
+  PaymentBatchDeletePayload,
+  PaymentCreatePayload,
+  PaymentSplitPayload,
+} from '@/apis/paymentsApi'
 
 import { QUERY_KEYS } from './queryKeys'
 
@@ -47,20 +51,14 @@ export function usePaymentSplitMutation() {
   })
 }
 
-/** 단건 결제 취소. */
-export function usePaymentRemoveMutation() {
+/**
+ * 결제 일괄 취소 — 주문 기준.
+ * 수금 탭의 [결제 취소] / 정산 탭 거래 내역의 단건 취소 모두 동일 사용 (단건은 orderSeqs 길이 1).
+ */
+export function usePaymentBatchDeleteMutation() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (seq: number) => paymentsApi.remove(seq),
-    onSuccess: () => invalidateAll(qc),
-  })
-}
-
-/** 다중 결제 취소 — 수금 탭의 [결제 취소] 버튼. */
-export function usePaymentBatchRemoveMutation() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (seqs: number[]) => paymentsApi.removeBatch(seqs),
+    mutationFn: (payload: PaymentBatchDeletePayload) => paymentsApi.batchDelete(payload),
     onSuccess: () => invalidateAll(qc),
   })
 }
