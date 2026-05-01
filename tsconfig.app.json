@@ -14,5 +14,10 @@
     // `vue-tsc --build` produces a .tsbuildinfo file for incremental type-checking.
     // Specified here to keep it out of the root directory.
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo"
+  },
+  // IDE Volar 와 동일한 strict 한 template type-check.
+  // readonly→mutable, prop 누락, 알 수 없는 prop/event 등 더 잡음.
+  "vueCompilerOptions": {
+    "strictTemplates": true
   }
 }
