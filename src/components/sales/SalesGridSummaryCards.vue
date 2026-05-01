@@ -1,6 +1,6 @@
 <!-- 주문내역관리 그리드 KPI 4 카드 — 조회 기간 매출 / 평균 일매출 / 현금 / 카드 -->
 <template>
-  <div class="sales-summary-cards grid grid-cols-4 gap-4">
+  <div class="sales-grid-summary-cards grid grid-cols-4 gap-4">
     <!-- 1. 조회 기간 매출 (강조 fill) -->
     <div class="flex flex-col gap-1 rounded-lg bg-primary-500 p-4 text-surface-0">
       <div class="text-sm font-medium opacity-90">조회 기간 매출</div>

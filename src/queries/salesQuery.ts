@@ -88,11 +88,15 @@ export function useOrdersRemoveMutation() {
  * 주문내역관리 페이지 (/sales) — 통계 탭
  * ──────────────────────────────────────────────────────────────────── */
 
-/** 통계 - 기본 뷰 (granularity 무관). */
-export function useStatsBasicQuery(params: MaybeRefOrGetter<DateRangeParams>) {
+/** 통계 - 기본 뷰 (granularity 무관). 날짜 범위 선택 전엔 enabled=false. */
+export function useStatsBasicQuery(
+  params: MaybeRefOrGetter<DateRangeParams>,
+  enabled?: MaybeRefOrGetter<boolean>,
+) {
   return useQuery({
     queryKey: computed<unknown[]>(() => [...QUERY_KEYS.salesStatsBasic, toValue(params)]),
     queryFn: () => salesApi.fetchStatsBasic(toValue(params)),
+    enabled: computed(() => toValue(enabled) ?? true),
   })
 }
 
@@ -100,25 +104,37 @@ export function useStatsBasicQuery(params: MaybeRefOrGetter<DateRangeParams>) {
  * 매출 추이 차트 전용 — 차트 로컬 segment (`day|week|month`) 변경 시만 refetch.
  * 다른 통계 카드들은 영향 없음 (granularity 분리 endpoint).
  */
-export function useStatsTrendQuery(params: MaybeRefOrGetter<StatsTrendParams>) {
+export function useStatsTrendQuery(
+  params: MaybeRefOrGetter<StatsTrendParams>,
+  enabled?: MaybeRefOrGetter<boolean>,
+) {
   return useQuery({
     queryKey: computed<unknown[]>(() => [...QUERY_KEYS.salesStatsTrend, toValue(params)]),
     queryFn: () => salesApi.fetchStatsTrend(toValue(params)),
+    enabled: computed(() => toValue(enabled) ?? true),
   })
 }
 
 /** 통계 - 메뉴 분석 뷰. */
-export function useStatsMenuQuery(params: MaybeRefOrGetter<DateRangeParams>) {
+export function useStatsMenuQuery(
+  params: MaybeRefOrGetter<DateRangeParams>,
+  enabled?: MaybeRefOrGetter<boolean>,
+) {
   return useQuery({
     queryKey: computed<unknown[]>(() => [...QUERY_KEYS.salesStatsMenu, toValue(params)]),
     queryFn: () => salesApi.fetchStatsMenu(toValue(params)),
+    enabled: computed(() => toValue(enabled) ?? true),
   })
 }
 
 /** 통계 - 점포 분석 뷰. storeSeq 변경 시 점포별 메뉴 비중 부분 refetch. */
-export function useStatsStoreQuery(params: MaybeRefOrGetter<StatsStoreParams>) {
+export function useStatsStoreQuery(
+  params: MaybeRefOrGetter<StatsStoreParams>,
+  enabled?: MaybeRefOrGetter<boolean>,
+) {
   return useQuery({
     queryKey: computed<unknown[]>(() => [...QUERY_KEYS.salesStatsStore, toValue(params)]),
     queryFn: () => salesApi.fetchStatsStore(toValue(params)),
+    enabled: computed(() => toValue(enabled) ?? true),
   })
 }

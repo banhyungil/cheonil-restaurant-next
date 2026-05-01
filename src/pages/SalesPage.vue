@@ -17,7 +17,7 @@
     <template v-if="cTab === 'grid'">
       <SalesGridFilterBar :filter="filter" @search="onSearch" @reset="onReset" />
 
-      <SalesSummaryCards :summary="summary" />
+      <SalesGridSummaryCards :summary="summary" />
 
       <div class="min-h-0 flex-1 overflow-auto">
         <SalesGridTable
@@ -28,16 +28,33 @@
       </div>
     </template>
 
-    <!-- 통계 탭 (placeholder — 차후 단계) -->
+    <!-- 통계 탭 -->
     <template v-else>
-      <div class="flex h-full items-center justify-center text-surface-500">
-        통계 탭 — 차차 구현
+      <SalesStatsHeader
+        v-model:from="statsFrom"
+        v-model:to="statsTo"
+        :view="cStatsView"
+        :summary="statsBasic"
+        @update:view="onChangeStatsView"
+      />
+
+      <div class="min-h-0 flex-1 overflow-auto">
+        <StatsBasicView
+          v-if="cStatsView === 'basic'"
+          v-model:granularity="statsGranularity"
+          :basic="statsBasic"
+          :trend="statsTrend"
+        />
+        <div v-else class="flex h-full items-center justify-center text-surface-500">
+          {{ cStatsView === 'menu' ? '메뉴 분석' : '점포 분석' }} — 차후 구현
+        </div>
       </div>
     </template>
   </section>
 </template>
 
 <script setup lang="ts">
+import { format, subDays } from 'date-fns'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { computed, reactive, ref } from 'vue'
@@ -47,11 +64,15 @@ import {
   useOrdersQuery,
   useOrdersRemoveMutation,
   useOrdersSummaryQuery,
+  useStatsBasicQuery,
+  useStatsTrendQuery,
 } from '@/queries/salesQuery'
 import type { OrderRow } from '@/types/sales'
+import type { StatsGranularity } from '@/types/salesStats'
 
 import type { OrdersParams } from '@/apis/salesApi'
 import type { GridFilter } from '@/components/sales/SalesGridFilterBar.vue'
+import type { StatsView } from '@/components/sales/SalesStatsHeader.vue'
 
 type SalesTab = 'grid' | 'stats'
 
@@ -71,17 +92,30 @@ function onChangeTab(t: SalesTab) {
   router.replace({ query: { ...route.query, tab: t } })
 }
 
+/** 기본 날짜 범위 — 오늘 기준 최근 7일 (양 끝 포함). */
+function getDefaultRange(): { from: string; to: string } {
+  const today = new Date()
+  return {
+    from: format(subDays(today, 6), 'yyyy-MM-dd'),
+    to: format(today, 'yyyy-MM-dd'),
+  }
+}
+const DEFAULT_RANGE = getDefaultRange()
+
 // --- 필터: draft (편집 중) + applied (검색 버튼 누른 값). ---
-// applied 가 있어야 useQuery 호출. enabled = applied !== null.
+// 진입 시 기본 범위로 자동 1회 조회 (필터 변경은 검색 버튼 trigger 만 §7-4).
 const filter = reactive<GridFilter>({
   storeSeq: null,
   menuSeq: null,
-  from: null,
-  to: null,
+  from: DEFAULT_RANGE.from,
+  to: DEFAULT_RANGE.to,
   payType: 'ALL',
 })
 
-const appliedParams = ref<OrdersParams | null>(null)
+const appliedParams = ref<OrdersParams | null>({
+  from: DEFAULT_RANGE.from,
+  to: DEFAULT_RANGE.to,
+})
 
 function onSearch(params: OrdersParams) {
   appliedParams.value = params
@@ -123,4 +157,37 @@ function onRemove() {
     },
   })
 }
+
+// ────────────────────────────────────────────
+// 통계 탭 — view / 날짜 범위 / granularity (그리드와 별도 state §7-2)
+// ────────────────────────────────────────────
+const cStatsView = computed<StatsView>(() => {
+  const v = route.query.view
+  return v === 'menu' || v === 'store' ? v : 'basic'
+})
+function onChangeStatsView(v: StatsView) {
+  router.replace({ query: { ...route.query, view: v } })
+}
+
+// 통계도 동일한 기본 범위로 진입 (그리드와 별도 state — 이후 사용자 변경분만 분리 §7-2).
+const statsFrom = ref<string | null>(DEFAULT_RANGE.from)
+const statsTo = ref<string | null>(DEFAULT_RANGE.to)
+const statsGranularity = ref<StatsGranularity>('day')
+
+const cStatsRangeReady = computed(
+  () => statsFrom.value != null && statsTo.value != null,
+)
+
+const cStatsParams = computed(() => ({
+  from: statsFrom.value ?? '',
+  to: statsTo.value ?? '',
+}))
+const cStatsTrendParams = computed(() => ({
+  from: statsFrom.value ?? '',
+  to: statsTo.value ?? '',
+  granularity: statsGranularity.value,
+}))
+
+const { data: statsBasic } = useStatsBasicQuery(cStatsParams, cStatsRangeReady)
+const { data: statsTrend } = useStatsTrendQuery(cStatsTrendParams, cStatsRangeReady)
 </script>
