@@ -1,2 +1,58 @@
-// 정산. 주문목록. 수금이 좀다르네. payment분리했으니... payment는 분할결제 예상해서 한거긴 함
-export function as() {}
+import type { PayType, Payment } from '@/types/payment'
+
+import { api } from './api'
+
+/**
+ * 결제 생성 페이로드.
+ * 백엔드: t_payment INSERT + t_order.status='PAID'.
+ */
+export interface PaymentCreatePayload {
+  orderSeq: number
+  payType: PayType
+}
+
+/** 단건 결제. */
+export async function create(payload: PaymentCreatePayload): Promise<Payment> {
+  return api.post<Payment>('/payments', payload).then((r) => r.data)
+}
+
+/**
+ * 다중 일괄 결제 — 수금 탭의 [현금]/[카드] 버튼.
+ * 선택된 미결제 주문들을 동일 결제수단으로 일괄 처리.
+ */
+export async function createBatch(payloads: PaymentCreatePayload[]): Promise<Payment[]> {
+  return api.post<Payment[]>('/payments/batch', payloads).then((r) => r.data)
+}
+
+/** 분할 결제 한 행 — payType + 금액. */
+export interface PaymentSplit {
+  payType: PayType
+  amount: number
+}
+
+/**
+ * 단일 주문 분할 결제 페이로드.
+ * splits 의 amount 합계 === 주문금액 검증은 백엔드 책임 (트랜잭션 내).
+ */
+export interface PaymentSplitPayload {
+  orderSeq: number
+  splits: PaymentSplit[]
+}
+
+/**
+ * 분할 결제 — 단일 주문을 여러 결제수단/금액으로 나눠서 처리.
+ * 수금 탭에서 단일 row 선택 시만 활성. 다이얼로그로 splits 입력 받아 호출.
+ */
+export async function createSplit(payload: PaymentSplitPayload): Promise<Payment[]> {
+  return api.post<Payment[]>('/payments/split', payload).then((r) => r.data)
+}
+
+/** 결제 취소 (단건) — t_payment 삭제 + t_order.status='COOKED' 복귀. */
+export async function remove(seq: number): Promise<void> {
+  return api.delete(`/payments/${seq}`).then(() => undefined)
+}
+
+/** 다중 결제 취소 — 수금 탭의 [결제 취소] 버튼. */
+export async function removeBatch(seqs: number[]): Promise<void> {
+  return api.delete('/payments/batch', { params: { seqs } }).then(() => undefined)
+}
