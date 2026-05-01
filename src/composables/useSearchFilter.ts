@@ -1,5 +1,5 @@
 import { divideByJong, hangulIncludes, includesByCho, isCho, isJong } from 'hangul-util'
-import { computed, toValue, type MaybeRefOrGetter, type Ref } from 'vue'
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 
 /**
  * 리스트 키워드 필터링 (한글 자모/초성 검색 지원).
@@ -11,17 +11,17 @@ import { computed, toValue, type MaybeRefOrGetter, type Ref } from 'vue'
  * 자음군 (ㄶ, ㄻ 등) 을 끝에 입력한 경우 구성 자음으로 풀어서 검색 (예: "ㄶ" → "ㄴㅎ").
  *
  * @param items         원본 리스트 (ref / getter / raw 배열)
- * @param keyword       검색어 ref
+ * @param keyword       검색어 (ref / getter / raw — 읽기 전용)
  * @param getSearchKey  item → 검색 대상 문자열
  */
 export function useSearchFilter<T>(
   items: MaybeRefOrGetter<readonly T[]>,
-  keyword: Ref<string>,
+  keyword: MaybeRefOrGetter<string>,
   getSearchKey: (item: T) => string,
 ) {
   const cFiltered = computed(() => {
     const list = toValue(items)
-    const kw = normalizeKeyword(keyword.value.trim())
+    const kw = normalizeKeyword(toValue(keyword).trim())
     if (!kw) return list
 
     const isChoseongOnly = /^[ㄱ-ㅎ]+$/.test(kw)

@@ -8,6 +8,21 @@ export interface StoresListParams {
   includeInactive?: boolean
 }
 
+/**
+ * 매장 생성/수정 페이로드 (PUT 전체 교체).
+ * active 미지정 시 백엔드 default(true) 사용.
+ */
+export interface StoreCreatePayload {
+  ctgSeq: number
+  nm: string
+  /** 구역 — 위치 정보 (예: '원예 6번지 · B동 3층'). */
+  addr?: string
+  cmt?: string
+  active?: boolean
+}
+
+export type StoreUpdatePayload = StoreCreatePayload
+
 /** 매장 전체 조회. */
 export async function fetchList(params?: StoresListParams): Promise<Store[]> {
   return api.get<Store[]>('/stores', { params }).then((r) => r.data)
@@ -23,7 +38,24 @@ export async function patchActive(seq: number, active: boolean): Promise<void> {
   return api.patch(`/stores/${seq}/active`, { active }).then(() => undefined)
 }
 
-// 2차 구현 예정
-// export async function create(payload: Omit<Store, 'seq' | 'regAt' | 'modAt'>): Promise<Store>
-// export async function update(seq: number, payload: Partial<Store>): Promise<Store>
-// export async function remove(seq: number): Promise<void>
+/** 매장 생성. config 로 silent 등 axios 옵션 전달 가능. */
+export async function create(
+  payload: StoreCreatePayload,
+  config?: { silent?: boolean },
+): Promise<Store> {
+  return api.post<Store>('/stores', payload, config).then((r) => r.data)
+}
+
+/** 매장 전체 수정 (PUT 교체). */
+export async function update(
+  seq: number,
+  payload: StoreUpdatePayload,
+  config?: { silent?: boolean },
+): Promise<Store> {
+  return api.put<Store>(`/stores/${seq}`, payload, config).then((r) => r.data)
+}
+
+/** 매장 삭제. */
+export async function remove(seq: number): Promise<void> {
+  return api.delete(`/stores/${seq}`).then(() => undefined)
+}

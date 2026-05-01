@@ -25,12 +25,18 @@ export function useOrderStream() {
   const queryClient = useQueryClient()
   let eventSource: EventSource | null = null
 
+  /** 정산 도메인은 SSE 가 없어 — 주문 변동 시 sales 캐시 stale 처리 (refetch 트리거). */
+  const invalidateSales = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.sales })
+  }
+
   onMounted(() => {
     eventSource = new EventSource(STREAM_URL)
 
     eventSource.addEventListener('order:created', (e) => {
       const order = JSON.parse((e as MessageEvent<string>).data) as OrderExt
       queryClient.setQueryData<OrderExt[]>(QUERY_KEYS.ordersMonitor, (old = []) => [...old, order])
+      invalidateSales()
     })
 
     eventSource.addEventListener('order:updated', (e) => {
@@ -38,6 +44,7 @@ export function useOrderStream() {
       queryClient.setQueryData<OrderExt[]>(QUERY_KEYS.ordersMonitor, (old) =>
         old?.map((o) => (o.seq === order.seq ? order : o)),
       )
+      invalidateSales()
     })
 
     eventSource.addEventListener('order:status-changed', (e) => {
@@ -45,6 +52,7 @@ export function useOrderStream() {
       queryClient.setQueryData<OrderExt[]>(QUERY_KEYS.ordersMonitor, (old) =>
         old?.map((o) => (o.seq === result.seq ? { ...o, ...result } : o)),
       )
+      invalidateSales()
     })
 
     eventSource.addEventListener('order:removed', (e) => {
@@ -52,6 +60,7 @@ export function useOrderStream() {
       queryClient.setQueryData<OrderExt[]>(QUERY_KEYS.ordersMonitor, (old) =>
         old?.filter((o) => o.seq !== seq),
       )
+      invalidateSales()
     })
 
     // 첫 연결 + 재연결 시점 — 누락된 변경분 회수. 활성 쿼리면 dedup 됨.

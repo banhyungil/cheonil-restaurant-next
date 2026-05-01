@@ -10,6 +10,7 @@
 
 - vue template에서 ref는 자동 unwrap 된다.
 - package.json에 설치된 라이브러리를 참고하여 개발진행한다.
+- ddl-pg.sql 에서 DB 구조 확인.
 
 # prime-vue 관련 지침
 

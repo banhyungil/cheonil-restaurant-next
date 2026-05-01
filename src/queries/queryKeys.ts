@@ -16,4 +16,10 @@ export const QUERY_KEYS = {
   orderRsvsMonitor: ['orderRsvs', 'monitor'] as const,
   orderRsvTmpls: ['orderRsvTmpls'] as const,
   settings: ['settings'] as const,
+  sales: ['sales'] as const,
+  salesSummary: ['sales', 'summary'] as const,
+  salesTransactions: ['sales', 'transactions'] as const,
+  /** 수금 탭 미수 list — 날짜 무관. */
+  salesUnpaid: ['sales', 'unpaid'] as const,
+  payments: ['payments'] as const,
 } as const
