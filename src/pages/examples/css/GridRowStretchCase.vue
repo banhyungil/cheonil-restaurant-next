@@ -56,7 +56,7 @@
       </summary>
       <ul class="flex flex-col gap-2 px-4 pb-4 text-sm text-surface-700">
         <li>
-          <code class="rounded bg-surface-100 px-1">grid-auto-rows-[<n>px]</code> — 모든 row 높이
+          <code class="rounded bg-surface-100 px-1">grid-auto-rows-[&lt;n&gt;px]</code> — 모든 row 높이
           강제 통일 (콘텐츠 잘릴 수 있음)
         </li>
         <li>

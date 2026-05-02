@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import type { ClassValue } from 'clsx'
 import _ from 'lodash'
-import { computed, useAttrs } from 'vue'
+import { computed, useAttrs, type ButtonHTMLAttributes } from 'vue'
 
 import { cn } from '@/utils/cn'
 
@@ -33,20 +33,24 @@ type Size = 'sm' | 'md' | 'lg'
 
 defineOptions({ inheritAttrs: false })
 
-const props = withDefaults(
-  defineProps<{
-    variant?: Variant
-    color?: Color
-    size?: Size
-    loading?: boolean
-    rounded?: boolean
-  }>(),
-  {
-    variant: 'filled',
-    color: 'primary',
-    size: 'md',
-  },
-)
+/**
+ * native button attrs (onClick, disabled, aria-*, ...) 는 fallthrough.
+ * `/* @vue-ignore *\/` 로 SFC 컴파일러는 base type 무시 (runtime props 미생성),
+ * type 시스템에선 그대로 inherit → 호출부에서 native attr 타입 검사 통과.
+ */
+interface BButtonProps extends /* @vue-ignore */ ButtonHTMLAttributes {
+  variant?: Variant
+  color?: Color
+  size?: Size
+  loading?: boolean
+  rounded?: boolean
+}
+
+const props = withDefaults(defineProps<BButtonProps>(), {
+  variant: 'filled',
+  color: 'primary',
+  size: 'md',
+})
 
 /** PrimeVue severity — primary 는 기본값(undefined) 이므로 생략. */
 const cSeverity = computed(() => (props.color === 'primary' ? undefined : props.color))

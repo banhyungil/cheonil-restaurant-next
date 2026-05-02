@@ -20,7 +20,7 @@
       :min="1"
       :show-buttons="false"
       :allow-empty="false"
-      aria-label="수량 입력"
+      ariaLabel="수량 입력"
       class="cart-item-row__cnt h-8.5 w-11"
       input-class="h-8.5! w-11! rounded-md! border-[1.5px]! border-primary-500! bg-primary-50! px-0! text-center! text-base! font-bold! text-primary-700!"
       @update:model-value="onChangeCnt"

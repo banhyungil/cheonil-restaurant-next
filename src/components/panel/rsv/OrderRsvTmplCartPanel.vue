@@ -27,7 +27,7 @@
           <label for="tmpl-nm" class="text-sm font-semibold text-surface-900">
             📝 템플릿명 <span class="text-red-500">*</span>
           </label>
-          <InputText id="tmpl-nm" v-model="nm" placeholder="템플릿 명을 입력하세요" />
+          <BInputText id="tmpl-nm" v-model="nm" placeholder="템플릿 명을 입력하세요" />
         </div>
 
         <!-- 반복 요일 -->
@@ -52,18 +52,25 @@
               🕐 예약 시각 <span class="text-red-500">*</span>
             </label>
             <DatePicker
-              v-model="mRsvTime"
+              :model-value="mRsvTime"
               time-only
               hour-format="24"
               show-icon
               icon-display="input"
+              @update:model-value="(v) => (mRsvTime = v as Date | null)"
             />
           </div>
           <div class="flex flex-1 flex-col gap-1.5">
             <label class="text-sm font-semibold text-surface-900">
               📆 시작일 <span class="text-red-500">*</span>
             </label>
-            <DatePicker v-model="mStartDt" :min-date="MIN_TODAY" date-format="yy-mm-dd" show-icon />
+            <DatePicker
+            :model-value="mStartDt"
+            :min-date="MIN_TODAY"
+            date-format="yy-mm-dd"
+            show-icon
+            @update:model-value="(v) => (mStartDt = v as Date | null)"
+          />
           </div>
         </div>
 
@@ -72,12 +79,13 @@
           <label class="text-sm font-semibold text-surface-900">📆 종료일</label>
           <div class="flex items-center gap-2">
             <DatePicker
-              v-model="mEndDt"
+              :model-value="mEndDt"
               :min-date="cEndMinDate"
               :disabled="mIsEndless"
               date-format="yy-mm-dd"
               show-icon
               class="flex-1"
+              @update:model-value="(v) => (mEndDt = v as Date | null)"
             />
             <label class="flex items-center gap-1.5 text-sm">
               <Checkbox v-model="mIsEndless" binary />

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
+import ConfirmDialog from 'primevue/confirmdialog'
 import { useToast } from 'primevue/usetoast'
+import { RouterView } from 'vue-router'
 
 import { useOrderStream } from '@/composables/useOrderStream'
 import { setToastInstance } from '@/utils/toastBus'

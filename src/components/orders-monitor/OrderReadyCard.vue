@@ -34,17 +34,11 @@
           color="secondary"
           size="sm"
           aria-haspopup="true"
-          :aria-controls="`order-ready-menu-${order.seq}`"
           @click="onToggleMenu"
         >
           <EllipsisVertical :size="18" />
         </BButton>
-        <Menu
-          :id="`order-ready-menu-${order.seq}`"
-          ref="eltMenu"
-          :model="cMenuItems"
-          :popup="true"
-        />
+        <Menu ref="eltMenu" :model="cMenuItems" :popup="true" />
       </template>
     </div>
 

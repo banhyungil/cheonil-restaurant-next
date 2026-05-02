@@ -9,7 +9,7 @@
         <InputIcon class="text-surface-500">
           <Search :size="16" />
         </InputIcon>
-        <InputText
+        <BInputText
           v-model="searchKeyword"
           placeholder="매장 검색"
           class="h-10 w-full"

@@ -70,7 +70,7 @@ function onSubmit({ valid, values }: FormSubmitEvent) {
 
       <div class="flex flex-col gap-1">
         <label for="category" class="text-sm font-semibold">분류</label>
-        <Select id="category" name="category" :options="categories" optionLabel="label" optionValue="value" placeholder="선택하세요" />
+        <Select inputId="category" name="category" :options="categories" optionLabel="label" optionValue="value" placeholder="선택하세요" />
         <Message v-if="$form.category?.invalid" severity="error" size="small" variant="simple">
           {{ $form.category.errors?.[0]?.message }}
         </Message>

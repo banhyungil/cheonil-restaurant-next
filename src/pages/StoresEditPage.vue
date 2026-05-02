@@ -50,7 +50,7 @@
           <label class="text-sm font-semibold text-surface-900">
             매장명 <span class="text-red-500">*</span>
           </label>
-          <InputText
+          <BInputText
             v-model="nm"
             :invalid="!!nmError"
             placeholder="예: 세림"
@@ -62,7 +62,7 @@
 
         <div class="flex max-w-80 flex-1 flex-col gap-1.5">
           <label class="text-sm font-semibold text-surface-900">주소</label>
-          <InputText v-model="addr" placeholder="예: 원예 6번지 · B동 3층" />
+          <BInputText v-model="addr" placeholder="예: 원예 6번지 · B동 3층" />
           <p class="text-xs text-surface-500">위치 정보 — 목록에서 매장 식별에 사용</p>
         </div>
       </div>

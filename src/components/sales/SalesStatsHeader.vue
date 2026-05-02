@@ -11,13 +11,14 @@
     />
 
     <DatePicker
-      v-model="cDateRange"
+      :model-value="cDateRange"
       selection-mode="range"
       date-format="yy-mm-dd"
       show-icon
       :max-date="cToday"
       placeholder="📅 날짜 범위 선택"
       class="w-72"
+      @update:model-value="(v) => (cDateRange = v as (Date | null)[] | null)"
     />
 
     <div class="flex-1" />

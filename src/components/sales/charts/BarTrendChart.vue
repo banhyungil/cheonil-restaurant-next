@@ -7,7 +7,6 @@
         :model-value="granularity"
         :options="GRAN_OPTIONS"
         variant="segmented"
-        size="sm"
         @update:model-value="emit('update:granularity', $event as StatsGranularity)"
       />
     </div>
