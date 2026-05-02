@@ -20,11 +20,7 @@
       <SalesGridSummaryCards :summary="summary" />
 
       <div class="min-h-0 flex-1 overflow-auto">
-        <SalesGridTable
-          v-model:selection="selection"
-          :rows="orders ?? []"
-          @remove="onRemove"
-        />
+        <SalesGridTable v-model:selection="selection" :rows="orders ?? []" @remove="onRemove" />
       </div>
     </template>
 
@@ -61,9 +57,9 @@ import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import {
-  useOrdersQuery,
   useOrdersRemoveMutation,
-  useOrdersSummaryQuery,
+  useSalesOrdersQuery,
+  useSalesOrdersSummaryQuery,
   useStatsBasicQuery,
   useStatsTrendQuery,
 } from '@/queries/salesQuery'
@@ -127,13 +123,11 @@ function onReset() {
   selection.value = []
 }
 
-const cQueryParams = computed<OrdersParams>(
-  () => appliedParams.value ?? { from: '', to: '' },
-)
+const cQueryParams = computed<OrdersParams>(() => appliedParams.value ?? { from: '', to: '' })
 const cQueryEnabled = computed(() => appliedParams.value != null)
 
-const { data: orders } = useOrdersQuery(cQueryParams, cQueryEnabled)
-const { data: summary } = useOrdersSummaryQuery(cQueryParams, cQueryEnabled)
+const { data: orders } = useSalesOrdersQuery(cQueryParams, cQueryEnabled)
+const { data: summary } = useSalesOrdersSummaryQuery(cQueryParams, cQueryEnabled)
 
 // --- 선택 + 삭제 ---
 const selection = ref<OrderRow[]>([])
@@ -174,9 +168,7 @@ const statsFrom = ref<string | null>(DEFAULT_RANGE.from)
 const statsTo = ref<string | null>(DEFAULT_RANGE.to)
 const statsGranularity = ref<StatsGranularity>('day')
 
-const cStatsRangeReady = computed(
-  () => statsFrom.value != null && statsTo.value != null,
-)
+const cStatsRangeReady = computed(() => statsFrom.value != null && statsTo.value != null)
 
 const cStatsParams = computed(() => ({
   from: statsFrom.value ?? '',

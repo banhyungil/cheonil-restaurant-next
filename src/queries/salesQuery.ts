@@ -45,7 +45,7 @@ export function useUnpaidQuery(params?: MaybeRefOrGetter<UnpaidParams>) {
  * 그리드 탭 거래 내역 — `enabled` 로 [검색] 버튼 클릭 시만 호출 보호.
  * 페이징/정렬은 PrimeVue DataTable 클라 처리 (전체 row 응답).
  */
-export function useOrdersQuery(
+export function useSalesOrdersQuery(
   params: MaybeRefOrGetter<OrdersParams>,
   enabled?: MaybeRefOrGetter<boolean>,
 ) {
@@ -57,7 +57,7 @@ export function useOrdersQuery(
 }
 
 /** 그리드 탭 KPI 4 카드 — 동일 필터, [검색] 버튼 동시 trigger. */
-export function useOrdersSummaryQuery(
+export function useSalesOrdersSummaryQuery(
   params: MaybeRefOrGetter<OrdersParams>,
   enabled?: MaybeRefOrGetter<boolean>,
 ) {
