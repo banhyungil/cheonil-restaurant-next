@@ -4,7 +4,7 @@
     <!-- 헤더 -->
     <header class="flex h-10 items-center gap-3">
       <h1 class="text-2xl font-bold text-surface-900">예약 관리</h1>
-      <span class="text-base text-surface-500">· 당일 예약 · 실시간 동기화</span>
+      <span class="text-base text-surface-500">· {{ cModeLabel }} 예약</span>
       <div class="flex-1" />
       <BTabs v-model="selDayMode" :options="DAY_MODE_OPTIONS" variant="outline" />
       <Select
@@ -32,7 +32,7 @@
       <section class="flex flex-1 flex-col gap-3">
         <div class="flex h-7 items-center gap-2.5">
           <span class="size-2 rounded bg-blue-500" />
-          <h2 class="text-lg font-bold text-surface-900">진행 중 예약</h2>
+          <h2 class="text-lg font-bold text-surface-900">진행 중 예약 ({{ cModeLabel }})</h2>
           <span
             class="flex h-5.5 items-center justify-center rounded-full bg-blue-500 px-2.5 text-xs font-bold text-white"
           >
@@ -112,6 +112,8 @@ type DayModeVal = (typeof DAY_MODE_OPTIONS)[number]['val']
 
 const selDayMode = ref<DayModeVal>('TODAY')
 const selStoreSeq = ref<number | null>(null)
+
+const cModeLabel = computed(() => DAY_MODE_OPTIONS.find((o) => o.val == selDayMode.value)?.label)
 
 const { data: rsvs } = useOrderRsvsMonitorQuery(selDayMode, selStoreSeq)
 const { data: stores } = useStoresQuery()
