@@ -38,13 +38,15 @@ defineOptions({ inheritAttrs: false })
  * `/* @vue-ignore *\/` 로 SFC 컴파일러는 base type 무시 (runtime props 미생성),
  * type 시스템에선 그대로 inherit → 호출부에서 native attr 타입 검사 통과.
  */
-interface BButtonProps extends /* @vue-ignore */ ButtonHTMLAttributes {
+type BButtonOwnProps = {
   variant?: Variant
   color?: Color
   size?: Size
   loading?: boolean
   rounded?: boolean
 }
+
+type BButtonProps = BButtonOwnProps & /* @vue-ignore */ ButtonHTMLAttributes
 
 const props = withDefaults(defineProps<BButtonProps>(), {
   variant: 'filled',
