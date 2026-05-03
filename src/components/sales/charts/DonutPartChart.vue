@@ -1,8 +1,10 @@
 <!-- 도넛 차트 — 결제유형 비율 / 카테고리별 매출 등. 가운데 총합 라벨. -->
 <template>
-  <div class="donut-part-chart flex flex-col gap-2 rounded-lg border border-surface-200 bg-surface-0 p-4">
+  <div
+    class="donut-part-chart flex flex-col gap-2 rounded-lg border border-surface-200 bg-surface-0 p-4"
+  >
     <h3 class="text-sm font-semibold text-surface-900">{{ title }}</h3>
-    <Apexchart
+    <apexchart
       v-if="parts.length > 0"
       type="donut"
       height="240"

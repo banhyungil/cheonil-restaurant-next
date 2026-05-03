@@ -1,6 +1,8 @@
 <!-- 매출 추이 bar chart — 카드 로컬 [일|주|월] segment + 비교 series -->
 <template>
-  <div class="bar-trend-chart flex flex-col gap-2 rounded-lg border border-surface-200 bg-surface-0 p-4">
+  <div
+    class="bar-trend-chart flex flex-col gap-2 rounded-lg border border-surface-200 bg-surface-0 p-4"
+  >
     <div class="flex items-center justify-between">
       <h3 class="text-sm font-semibold text-surface-900">📈 매출 추이</h3>
       <BTabs
@@ -10,13 +12,7 @@
         @update:model-value="emit('update:granularity', $event as StatsGranularity)"
       />
     </div>
-    <Apexchart
-      v-if="data"
-      type="bar"
-      height="240"
-      :options="cOptions"
-      :series="cSeries"
-    />
+    <apexchart v-if="data" type="bar" height="240" :options="cOptions" :series="cSeries" />
     <div v-else class="flex h-60 items-center justify-center text-sm text-surface-500">
       데이터를 불러오는 중...
     </div>

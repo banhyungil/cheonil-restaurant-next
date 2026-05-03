@@ -1,16 +1,13 @@
 <!-- 시간대별 매출 bar chart — 피크 시간 색 강조 + 우측 상단 라벨 -->
 <template>
-  <div class="bar-hourly-chart flex flex-col gap-2 rounded-lg border border-surface-200 bg-surface-0 p-4">
+  <div
+    class="bar-hourly-chart flex flex-col gap-2 rounded-lg border border-surface-200 bg-surface-0 p-4"
+  >
     <div class="flex items-center justify-between">
       <h3 class="text-sm font-semibold text-surface-900">📊 시간대별 매출</h3>
       <span v-if="cPeakLabel" class="text-xs text-surface-500">피크 {{ cPeakLabel }}시</span>
     </div>
-    <Apexchart
-      type="bar"
-      height="240"
-      :options="cOptions"
-      :series="cSeries"
-    />
+    <apexchart type="bar" height="240" :options="cOptions" :series="cSeries" />
   </div>
 </template>
 

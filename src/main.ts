@@ -13,7 +13,6 @@ import './style/theme.css'
 import App from './App.vue'
 import router from './router'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
-import type { PassThroughOptions } from 'primevue/passthrough'
 
 const app = createApp(App)
 
