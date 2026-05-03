@@ -75,6 +75,16 @@
       </template>
     </Column>
 
+    <Column header="자동 주문">
+      <template #body="{ data }">
+        <ToggleSwitch
+          v-tooltip="'예약 시각이 되면 주문을 자동 생성합니다'"
+          :model-value="data.autoOrder"
+          @update:model-value="(v: boolean) => emit('toggle-auto-order', data.seq, v)"
+        />
+      </template>
+    </Column>
+
     <Column header="">
       <template #body="{ data }">
         <div class="flex gap-1">
@@ -126,6 +136,7 @@ defineProps<{
 const emit = defineEmits<{
   edit: [seq: number]
   'toggle-active': [seq: number, active: boolean]
+  'toggle-auto-order': [seq: number, autoOrder: boolean]
   remove: [seq: number]
 }>()
 </script>

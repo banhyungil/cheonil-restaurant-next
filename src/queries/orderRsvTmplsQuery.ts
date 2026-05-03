@@ -62,6 +62,16 @@ export function useOrderRsvTmplActiveMutation() {
   })
 }
 
+/** 템플릿 자동 주문 토글. */
+export function useOrderRsvTmplAutoOrderMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ seq, autoOrder }: { seq: number; autoOrder: boolean }) =>
+      orderRsvTmplsApi.patchAutoOrder(seq, autoOrder),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.orderRsvTmpls }),
+  })
+}
+
 /** 템플릿 삭제 — 연결된 인스턴스는 백엔드가 rsv_tmpl_seq=NULL 처리. */
 export function useOrderRsvTmplRemoveMutation() {
   const qc = useQueryClient()

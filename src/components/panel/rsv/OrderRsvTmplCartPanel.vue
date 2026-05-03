@@ -38,10 +38,21 @@
             </label>
             <DayTypeSelector v-model="dayTypes" />
           </div>
-          <!-- active 토글 -->
-          <div class="flex flex-col">
-            <label class="text-sm font-semibold text-surface-900">활성</label>
-            <ToggleSwitch v-model="active" />
+          <!-- active / autoOrder 토글 -->
+          <div class="flex items-end gap-4">
+            <div class="flex flex-col items-center gap-1.5">
+              <label class="text-sm font-semibold text-surface-900">활성</label>
+              <ToggleSwitch v-model="active" />
+            </div>
+            <div class="flex flex-col items-center gap-1.5">
+              <label
+                v-tooltip="'예약 시각이 되면 주문을 자동 생성합니다'"
+                class="cursor-help text-sm font-semibold text-surface-900"
+              >
+                자동 주문
+              </label>
+              <ToggleSwitch v-model="autoOrder" />
+            </div>
           </div>
         </div>
 
@@ -172,6 +183,8 @@ const startDt = defineModel<string>('startDt', { required: true })
 const endDt = defineModel<string | null>('endDt', { required: true })
 const cmt = defineModel<string>('cmt', { required: true })
 const active = defineModel<boolean>('active', { required: true })
+/** 자동 주문 — 예약 시각 도래 시 주문 자동 생성. */
+const autoOrder = defineModel<boolean>('autoOrder', { required: true })
 
 watch([() => props.store?.nm, rsvTime], ([newStoreNm], [oldStoreNm]) => {
   // 매장 선택했고, 템플릿 명에 이전 매장명이 포함되어있으면 갱신

@@ -45,6 +45,7 @@
         v-model:end-dt="endDt"
         v-model:cmt="cmt"
         v-model:active="active"
+        v-model:auto-order="autoOrder"
         :store="selStore"
         :items="cart"
         :is-editing="isEditing"
@@ -113,6 +114,7 @@ const {
   endDt,
   cmt,
   active,
+  autoOrder,
   isEditing,
   editingSeq,
 } = storeToRefs(orderRsvTmplStore)
@@ -163,6 +165,7 @@ function onSave() {
     endDt: endDt.value,
     cmt: cmt.value || undefined,
     active: active.value,
+    autoOrder: autoOrder.value,
     menus: cart.value.map(({ menuSeq, price, cnt }) => ({ menuSeq, price, cnt })),
   }
 
