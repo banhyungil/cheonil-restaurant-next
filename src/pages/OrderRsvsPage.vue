@@ -113,7 +113,7 @@ type DayModeVal = (typeof DAY_MODE_OPTIONS)[number]['val']
 const selDayMode = ref<DayModeVal>('TODAY')
 const selStoreSeq = ref<number | null>(null)
 
-const { data: monitor } = useOrderRsvsMonitorQuery(selDayMode, selStoreSeq)
+const { data: rsvs } = useOrderRsvsMonitorQuery(selDayMode, selStoreSeq)
 const { data: stores } = useStoresQuery()
 
 /** 매장명 + 초성을 합친 검색용 필드 추가 — Select 의 filter-fields 가 contains 매칭 */
@@ -124,8 +124,8 @@ const cStoresWithSearch = computed(() =>
   })),
 )
 
-const cReadyRsvs = computed(() => monitor.value?.ready ?? [])
-const cHistoryRsvs = computed(() => monitor.value?.history ?? [])
+const cReadyRsvs = computed(() => rsvs.value?.ready ?? [])
+const cHistoryRsvs = computed(() => rsvs.value?.history ?? [])
 
 const router = useRouter()
 const toast = useToast()

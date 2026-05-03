@@ -70,7 +70,6 @@ export const routes: RouteRecordRaw[] = [
             label: '예약 관리',
             icon: CalendarDays,
             order: 3,
-            badge: 3,
           },
           keepAlive: 'OrderRsvsPage',
         },
