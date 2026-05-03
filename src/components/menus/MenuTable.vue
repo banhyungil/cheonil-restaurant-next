@@ -5,6 +5,9 @@
     :value="menus"
     striped-rows
     data-key="seq"
+    scrollable
+    scroll-height="flex"
+    :virtual-scroller-options="{ itemSize: 64 }"
     :pt="{ thead: { class: 'bg-surface-50' } }"
   >
     <Column field="nm" header="메뉴명">

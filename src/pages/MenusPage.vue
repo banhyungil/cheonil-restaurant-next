@@ -25,8 +25,8 @@
     <!-- 카테고리 탭 -->
     <BTabs v-model="selCtg" :options="cCategoriesAll" variant="outline" />
 
-    <!-- 테이블 -->
-    <div class="min-h-0 flex-1 overflow-auto">
+    <!-- 테이블 — DataTable virtualScroller 가 자체 스크롤 처리. min-h-0 + flex-1 로 영역만 확보 -->
+    <div class="min-h-0 flex-1">
       <MenuTable
         :menus="cFilteredMenus"
         :categories="categories ?? []"

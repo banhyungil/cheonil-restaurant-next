@@ -25,8 +25,8 @@
     <!-- 카테고리 탭 -->
     <BTabs v-model="selCtg" :options="cCategoriesAll" variant="outline" />
 
-    <!-- 테이블 -->
-    <div class="min-h-0 flex-1 overflow-auto">
+    <!-- 테이블 — DataTable virtualScroller 가 자체 스크롤 처리. min-h-0 + flex-1 로 영역만 확보 -->
+    <div class="min-h-0 flex-1">
       <StoreTable
         :stores="cFilteredStores"
         :categories="categories ?? []"
@@ -67,7 +67,7 @@ const cCategoriesAll = computed(() => [
 
 const cByCategory = computed(() =>
   selCtg.value === ALL_CTG_SEQ
-    ? stores.value ?? []
+    ? (stores.value ?? [])
     : (stores.value ?? []).filter((s) => s.ctgSeq === selCtg.value),
 )
 const { cFiltered: cFilteredStores } = useSearchFilter(cByCategory, searchKeyword, (s) => s.nm)
