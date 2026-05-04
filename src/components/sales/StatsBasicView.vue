@@ -13,7 +13,7 @@
 
     <!-- 2행: 점포 TOP 5 / 결제유형 / 메뉴 TOP 5 -->
     <div class="grid grid-cols-3 gap-4">
-      <BarHorizontalRanking title="🏪 점포별 매출" :rows="cStoreRows" unit="KRW" />
+      <BarHorizontalRanking title="🏪 점포별 매출 TOP 5" :rows="cStoreRows" unit="KRW" />
       <DonutPartChart title="💳 결제유형 비율" :parts="cPayParts" />
       <RankList title="🍽 메뉴 판매 TOP 5" :rows="cMenuRows" />
     </div>

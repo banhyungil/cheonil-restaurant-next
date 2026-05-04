@@ -12,6 +12,20 @@ export interface HourBucket {
   amount: number
 }
 
+/**
+ * 시간대별 메뉴 판매 stacked — 메뉴 분석 뷰.
+ *
+ * 시간(hour) × 메뉴(menus) cross-tab.
+ * `menus` 는 TOP 5 메뉴명 + 마지막 '기타' (총 6개) — 모든 hour 에 대해 동일 순서/길이.
+ * `hours[].counts.length === menus.length` 보장 (해당 시간 미판매면 0).
+ */
+export interface StatsHourMenuStack {
+  /** 메뉴명 series 키 — TOP 5 + '기타'. */
+  menus: string[]
+  /** 시간 bucket 별 메뉴 판매 수량 (menus 와 같은 인덱스). */
+  hours: { hour: number; counts: number[] }[]
+}
+
 /** 매출 추이 차트의 한 점 — granularity 단위 라벨 + 합계. */
 export interface TrendPoint {
   /** '월' / '4/15' / '04월' 등 granularity 따라 다름. */
@@ -111,12 +125,13 @@ export interface StatsTrend {
 
 /** 통계 - 메뉴 분석 뷰 응답. */
 export interface StatsMenu {
+  /** 수량 기준 TOP 10. */
   menusTop10: MenuRank[]
+  /** 판매액 기준 TOP 10 — "잘 팔리는" vs "매출 큰" 메뉴 비교용. */
+  menusTop10ByAmount: MenuRank[]
   categoryParts: CategoryPart[]
-  popularByCash: MenuRank[]
-  popularByCard: MenuRank[]
-  /** 피크타임 (12시) 인기 메뉴 — backend 가 시간대 추출 후 ranking. */
-  peakTimeMenus: MenuRank[]
+  /** 시간대별 메뉴 판매 stacked — 시간×메뉴 mix 분석 (TOP 5 + 기타). */
+  hourlyMenuStack: StatsHourMenuStack
 }
 
 /** 통계 - 점포 분석 뷰 응답. */

@@ -41,9 +41,12 @@
           :basic="statsBasic"
           :trend="statsTrend"
         />
-        <div v-else class="flex h-full items-center justify-center text-surface-500">
-          {{ cStatsView === 'menu' ? '메뉴 분석' : '점포 분석' }} — 차후 구현
-        </div>
+        <StatsMenuView v-else-if="cStatsView === 'menu'" :menu="statsMenu" />
+        <StatsStoreView
+          v-else
+          v-model:sel-store-seq="storeViewSelSeq"
+          :store="statsStore"
+        />
       </div>
     </template>
   </section>
@@ -61,6 +64,8 @@ import {
   useSalesOrdersQuery,
   useSalesOrdersSummaryQuery,
   useStatsBasicQuery,
+  useStatsMenuQuery,
+  useStatsStoreQuery,
   useStatsTrendQuery,
 } from '@/queries/salesQuery'
 import type { OrderRow } from '@/types/sales'
@@ -182,4 +187,18 @@ const cStatsTrendParams = computed(() => ({
 
 const { data: statsBasic } = useStatsBasicQuery(cStatsParams, cStatsRangeReady)
 const { data: statsTrend } = useStatsTrendQuery(cStatsTrendParams, cStatsRangeReady)
+
+// 메뉴 분석 — 해당 뷰 진입 시만 호출 (날짜 범위 + view 둘 다 충족).
+const cStatsMenuEnabled = computed(() => cStatsRangeReady.value && cStatsView.value === 'menu')
+const { data: statsMenu } = useStatsMenuQuery(cStatsParams, cStatsMenuEnabled)
+
+// 점포 분석 — 점포 select 변경 시 storeMenuParts 갱신.
+const storeViewSelSeq = ref<number | null>(null)
+const cStatsStoreParams = computed(() => ({
+  from: statsFrom.value ?? '',
+  to: statsTo.value ?? '',
+  storeSeq: storeViewSelSeq.value ?? undefined,
+}))
+const cStatsStoreEnabled = computed(() => cStatsRangeReady.value && cStatsView.value === 'store')
+const { data: statsStore } = useStatsStoreQuery(cStatsStoreParams, cStatsStoreEnabled)
 </script>
