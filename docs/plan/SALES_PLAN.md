@@ -36,7 +36,7 @@
 | GET    | `/sales/orders/summary?from=&to=&storeSeq=&menuSeq=&payType=`           | `OrdersSummaryRes`  | 그리드 탭 KPI 4 카드 (조회 기간 매출/평균/현금/카드)                |
 | GET    | `/sales/stats/basic?from=&to=`                                          | `StatsBasicRes`     | 통계 - 기본 뷰 (시간대/점포 TOP 5/결제유형/메뉴 TOP 5) — granularity 무관 |
 | GET    | `/sales/stats/trend?from=&to=&granularity=day\|week\|month`             | `StatsTrendRes`     | **매출 추이 차트 전용** — 차트 로컬 segment 변경 시만 호출           |
-| GET    | `/sales/stats/menu?from=&to=`                                           | `StatsMenuRes`      | 통계 - 메뉴 분석 뷰 (TOP 10 / 카테고리별 / 결제별 인기 / 피크타임)  |
+| GET    | `/sales/stats/menu?from=&to=`                                           | `StatsMenuRes`      | 통계 - 메뉴 분석 뷰 (수량 TOP10 / 판매액 TOP10 / 카테고리별 / 시간×메뉴 stacked) |
 | GET    | `/sales/stats/store?from=&to=&storeSeq=`                                | `StatsStoreRes`     | 통계 - 점포 분석 뷰 (점포별 매출/메뉴 비중/주문 빈도/미수/결제분포) |
 | DELETE | `/sales/orders` body `{ orderSeqs }`                                    | 204                 | 그리드 탭 다중 삭제 (관리자 회계 정정)                              |
 
@@ -88,11 +88,18 @@ public record StatsTrendRes(
 // 통계 - 메뉴 분석
 public record StatsMenuRes(
     List<MenuRank> menusTop10,                // 수량 기준
+    List<MenuRank> menusTop10ByAmount,        // 판매액 기준 — "잘 팔리는" vs "매출 큰" 비교용
     List<CategoryPart> categoryParts,         // 카테고리별 매출 도넛
-    List<MenuRank> popularByCash,             // 현금 인기
-    List<MenuRank> popularByCard,             // 카드 인기
-    List<MenuRank> peakTimeMenus              // 피크타임 (12시) 인기
+    StatsHourMenuStack hourlyMenuStack        // 시간×메뉴 cross-tab (TOP 5 + 기타) — stacked bar 용
 ) {}
+
+// 시간×메뉴 cross-tab — TOP 5 메뉴명(+기타) 고정 키, 시간 bucket × counts 배열
+public record StatsHourMenuStack(
+    List<String> menus,                       // ['갈비탕','제육','김치찌개','돈까스','비빔밥','기타']
+    List<HourCounts> hours
+) {
+  public record HourCounts(int hour, List<Integer> counts) {}
+}
 
 // 통계 - 점포 분석
 public record StatsStoreRes(
@@ -195,11 +202,15 @@ export interface StatsTrend {
 }
 
 export interface StatsMenu {
-  menusTop10: MenuRank[];
+  menusTop10: MenuRank[];           // 수량 기준
+  menusTop10ByAmount: MenuRank[];   // 판매액 기준
   categoryParts: CategoryPart[];
-  popularByCash: MenuRank[];
-  popularByCard: MenuRank[];
-  peakTimeMenus: MenuRank[];
+  hourlyMenuStack: StatsHourMenuStack;  // 시간×메뉴 stacked bar 용
+}
+
+export interface StatsHourMenuStack {
+  menus: string[];                  // TOP 5 + '기타'
+  hours: { hour: number; counts: number[] }[];
 }
 
 export interface StatsStore {
@@ -367,16 +378,21 @@ salesStatsStore: ['sales', 'stats', 'store'] as const,
 - 시간대별 — 피크 시간대 색 강조 (라벨 우측 상단 `피크 12시`)
 - **매출 추이** — 카드 우측 상단에 `[일|주|월]` segment (`BTabs variant="segmented" size="sm"`). 변경 시 `useStatsTrendQuery` 만 refetch. 비교 series (이번주 vs 지난주) 동일 차트에 두 줄.
 
-#### 4-3-2. 메뉴 분석 뷰 (2 행 그리드)
+#### 4-3-2. 메뉴 분석 뷰 (2 행 × 2칸 그리드)
 
 ```
-┌ 메뉴 판매 TOP 10 (bar)  ──┐ ┌ 카테고리별 매출 (donut) ─┐
-│ 갈비탕 제육 김치찌 ...    │ │ 탕/찌개 35% ...           │
-└──────────────────────────┘ └───────────────────────────┘
-┌ 현금 인기메뉴 ─┐ ┌ 카드 인기메뉴 ─┐ ┌ 피크타임 메뉴 (12시)─┐
-│ 갈비탕 곰 8건│ │ 제육      5건  │ │ 갈비탕 곰   6건       │
-└──────────────┘ └────────────────┘ └──────────────────────┘
+┌ 메뉴 판매 TOP 10 (수량) ─┐ ┌ 메뉴 판매액 TOP 10 (매출)─┐
+│ 갈비탕 제육 김치찌 ...   │ │ 갈비탕 제육 ...            │
+└──────────────────────────┘ └────────────────────────────┘
+┌ 카테고리별 매출 (donut) ─┐ ┌ 시간대별 메뉴 판매 (stacked) ──┐
+│ 탕/찌개 35% ...          │ │  09 10 [11] 12 ...   ▆▃▆▃▂  ...│
+└──────────────────────────┘ │  ■ 갈비탕 ■ 제육 ■ 김치찌개 …  │
+                              └────────────────────────────────┘
 ```
+
+- 수량 TOP 10 vs 판매액 TOP 10 — "잘 팔리는 메뉴" 와 "매출 큰 메뉴" 가 다를 수 있어 둘 다 노출 (가성비 vs 객단가 분석)
+- 시간대별 메뉴 판매 (stacked bar) — TOP 5 메뉴 + '기타' segment 누적. 시간대 총 판매량 (bar 높이) + 메뉴 mix (색상 분포) 동시 시각. 점심 갈비탕 비중 / 저녁 제육 비중 같은 패턴 식별.
+- 결제수단별 인기메뉴 (현금/카드) / 피크타임 메뉴 list 는 인사이트 모호해 제외
 
 #### 4-3-3. 점포 분석 뷰 (2 행 그리드)
 
