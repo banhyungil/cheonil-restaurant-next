@@ -19,12 +19,12 @@ import type { HourBucket } from '@/types/salesStats'
 import { baseChartOptions, CHART_COLORS, fmtKRW } from '@/utils/chartOptions'
 
 const props = defineProps<{
-  hourly: readonly HourBucket[]
+  hourlys: readonly HourBucket[]
 }>()
 
 const cPeakHour = computed<number | null>(() => {
-  if (props.hourly.length === 0) return null
-  const peak = props.hourly.reduce((best, h) => (h.amount > best.amount ? h : best))
+  if (props.hourlys.length === 0) return null
+  const peak = props.hourlys.reduce((best, h) => (h.amount > best.amount ? h : best))
   return peak.amount > 0 ? peak.hour : null
 })
 
@@ -35,7 +35,7 @@ const cPeakLabel = computed(() =>
 const cSeries = computed(() => [
   {
     name: '매출',
-    data: props.hourly.map((h) => h.amount),
+    data: props.hourlys.map((h) => h.amount),
   },
 ])
 
@@ -52,7 +52,7 @@ const cOptions = computed<ApexOptions>(() => ({
   },
   legend: { show: false },
   xaxis: {
-    categories: props.hourly.map((h) => String(h.hour).padStart(2, '0')),
+    categories: props.hourlys.map((h) => String(h.hour).padStart(2, '0')),
     labels: { style: { colors: CHART_COLORS.surfaceMuted, fontSize: '11px' } },
     axisBorder: { show: false },
     axisTicks: { show: false },
@@ -68,7 +68,7 @@ const cOptions = computed<ApexOptions>(() => ({
   fill: {
     colors: [
       ({ dataPointIndex }: { dataPointIndex: number }) => {
-        const h = props.hourly[dataPointIndex]
+        const h = props.hourlys[dataPointIndex]
         return h && h.hour === cPeakHour.value ? CHART_COLORS.primary : CHART_COLORS.primaryLight
       },
     ],

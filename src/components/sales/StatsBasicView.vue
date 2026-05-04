@@ -3,7 +3,7 @@
   <div class="stats-basic-view flex flex-col gap-4">
     <!-- 1행: 시간대별 + 매출 추이 (큰 차트) -->
     <div class="grid grid-cols-2 gap-4">
-      <BarHourlyChart :hourly="basic?.hourly ?? []" />
+      <BarHourlyChart v-if="basic" :hourlys="basic.hourlys" />
       <BarTrendChart
         :granularity="granularity"
         :data="trend"
@@ -13,11 +13,7 @@
 
     <!-- 2행: 점포 TOP 5 / 결제유형 / 메뉴 TOP 5 -->
     <div class="grid grid-cols-3 gap-4">
-      <BarHorizontalRanking
-        title="🏪 점포별 매출"
-        :rows="cStoreRows"
-        unit="KRW"
-      />
+      <BarHorizontalRanking title="🏪 점포별 매출" :rows="cStoreRows" unit="KRW" />
       <DonutPartChart title="💳 결제유형 비율" :parts="cPayParts" />
       <RankList title="🍽 메뉴 판매 TOP 5" :rows="cMenuRows" />
     </div>

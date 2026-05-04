@@ -94,7 +94,7 @@ export interface StatsBasic {
   prevSales: number
   totalCount: number
   prevCount: number
-  hourly: HourBucket[]
+  hourlys: HourBucket[]
   storesTop5: StoreSales[]
   payParts: PayMethodPart[]
   menusTop5: MenuRank[]
