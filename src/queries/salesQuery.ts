@@ -5,7 +5,6 @@ import * as salesApi from '@/apis/salesApi'
 import type {
   DateRangeParams,
   OrdersParams,
-  StatsStoreParams,
   StatsTrendParams,
   TransactionsParams,
   UnpaidParams,
@@ -127,9 +126,9 @@ export function useStatsMenuQuery(
   })
 }
 
-/** 통계 - 점포 분석 뷰. storeSeq 변경 시 점포별 메뉴 비중 부분 refetch. */
+/** 통계 - 점포 분석 뷰. */
 export function useStatsStoreQuery(
-  params: MaybeRefOrGetter<StatsStoreParams>,
+  params: MaybeRefOrGetter<DateRangeParams>,
   enabled?: MaybeRefOrGetter<boolean>,
 ) {
   return useQuery({

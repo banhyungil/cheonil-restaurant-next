@@ -42,11 +42,7 @@
           :trend="statsTrend"
         />
         <StatsMenuView v-else-if="cStatsView === 'menu'" :menu="statsMenu" />
-        <StatsStoreView
-          v-else
-          v-model:sel-store-seq="storeViewSelSeq"
-          :store="statsStore"
-        />
+        <StatsStoreView v-else :store="statsStore" />
       </div>
     </template>
   </section>
@@ -192,13 +188,7 @@ const { data: statsTrend } = useStatsTrendQuery(cStatsTrendParams, cStatsRangeRe
 const cStatsMenuEnabled = computed(() => cStatsRangeReady.value && cStatsView.value === 'menu')
 const { data: statsMenu } = useStatsMenuQuery(cStatsParams, cStatsMenuEnabled)
 
-// 점포 분석 — 점포 select 변경 시 storeMenuParts 갱신.
-const storeViewSelSeq = ref<number | null>(null)
-const cStatsStoreParams = computed(() => ({
-  from: statsFrom.value ?? '',
-  to: statsTo.value ?? '',
-  storeSeq: storeViewSelSeq.value ?? undefined,
-}))
+// 점포 분석 — 해당 뷰 진입 시만 호출.
 const cStatsStoreEnabled = computed(() => cStatsRangeReady.value && cStatsView.value === 'store')
-const { data: statsStore } = useStatsStoreQuery(cStatsStoreParams, cStatsStoreEnabled)
+const { data: statsStore } = useStatsStoreQuery(cStatsParams, cStatsStoreEnabled)
 </script>

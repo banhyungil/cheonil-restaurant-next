@@ -113,10 +113,6 @@ export interface StatsTrendParams extends DateRangeParams {
   granularity: StatsGranularity
 }
 
-/** 점포 분석 — 점포별 메뉴 비중 select 변경 시 storeSeq 추가. */
-export interface StatsStoreParams extends DateRangeParams {
-  storeSeq?: number
-}
 
 /** 통계 - 기본 뷰 (시간대/점포 TOP 5/결제유형/메뉴 TOP 5 + 헤더 KPI). */
 export async function fetchStatsBasic(params: DateRangeParams): Promise<StatsBasic> {
@@ -133,7 +129,7 @@ export async function fetchStatsMenu(params: DateRangeParams): Promise<StatsMenu
   return api.get<StatsMenu>('/sales/stats/menu', { params }).then((r) => r.data)
 }
 
-/** 통계 - 점포 분석 뷰. storeSeq 미지정 시 첫 매장 기본. */
-export async function fetchStatsStore(params: StatsStoreParams): Promise<StatsStore> {
+/** 통계 - 점포 분석 뷰. */
+export async function fetchStatsStore(params: DateRangeParams): Promise<StatsStore> {
   return api.get<StatsStore>('/sales/stats/store', { params }).then((r) => r.data)
 }

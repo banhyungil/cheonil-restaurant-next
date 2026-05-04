@@ -79,16 +79,6 @@ export interface StorePayDistribution {
   unpaid: number
 }
 
-/**
- * 점포별 메뉴 비중 — donut + list (TOP 4 + 기타).
- * 점포 분석 뷰에서 점포 select 변경 시 응답 일부 (해당 storeSeq 의 parts).
- */
-export interface StoreMenuPart {
-  storeSeq: number
-  parts: { menuNm: string; count: number; percent: number }[]
-  /** TOP 4 외 합산 건수. tooltip / footer 표시용. */
-  etcCount: number
-}
 
 /** 결제유형 비율 — 도넛 1조각 (현금/카드/미수). */
 export interface PayMethodPart {
@@ -134,11 +124,24 @@ export interface StatsMenu {
   hourlyMenuStack: StatsHourMenuStack
 }
 
+/**
+ * 점포별 메뉴 mix — 매장마다 자체 TOP 5 + 기타.
+ * mini donut grid 용 — 매장간 비교가 아닌 매장 특색 (mix 패턴) 분석.
+ */
+export interface StoreMenuMix {
+  storeSeq: number
+  storeNm: string
+  /** 매장 자체 TOP 5. */
+  parts: { menuNm: string; count: number; percent: number }[]
+  /** TOP 5 외 합산 건수. */
+  etcCount: number
+}
+
 /** 통계 - 점포 분석 뷰 응답. */
 export interface StatsStore {
   stores: StoreSales[]
-  /** 점포 select 따라 storeSeq 1개. 응답엔 array 라 차후 비교 모드 확장 여지. */
-  storeMenuParts: StoreMenuPart[]
+  /** 점포별 메뉴 mix — 모든 매장 데이터 (frontend 가 multi-select 필터). */
+  storeMenuMixes: StoreMenuMix[]
   orderCounts: StoreCount[]
   unpaidByStore: StoreUnpaid[]
   payDistribution: StorePayDistribution[]
