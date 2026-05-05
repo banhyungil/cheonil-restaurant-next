@@ -62,22 +62,6 @@ export interface StoreCount {
   count: number
 }
 
-/** 점포별 미수 — 점포 분석 뷰의 미수 현황 카드. */
-export interface StoreUnpaid {
-  storeSeq: number
-  storeNm: string
-  amount: number
-  count: number
-}
-
-/** 점포별 결제방식 분포 — stacked bar. */
-export interface StorePayDistribution {
-  storeSeq: number
-  storeNm: string
-  cash: number
-  card: number
-  unpaid: number
-}
 
 
 /** 결제유형 비율 — 도넛 1조각 (현금/카드/미수). */
@@ -137,12 +121,23 @@ export interface StoreMenuMix {
   etcCount: number
 }
 
+/**
+ * 시간대×매장 heatmap row — 매장 1개의 시간대별 주문 건수.
+ * 모든 매장이 동일한 hour bucket 셋을 가짐 (백엔드 보장).
+ */
+export interface StoreHourHeatmap {
+  storeSeq: number
+  storeNm: string
+  /** 영업 시간대 (보통 09~20) bucket 별 주문 건수. */
+  hourly: { hour: number; count: number }[]
+}
+
 /** 통계 - 점포 분석 뷰 응답. */
 export interface StatsStore {
   stores: StoreSales[]
   /** 점포별 메뉴 mix — 모든 매장 데이터 (frontend 가 multi-select 필터). */
   storeMenuMixes: StoreMenuMix[]
   orderCounts: StoreCount[]
-  unpaidByStore: StoreUnpaid[]
-  payDistribution: StorePayDistribution[]
+  /** 시간×매장 heatmap — 모든 매장 데이터. */
+  storeHourHeatmap: StoreHourHeatmap[]
 }

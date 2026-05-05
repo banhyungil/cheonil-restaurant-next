@@ -12,6 +12,9 @@
         option-label="label"
         placeholder="매장 선택"
         display="chip"
+        filter
+        filter-placeholder="매장명 검색"
+        :reset-filter-on-hide="true"
         class="w-80"
         @update:model-value="(v) => (selStoreSeqs = (v as number[]) ?? [])"
       />
