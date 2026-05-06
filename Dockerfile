@@ -15,9 +15,13 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 
-# 소스 복사 + 빌드 (vue-tsc + vite build 병렬)
+# 소스 복사 + 빌드 (vite 만 — type-check 는 CI/dev 책임)
+# `npm run build` 는 type-check + build-only 병렬인데:
+#   - `auto-imports.d.ts` / `components.d.ts` 는 git ignored — vite 실행 시 생성됨
+#   - 병렬 실행이면 type-check 가 dts 생성 전에 시작해 실패
+# 운영 빌드는 vite 만 실행 (이미 dev/CI 에서 type-check 통과 가정).
 COPY . .
-RUN npm run build
+RUN npm run build-only
 
 # ─── Stage 2: Runtime ───────────────────────────────────────────────
 FROM nginx:1.27-alpine AS runtime
