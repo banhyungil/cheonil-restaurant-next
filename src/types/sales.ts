@@ -35,6 +35,13 @@ export interface SalesSummary {
   unpaid: PayMethodSummary
 }
 
+/** 거래 row 의 결제 entry — 분할 결제 시 다수. */
+export interface PaymentEntry {
+  payType: PayType
+  amount: number
+  payAt: string
+}
+
 /**
  * 거래 내역 row — 정산 탭 / 수금 탭 모두 사용.
  * t_order + m_store + t_order_menu + m_menu + t_payment join aggregate.
@@ -48,11 +55,8 @@ export interface Transaction {
   orderAmount: number
   orderAt: string
   cookedAt: string | null
-  /** null = 미수. */
-  payType: PayType | null
-  payAt: string | null
-  /** 결제금액 — 미수면 0. */
-  payAmount: number
+  /** 결제 entry 목록. 비어 있으면 미수. 분할 결제는 다수 entry. */
+  payments: PaymentEntry[]
 }
 
 /** Spring Page 표준 응답. */

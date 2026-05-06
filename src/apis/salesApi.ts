@@ -22,16 +22,11 @@ export interface SalesSummaryParams {
   date: string
 }
 
-/** 정산 탭 거래 내역 조회 — 단일 날짜 + 결제수단 필터 + page. */
+/** 정산 탭 거래 내역 조회 — 단일 날짜 (전체 응답, 클라 페이징/필터). */
 export interface TransactionsParams {
   /** 'YYYY-MM-DD'. */
   date: string
   storeSeq?: number
-  /** 'CASH' / 'CARD' / 'UNPAID' (= 미수). 미지정 시 전체. */
-  payType?: PayType | 'UNPAID'
-  /** 0-based page index. */
-  page?: number
-  size?: number
 }
 
 /** 수금 탭 미수 조회 — 날짜 무관 모든 미수 (운영자가 누적 미수 일괄 처리). */
@@ -46,13 +41,9 @@ export async function fetchSummary(params: SalesSummaryParams): Promise<SalesSum
   return api.get<SalesSummary>('/sales/summary', { params }).then((r) => r.data)
 }
 
-/** 정산 탭 — 그날 거래 내역 (lazy pagination). */
-export async function fetchTransactions(
-  params: TransactionsParams,
-): Promise<PageRes<Transaction>> {
-  return api
-    .get<PageRes<Transaction>>('/sales/transactions', { params })
-    .then((r) => r.data)
+/** 정산 탭 — 그날 거래 내역 (전체 응답, 클라 페이징/필터/가상스크롤). */
+export async function fetchTransactions(params: TransactionsParams): Promise<Transaction[]> {
+  return api.get<Transaction[]>('/sales/transactions', { params }).then((r) => r.data)
 }
 
 /**

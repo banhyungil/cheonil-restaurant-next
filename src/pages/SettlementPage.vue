@@ -19,8 +19,7 @@
         <TransactionTable
           v-model:pay-filter="settleFilter"
           v-model:store-keyword="settleKeyword"
-          :transactions="transactions?.content ?? []"
-          @cancel-pay="onCancelPay"
+          :transactions="transactions ?? []"
         />
       </div>
     </template>
@@ -88,12 +87,7 @@ const settleFilter = ref<TxPayFilter>('ALL')
 const settleKeyword = ref('')
 
 const { data: summary } = useSalesSummaryQuery(date)
-const { data: transactions } = useTransactionsQuery(
-  computed(() => ({
-    date: date.value,
-    payType: settleFilter.value === 'ALL' ? undefined : settleFilter.value,
-  })),
-)
+const { data: transactions } = useTransactionsQuery(computed(() => ({ date: date.value })))
 
 // --- 수금 탭 상태 ---
 const collectSelection = ref<Transaction[]>([])
@@ -105,7 +99,7 @@ const { data: unpaid } = useUnpaidQuery()
 
 /** 수금 탭 데이터 — 토글에 따라 unpaid (모든 미수) 또는 transactions (선택 날짜 거래) */
 const cCollectionRows = computed<readonly Transaction[]>(() =>
-  showAllUnpaid.value ? (unpaid.value?.content ?? []) : (transactions.value?.content ?? []),
+  showAllUnpaid.value ? (unpaid.value?.content ?? []) : (transactions.value ?? []),
 )
 
 // --- mutation ---
@@ -120,7 +114,7 @@ const splitLoading = computed(() => isSplitPending.value)
 
 function onPayAll(payType: PayType) {
   // 선택 중 미수만 — PAID row 가 섞여 있어도 안전.
-  const targets = collectSelection.value.filter((t) => t.payType == null)
+  const targets = collectSelection.value.filter((t) => t.payments.length === 0)
   if (targets.length === 0) return
   const payloads = targets.map((t) => ({ orderSeq: t.orderSeq, payType }))
   payBatch(payloads, {
@@ -139,7 +133,7 @@ function onPayAll(payType: PayType) {
 
 function onCancelAll() {
   // 선택 중 PAID row 만 — 결제 취소 (PAID → COOKED).
-  const targets = collectSelection.value.filter((t) => t.payType != null)
+  const targets = collectSelection.value.filter((t) => t.payments.length > 0)
   if (targets.length === 0) return
   confirm.require({
     message: `선택한 ${targets.length}건의 결제를 취소하시겠습니까?`,
@@ -182,20 +176,4 @@ function onSubmitSplit(orderSeq: number, splits: { payType: PayType; amount: num
   )
 }
 
-function onCancelPay(orderSeq: number) {
-  confirm.require({
-    message: '해당 거래의 결제를 취소하시겠습니까? (PAID → COOKED)',
-    header: '결제 취소',
-    icon: 'pi pi-exclamation-triangle',
-    accept: () => {
-      cancelByOrders(
-        { orderSeqs: [orderSeq] },
-        {
-          onSuccess: () =>
-            toast.add({ severity: 'success', summary: '결제 취소', life: 2500 }),
-        },
-      )
-    },
-  })
-}
 </script>

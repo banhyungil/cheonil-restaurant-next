@@ -1,6 +1,6 @@
 <!-- 정산 탭 거래 내역 테이블 (read-only + PAID 결제 취소) -->
 <template>
-  <div class="transaction-table flex flex-col gap-3">
+  <div class="transaction-table flex h-full min-h-0 flex-col gap-3">
     <!-- 필터 chip + 매장 검색 -->
     <div class="flex items-center gap-3">
       <BTabs
@@ -28,9 +28,15 @@
       :value="cFiltered"
       striped-rows
       data-key="orderSeq"
+      scrollable
+      scroll-height="flex"
+      :virtual-scroller-options="{ itemSize: 48 }"
       :pt="{ thead: { class: 'bg-surface-50' } }"
-      :row-class="(d: Transaction) => (d.payType == null ? 'bg-red-50!' : '')"
+      :row-class="(d: Transaction) => (d.payments.length === 0 ? 'bg-red-50!' : '')"
     >
+      <Column header="#" :pt="{ headerCell: { style: 'width:3rem' }, bodyCell: { class: 'text-center text-sm text-surface-500' } }">
+        <template #body="{ index }">{{ index + 1 }}</template>
+      </Column>
       <Column field="storeNm" header="매장" />
       <Column field="menuSummary" header="메뉴" />
       <Column field="orderAmount" header="주문금액">
@@ -50,31 +56,17 @@
       </Column>
       <Column header="결제방식">
         <template #body="{ data }">
-          <PayTypeChip :pay-type="data.payType" />
+          <PayTypeChip :payments="data.payments" />
         </template>
       </Column>
       <Column header="결제시간">
         <template #body="{ data }">
-          <span class="text-sm text-surface-600">{{ fmtTime(data.payAt) }}</span>
+          <span class="text-sm text-surface-600">{{ fmtTime(lastPayAt(data.payments)) }}</span>
         </template>
       </Column>
-      <Column field="payAmount" header="결제금액">
+      <Column header="결제금액">
         <template #body="{ data }">
-          <span class="font-semibold">{{ data.payAmount.toLocaleString() }}원</span>
-        </template>
-      </Column>
-      <Column header="작업">
-        <template #body="{ data }">
-          <BButton
-            v-if="data.payType != null"
-            v-tooltip="'결제 취소'"
-            variant="outlined"
-            color="danger"
-            size="sm"
-            @click="emit('cancelPay', data.orderSeq)"
-          >
-            <Undo2 :size="14" />
-          </BButton>
+          <span class="font-semibold">{{ payAmountSum(data.payments).toLocaleString() }}원</span>
         </template>
       </Column>
 
@@ -98,14 +90,13 @@
 
 <script setup lang="ts">
 import { format, parseISO } from 'date-fns'
-import { vTooltip } from 'floating-vue'
 import _ from 'lodash'
-import { Search, Undo2 } from 'lucide-vue-next'
+import { Search } from 'lucide-vue-next'
 import { computed } from 'vue'
 
 import { useSearchFilter } from '@/composables/useSearchFilter'
 import type { PayType } from '@/types/payment'
-import type { Transaction } from '@/types/sales'
+import type { PaymentEntry, Transaction } from '@/types/sales'
 
 import PayTypeChip from './PayTypeChip.vue'
 
@@ -120,17 +111,16 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:payFilter': [val: TxPayFilter]
   'update:storeKeyword': [val: string]
-  cancelPay: [orderSeq: number]
 }>()
 
-/** payType 별 카운트 (필터 칩 N 표시용). */
+/** payType 별 카운트 — 분할 결제는 해당 payType 양쪽에 카운트 (포함). */
 const cCounts = computed(() => {
   const all = props.transactions
   return {
     ALL: all.length,
-    CASH: all.filter((t) => t.payType === 'CASH').length,
-    CARD: all.filter((t) => t.payType === 'CARD').length,
-    UNPAID: all.filter((t) => t.payType == null).length,
+    CASH: all.filter((t) => t.payments.some((p) => p.payType === 'CASH')).length,
+    CARD: all.filter((t) => t.payments.some((p) => p.payType === 'CARD')).length,
+    UNPAID: all.filter((t) => t.payments.length === 0).length,
   }
 })
 
@@ -144,16 +134,25 @@ const cFilterOptions = computed(() => [
 const cByPayType = computed(() => {
   const f = props.payFilter
   if (f === 'ALL') return props.transactions
-  if (f === 'UNPAID') return props.transactions.filter((t) => t.payType == null)
-  return props.transactions.filter((t) => t.payType === f)
+  if (f === 'UNPAID') return props.transactions.filter((t) => t.payments.length === 0)
+  return props.transactions.filter((t) => t.payments.some((p) => p.payType === f))
 })
 
 // 매장명 자모/초성 검색
 const { cFiltered } = useSearchFilter(cByPayType, () => props.storeKeyword, (t) => t.storeNm)
 
-const cPaidCount = computed(() => cFiltered.value.filter((t) => t.payType != null).length)
-const cUnpaidCount = computed(() => cFiltered.value.filter((t) => t.payType == null).length)
+const cPaidCount = computed(() => cFiltered.value.filter((t) => t.payments.length > 0).length)
+const cUnpaidCount = computed(() => cFiltered.value.filter((t) => t.payments.length === 0).length)
 const cTotalSum = computed(() => _.sumBy(cFiltered.value, (t) => t.orderAmount))
+
+function lastPayAt(payments: readonly PaymentEntry[]): string | null {
+  if (payments.length === 0) return null
+  return _.maxBy([...payments], (p) => p.payAt)?.payAt ?? null
+}
+
+function payAmountSum(payments: readonly PaymentEntry[]): number {
+  return _.sumBy([...payments], (p) => p.amount)
+}
 
 function fmtTime(s: string | null): string {
   if (!s) return '-'

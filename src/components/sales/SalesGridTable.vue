@@ -12,7 +12,7 @@
       sort-mode="single"
       :default-sort-order="-1"
       :pt="{ thead: { class: 'bg-surface-50' } }"
-      :row-class="(d: OrderRow) => (d.payType == null ? 'bg-red-50!' : '')"
+      :row-class="(d: OrderRow) => (d.payments.length === 0 ? 'bg-red-50!' : '')"
       @update:selection="emit('update:selection', $event as OrderRow[])"
     >
       <Column selection-mode="multiple" :pt="{ headerCell: { style: 'width:3rem' } }" />
@@ -35,17 +35,17 @@
       </Column>
       <Column header="결제방식">
         <template #body="{ data }">
-          <PayTypeChip :pay-type="data.payType" />
+          <PayTypeChip :payments="data.payments" />
         </template>
       </Column>
       <Column header="결제날짜">
         <template #body="{ data }">
-          <span class="text-sm text-surface-600">{{ fmtDate(data.payAt) }}</span>
+          <span class="text-sm text-surface-600">{{ fmtDate(lastPayAt(data.payments)) }}</span>
         </template>
       </Column>
-      <Column field="payAmount" header="결제금액" sortable>
+      <Column header="결제금액">
         <template #body="{ data }">
-          <span class="font-semibold">{{ data.payAmount.toLocaleString() }}원</span>
+          <span class="font-semibold">{{ payAmountSum(data.payments).toLocaleString() }}원</span>
         </template>
       </Column>
       <Column header="상태">
@@ -93,7 +93,7 @@ import _ from 'lodash'
 import { Trash2 } from 'lucide-vue-next'
 import { computed } from 'vue'
 
-import type { OrderRow } from '@/types/sales'
+import type { OrderRow, PaymentEntry } from '@/types/sales'
 
 import PayTypeChip from '@/components/settlement/PayTypeChip.vue'
 
@@ -121,6 +121,15 @@ function fmtDateTime(s: string): string {
 function fmtDate(s: string | null): string {
   if (!s) return '-'
   return format(parseISO(s), 'MM/dd')
+}
+
+function lastPayAt(payments: readonly PaymentEntry[]): string | null {
+  if (payments.length === 0) return null
+  return _.maxBy([...payments], (p) => p.payAt)?.payAt ?? null
+}
+
+function payAmountSum(payments: readonly PaymentEntry[]): number {
+  return _.sumBy([...payments], (p) => p.amount)
 }
 </script>
 

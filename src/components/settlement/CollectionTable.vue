@@ -36,10 +36,13 @@
       striped-rows
       data-key="orderSeq"
       :pt="{ thead: { class: 'bg-surface-50' } }"
-      :row-class="(d: Transaction) => (d.payType == null ? 'bg-red-50!' : '')"
+      :row-class="(d: Transaction) => (d.payments.length === 0 ? 'bg-red-50!' : '')"
       @update:selection="emit('update:selection', $event as Transaction[])"
     >
       <Column selection-mode="multiple" :pt="{ headerCell: { style: 'width:3rem' } }" />
+      <Column header="#" :pt="{ headerCell: { style: 'width:3rem' }, bodyCell: { class: 'text-center text-sm text-surface-500' } }">
+        <template #body="{ index }">{{ index + 1 }}</template>
+      </Column>
       <Column field="storeNm" header="매장" />
       <Column field="menuSummary" header="메뉴" />
       <Column field="orderAmount" header="주문금액">
@@ -60,7 +63,7 @@
       </Column>
       <Column header="결제방식">
         <template #body="{ data }">
-          <PayTypeChip :pay-type="data.payType" />
+          <PayTypeChip :payments="data.payments" />
         </template>
       </Column>
 
@@ -186,13 +189,13 @@ const cEmptyLabel = computed(() =>
 
 const cSelectedSum = computed(() => _.sumBy(props.selection, (t) => t.orderAmount))
 const cSelectedUnpaidCount = computed(
-  () => props.selection.filter((t) => t.payType == null).length,
+  () => props.selection.filter((t) => t.payments.length === 0).length,
 )
 const cSelectedPaidCount = computed(
-  () => props.selection.filter((t) => t.payType != null).length,
+  () => props.selection.filter((t) => t.payments.length > 0).length,
 )
 const cCanSplit = computed(
-  () => props.selection.length === 1 && props.selection[0]?.payType == null,
+  () => props.selection.length === 1 && props.selection[0]?.payments.length === 0,
 )
 
 function fmtDate(s: string): string {
@@ -207,6 +210,6 @@ function daysAgo(s: string): string {
 
 function onClickSplit() {
   const tx = props.selection[0]
-  if (tx && tx.payType == null) emit('paySplit', tx)
+  if (tx && tx.payments.length === 0) emit('paySplit', tx)
 }
 </script>
