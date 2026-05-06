@@ -82,6 +82,14 @@ export async function patchAutoOrder(seq: number, autoOrder: boolean): Promise<v
   return api.patch(`/order-rsv-tmpls/${seq}/auto-order`, { autoOrder }).then(() => undefined)
 }
 
+/**
+ * 수동 예약 인스턴스 생성 — 스케줄러 누락분 보충용.
+ * 오늘 생성됐어야 하나 안 만들어진 케이스 (서버 다운 등) 에 사용.
+ */
+export async function generateRsv(seq: number): Promise<void> {
+  return api.post(`/order-rsv-tmpls/${seq}/generate-rsv`).then(() => undefined)
+}
+
 /** 템플릿 삭제. 연결된 인스턴스는 백엔드가 rsv_tmpl_seq=NULL 처리. */
 export async function remove(seq: number): Promise<void> {
   return api.delete(`/order-rsv-tmpls/${seq}`).then(() => undefined)

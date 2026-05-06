@@ -34,6 +34,7 @@
         @edit="onEdit"
         @toggle-active="onToggleActive"
         @toggle-auto-order="onToggleAutoOrder"
+        @generate-rsv="onGenerateRsv"
         @remove="onRemove"
       />
     </div>
@@ -47,6 +48,7 @@ import { useToast } from 'primevue/usetoast'
 import {
   useOrderRsvTmplActiveMutation,
   useOrderRsvTmplAutoOrderMutation,
+  useOrderRsvTmplGenerateRsvMutation,
   useOrderRsvTmplRemoveMutation,
   useOrderRsvTmplsQuery,
 } from '@/queries/orderRsvTmplsQuery'
@@ -105,6 +107,7 @@ const orderRsvTmplStore = useOrderRsvTmplStore()
 const { data: stores } = useStoresQuery()
 const { mutate: patchActive } = useOrderRsvTmplActiveMutation()
 const { mutate: patchAutoOrder } = useOrderRsvTmplAutoOrderMutation()
+const { mutate: generateRsv } = useOrderRsvTmplGenerateRsvMutation()
 const { mutate: removeTmpl } = useOrderRsvTmplRemoveMutation()
 
 function onAdd() {
@@ -143,6 +146,12 @@ function onToggleAutoOrder(seq: number, autoOrder: boolean) {
         }),
     },
   )
+}
+
+function onGenerateRsv(seq: number) {
+  generateRsv(seq, {
+    onSuccess: () => toast.add({ severity: 'success', summary: '예약 인스턴스 생성', life: 2000 }),
+  })
 }
 
 function onRemove(seq: number) {

@@ -89,19 +89,29 @@
       <template #body="{ data }">
         <div class="flex gap-1">
           <BButton
+            v-if="needsManualGenerate(data)"
+            v-tooltip="'수동 생성 - 오늘 예약일자 기준 미생성 된 건'"
+            variant="outlined"
+            color="warn"
+            size="sm"
+            @click="emit('generate-rsv', data.seq)"
+          >
+            <PlayCircle :size="14" />
+          </BButton>
+          <BButton
+            v-tooltip="'수정'"
             variant="outlined"
             color="secondary"
             size="sm"
             @click="emit('edit', data.seq)"
-            v-tooltip="'수정'"
           >
             <SquarePen :size="14" />
           </BButton>
           <BButton
+            v-tooltip="'삭제'"
             variant="outlined"
             color="danger"
             size="sm"
-            v-tooltip="'삭제'"
             @click="emit('remove', data.seq)"
           >
             <Trash2 :size="14" />
@@ -113,10 +123,11 @@
 </template>
 
 <script setup lang="ts">
-import { SquarePen, Trash2 } from 'lucide-vue-next'
+import { format, isToday, parseISO } from 'date-fns'
+import { vTooltip } from 'floating-vue'
+import { PlayCircle, SquarePen, Trash2 } from 'lucide-vue-next'
 
 import type { DayType, OrderRsvTmplExt } from '@/types/orderRsv'
-import { vTooltip } from 'floating-vue'
 
 const DAY_TYPES: DayType[] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 const DAY_LABEL: Record<DayType, string> = {
@@ -129,6 +140,9 @@ const DAY_LABEL: Record<DayType, string> = {
   SUN: '일',
 }
 
+/** Date.getDay() 인덱스 → DayType. 일요일 = 0 부터 시작. */
+const DAY_TYPE_BY_INDEX: DayType[] = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+
 defineProps<{
   tmpls: OrderRsvTmplExt[]
 }>()
@@ -137,6 +151,37 @@ const emit = defineEmits<{
   edit: [seq: number]
   'toggle-active': [seq: number, active: boolean]
   'toggle-auto-order': [seq: number, autoOrder: boolean]
+  'generate-rsv': [seq: number]
   remove: [seq: number]
 }>()
+
+/**
+ * 수동 생성 버튼 표시 조건:
+ *  1. active 한 템플릿
+ *  2. 오늘이 dayTypes 에 포함
+ *  3. 오늘이 [startDt, endDt] 기간 내
+ *  4. 오늘 rsvTime 이 이미 지났음
+ *  5. lastRsvGenAt 이 오늘 아님 (스케줄러 누락)
+ */
+function needsManualGenerate(t: OrderRsvTmplExt): boolean {
+  if (!t.active) return false
+
+  const now = new Date()
+  const todayDay = DAY_TYPE_BY_INDEX[now.getDay()]!
+  if (!t.dayTypes.includes(todayDay)) return false
+
+  const todayStr = format(now, 'yyyy-MM-dd')
+  if (todayStr < t.startDt) return false
+  if (t.endDt && todayStr > t.endDt) return false
+
+  // 'HH:mm:ss' 의 오늘자 시각 vs 현재
+  const [hh = 0, mm = 0, ss = 0] = t.rsvTime.split(':').map(Number)
+  const rsvAt = new Date(now)
+  rsvAt.setHours(hh, mm, ss, 0)
+  if (now < rsvAt) return false
+
+  if (t.lastRsvGenAt && isToday(parseISO(t.lastRsvGenAt))) return false
+
+  return true
+}
 </script>
