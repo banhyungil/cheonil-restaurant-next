@@ -5,7 +5,7 @@ import { computed, type ComputedRef, type MaybeRefOrGetter, toValue } from 'vue'
  * order 에 없는 item 은 끝에 append (원래 상대 순서 유지) — 신규 추가 row 자동 표시 보장.
  *
  * @example
- *   const cSortedStores = useSortedItems(stores, () => storeOrder?.effectiveConfig.order ?? [])
+ *   const cSortedStores = useSortedItems(stores, () => storeOrder?.config.order ?? [])
  */
 export function useSortedItems<T extends { seq: number }>(
   items: MaybeRefOrGetter<readonly T[] | undefined>,

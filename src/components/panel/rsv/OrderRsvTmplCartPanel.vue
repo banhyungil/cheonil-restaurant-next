@@ -19,7 +19,8 @@
       description="좌측에서 단골 매장을 클릭하세요"
     />
 
-    <template v-else>
+    <!-- [scrollbar-gutter:stable]: 스크롤바 유무 상관없이 영역 확복, 요소 좌우 흔들림 방짐 -->
+    <div v-else class="flex flex-col flex-1 gap-2 overflow-auto [scrollbar-gutter:stable] pr-3">
       <!-- 템플릿 메타 -->
       <div class="flex flex-col gap-3">
         <!-- 템플릿명 -->
@@ -76,12 +77,12 @@
               📆 시작일 <span class="text-red-500">*</span>
             </label>
             <DatePicker
-            :model-value="mStartDt"
-            :min-date="MIN_TODAY"
-            date-format="yy-mm-dd"
-            show-icon
-            @update:model-value="(v) => (mStartDt = v as Date | null)"
-          />
+              :model-value="mStartDt"
+              :min-date="MIN_TODAY"
+              date-format="yy-mm-dd"
+              show-icon
+              @update:model-value="(v) => (mStartDt = v as Date | null)"
+            />
           </div>
         </div>
 
@@ -109,7 +110,7 @@
       <div class="h-px w-full bg-surface-200" />
 
       <!-- 담긴 메뉴 -->
-      <div class="flex flex-1 flex-col gap-1.5 overflow-auto">
+      <div class="flex flex-1 flex-col gap-1.5">
         <label class="text-sm font-semibold text-surface-900">🧾 담긴 메뉴</label>
         <CartEmptyState
           v-if="cState === 'no-menu'"
@@ -117,7 +118,7 @@
           title="메뉴를 담아주세요"
           description="좌측 메뉴를 클릭하면 카트에 담깁니다"
         />
-        <div v-else class="flex flex-1 flex-col gap-2.5 overflow-y-auto p-2.5">
+        <div v-else class="flex flex-1 flex-col gap-2.5 p-2.5">
           <CartItemRow
             v-for="item in items"
             :key="item.menuSeq"
@@ -140,7 +141,7 @@
           class="resize-none text-sm"
         />
       </div>
-    </template>
+    </div>
 
     <!-- 합계 -->
     <CartSummary :total-count="cTotalCount" :total-amount="cTotalAmount" />

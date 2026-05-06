@@ -81,7 +81,7 @@ const cOrderOf = <C extends 'STORE_ORDER' | 'MENU_ORDER' | 'STORE_CATEGORY_ORDER
 ) =>
   computed(
     () =>
-      (settings.value?.find((s): s is Setting<C> => s.code === code)?.effectiveConfig.order as
+      (settings.value?.find((s): s is Setting<C> => s.code === code)?.config.order as
         | number[]
         | undefined) ?? [],
   )

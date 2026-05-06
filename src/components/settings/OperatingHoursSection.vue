@@ -83,7 +83,7 @@ const { mutate: restoreSetting } = useSettingRestoreMutation<'OPERATING_HOURS'>(
 const draft = reactive<OperatingHoursConfig>({ startHour: 0, endHour: 0 })
 
 watch(
-  () => props.setting?.effectiveConfig,
+  () => props.setting?.config,
   (cfg) => {
     if (cfg) {
       draft.startHour = cfg.startHour
@@ -96,7 +96,7 @@ watch(
 const cIsValid = computed(() => draft.endHour > draft.startHour)
 
 const cIsDirty = computed(() => {
-  const cfg = props.setting?.effectiveConfig
+  const cfg = props.setting?.config
   if (!cfg) return false
   return cfg.startHour !== draft.startHour || cfg.endHour !== draft.endHour
 })
