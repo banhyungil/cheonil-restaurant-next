@@ -6,7 +6,7 @@
     <div class="flex items-center justify-between gap-3">
       <h3 class="text-sm font-semibold text-surface-900">⏰ 시간대×매장 주문 heatmap</h3>
       <MultiSelect
-        :model-value="selStoreSeqs"
+        v-model="selStoreSeqs"
         :options="cStoreOptions"
         option-value="val"
         option-label="label"
@@ -16,7 +16,6 @@
         filter-placeholder="매장명 검색"
         :reset-filter-on-hide="true"
         class="w-80"
-        @update:model-value="(v) => (selStoreSeqs = (v as number[]) ?? [])"
       />
     </div>
 
@@ -35,7 +34,7 @@
 
 <script setup lang="ts">
 import type { ApexOptions } from 'apexcharts'
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 
 import type { StoreHourHeatmap } from '@/types/salesStats'
 import { baseChartOptions, CHART_COLORS } from '@/utils/chartOptions'
@@ -44,28 +43,30 @@ const props = defineProps<{
   rows: readonly StoreHourHeatmap[]
 }>()
 
-const cStoreOptions = computed(() =>
-  props.rows.map((r) => ({ val: r.storeSeq, label: r.storeNm })),
-)
+const cStoreOptions = computed(() => props.rows.map((r) => ({ val: r.storeSeq, label: r.storeNm })))
 
-const selStoreSeqs = ref<number[]>([])
+/** 선택된 매장 — localStorage 영속. 페이지 재진입 시 선택 유지. */
+const selStoreSeqs = useLocalStorage<number[]>('sales:storeHourHeatmap:selStoreSeqs', [])
+
 watch(
   () => props.rows,
   (rows) => {
     if (rows.length === 0) {
-      selStoreSeqs.value = []
       return
     }
-    if (selStoreSeqs.value.length === 0) {
+
+    const validSeqs = new Set(rows.map((r) => r.storeSeq))
+    const filtered = selStoreSeqs.value.filter((seq) => validSeqs.has(seq))
+    if (filtered.length === 0) {
       selStoreSeqs.value = rows.map((r) => r.storeSeq)
+    } else if (filtered.length !== selStoreSeqs.value.length) {
+      selStoreSeqs.value = filtered
     }
   },
   { immediate: true },
 )
 
-const cFiltered = computed(() =>
-  props.rows.filter((r) => selStoreSeqs.value.includes(r.storeSeq)),
-)
+const cFiltered = computed(() => props.rows.filter((r) => selStoreSeqs.value.includes(r.storeSeq)))
 
 /** 매장 row 마다 32px + header/legend 여유. */
 const cHeight = computed(() => Math.max(180, cFiltered.value.length * 36 + 60))
@@ -88,9 +89,7 @@ const cOptions = computed<ApexOptions>(() => ({
       radius: 4,
       useFillColorAsStroke: false,
       colorScale: {
-        ranges: [
-          { from: 0, to: 0, color: CHART_COLORS.surfaceLine, name: '0' },
-        ],
+        ranges: [{ from: 0, to: 0, color: CHART_COLORS.surfaceLine, name: '0' }],
       },
     },
   },

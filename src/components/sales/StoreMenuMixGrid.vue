@@ -4,9 +4,9 @@
     class="store-menu-mix-grid flex flex-col gap-3 rounded-lg border border-surface-200 bg-surface-0 p-4"
   >
     <div class="flex items-center justify-between gap-3">
-      <h3 class="text-sm font-semibold text-surface-900">📦 점포별 메뉴 mix</h3>
+      <h3 class="text-sm font-semibold text-surface-900">📦 점포별 메뉴 TOP 5</h3>
       <MultiSelect
-        :model-value="selStoreSeqs"
+        v-model="selStoreSeqs"
         :options="cStoreOptions"
         option-value="val"
         option-label="label"
@@ -16,15 +16,9 @@
         filter-placeholder="매장명 검색"
         :reset-filter-on-hide="true"
         class="w-80"
-        @update:model-value="(v) => (selStoreSeqs = (v as number[]) ?? [])"
       />
     </div>
-
-    <div
-      v-if="cFilteredMixes.length > 0"
-      class="grid gap-3"
-      :class="cGridCols"
-    >
+    <div v-if="cFilteredMixes.length > 0" class="grid gap-3" :class="cGridCols">
       <article
         v-for="m in cFilteredMixes"
         :key="m.storeSeq"
@@ -33,11 +27,7 @@
         <h4 class="truncate text-sm font-semibold text-surface-900">{{ m.storeNm }}</h4>
         <apexchart type="donut" height="160" :options="cOptionsFor(m)" :series="cSeriesFor(m)" />
         <ol class="flex flex-col gap-1 text-xs">
-          <li
-            v-for="(p, i) in m.parts"
-            :key="p.menuNm"
-            class="flex items-center gap-1.5"
-          >
+          <li v-for="(p, i) in m.parts" :key="p.menuNm" class="flex items-center gap-1.5">
             <span
               class="inline-block size-2 rounded-full"
               :style="{ background: PALETTE[i % PALETTE.length] }"
@@ -58,7 +48,7 @@
 
 <script setup lang="ts">
 import type { ApexOptions } from 'apexcharts'
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 
 import type { StoreMenuMix } from '@/types/salesStats'
 import { baseChartOptions, CHART_COLORS } from '@/utils/chartOptions'
@@ -66,6 +56,9 @@ import { baseChartOptions, CHART_COLORS } from '@/utils/chartOptions'
 const props = defineProps<{
   mixes: readonly StoreMenuMix[]
 }>()
+
+/** 선택된 매장 — localStorage 영속. 페이지 재진입 시 선택 유지. */
+const selStoreSeqs = useLocalStorage<number[]>('sales:storeMenuMix:selStoreSeqs', [])
 
 /** 색상 팔레트 — TOP 5 + 기타 (마지막) 6개. */
 const PALETTE = [
@@ -81,18 +74,24 @@ const cStoreOptions = computed(() =>
   props.mixes.map((m) => ({ val: m.storeSeq, label: m.storeNm })),
 )
 
-/** 선택된 매장 — 진입/데이터 변경 시 전체 select 로 default. */
-const selStoreSeqs = ref<number[]>([])
+/**
+ * 데이터 변경 시 stale seq 정리 + 첫 진입 default.
+ * - localStorage 에 저장된 seq 중 현재 응답에 없는 것 (삭제된 매장) 제거
+ * - 모두 사라지면 (또는 첫 진입) 전체 select
+ */
 watch(
   () => props.mixes,
   (mixes) => {
     if (mixes.length === 0) {
-      selStoreSeqs.value = []
       return
     }
-    // 첫 hydrate 시 또는 기존 선택이 모두 사라진 경우 모두 선택.
-    if (selStoreSeqs.value.length === 0) {
+
+    const validSeqs = new Set(mixes.map((m) => m.storeSeq))
+    const filtered = selStoreSeqs.value.filter((seq) => validSeqs.has(seq))
+    if (filtered.length === 0) {
       selStoreSeqs.value = mixes.map((m) => m.storeSeq)
+    } else if (filtered.length !== selStoreSeqs.value.length) {
+      selStoreSeqs.value = filtered
     }
   },
   { immediate: true },
