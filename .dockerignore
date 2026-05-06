@@ -1,0 +1,42 @@
+# 의존성 / 빌드 산출물 (컨테이너 내부에서 npm ci / npm run build)
+node_modules
+dist
+dist-ssr
+
+# Vite / 캐시
+.vite
+.cache
+
+# VCS / IDE
+.git
+.gitignore
+.idea
+.vscode
+*.swp
+.DS_Store
+
+# 테스트 / 리포트
+coverage
+playwright-report
+test-results
+**/__tests__
+
+# 환경 / 로컬 설정 — 컨테이너에서는 환경변수로 주입
+.env
+.env.*
+!.env.example
+
+# 로그
+*.log
+logs
+npm-debug.log*
+
+# 문서 — 빌드에 불필요
+docs
+*.md
+!README.md
+
+# Docker 자체
+Dockerfile
+docker-compose*.yaml
+.dockerignore
