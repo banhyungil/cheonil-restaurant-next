@@ -1,3 +1,4 @@
+import type { OrderStatus } from './order'
 import type { PayType } from './payment'
 
 /** 결제 수단별 합계 / 건수. */
@@ -61,4 +62,31 @@ export interface PageRes<T> {
   /** 0-based. */
   number: number
   size: number
+}
+
+/**
+ * 주문내역관리 그리드 row — `Transaction` + 상태/비고 확장.
+ * 정산 페이지의 read-only 거래 내역과 달리 status / cmt (비고) 노출.
+ */
+export interface OrderRow extends Transaction {
+  status: OrderStatus
+  /** 비고 (덜맵게/포장 등 — t_order.cmt). */
+  cmt: string | null
+}
+
+/**
+ * 주문내역관리 그리드 KPI 4 카드 응답.
+ * - 조회 기간 매출 (totalSales/totalCount)
+ * - 평균 일매출 (avgDailySales/avgDailyCount)
+ * - 현금 / 카드 (PayMethodSummary)
+ *
+ * 정산의 SalesSummary 와 다름: 단일 날짜가 아닌 기간 집계 + prevSales/netSales/unpaid 없음.
+ */
+export interface OrdersSummary {
+  totalSales: number
+  totalCount: number
+  avgDailySales: number
+  avgDailyCount: number
+  cash: PayMethodSummary
+  card: PayMethodSummary
 }

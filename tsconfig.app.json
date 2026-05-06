@@ -15,4 +15,8 @@
     // Specified here to keep it out of the root directory.
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo"
   }
+  // strictTemplates 비활성 (default).
+  // PrimeVue 의 loose typing (`unknown[] | undefined` 등) 이 v-model / :options 매번 cast 강요해 friction 큼.
+  // 진짜 타입 안전은 `strict: true` (TS) 가 책임. strictTemplates 는 marginal 개선분이라 trade-off 상 OFF.
+  // 노션 이슈 페이지: https://www.notion.so/.../vue-tsc-CLI-와-IDE-Volar-의-template-type-check-차이
 }

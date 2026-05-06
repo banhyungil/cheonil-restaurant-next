@@ -26,7 +26,7 @@
     <div class="h-6 shrink-0" />
 
     <!-- Nav groups -->
-    <template v-for="group in navGroups" :key="group.label">
+    <template v-for="group in cNavGroups" :key="group.label">
       <div v-if="!collapsed" class="flex h-7 items-center pl-2">
         <span class="text-sm font-semibold text-surface-500">{{ group.label }}</span>
       </div>
@@ -82,23 +82,36 @@
 
 <script setup lang="ts">
 import { ChevronsLeft, Menu, UtensilsCrossed } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import _ from 'lodash'
+
+import { useOrderRsvsMonitorQuery } from '@/queries/orderRsvsQuery'
 import { NAV_GROUPS } from '@/router/routes'
 
 const router = useRouter()
 const collapsed = ref(false)
+
+/** 예약 관리 nav badge — 전체 매장의 진행 중 예약 개수 (OrderRsvsPage 와 query cache 공유). */
+const { data: rsvMonitor } = useOrderRsvsMonitorQuery('ALL', null)
+const cOngoingRsvCount = computed(() => rsvMonitor.value?.ready?.length ?? 0)
 
 const navItems = router.getRoutes().flatMap((route) => {
   if (!route.meta.nav || typeof route.name !== 'string') return []
   return [{ ...route.meta.nav, name: route.name, to: route.path }]
 })
 
-const navGroups = _.map(NAV_GROUPS)
-  .map((group) => ({
-    label: group,
-    items: navItems.filter((item) => item.group === group).sort((a, b) => a.order - b.order),
-  }))
-  .filter((g) => g.items.length > 0)
+const cNavGroups = computed(() =>
+  _.map(NAV_GROUPS)
+    .map((group) => ({
+      label: group,
+      items: navItems
+        .filter((item) => item.group === group)
+        .map((item) =>
+          item.name === 'order-rsvs' ? { ...item, badge: cOngoingRsvCount.value } : item,
+        )
+        .sort((a, b) => a.order - b.order),
+    }))
+    .filter((g) => g.items.length > 0),
+)
 </script>

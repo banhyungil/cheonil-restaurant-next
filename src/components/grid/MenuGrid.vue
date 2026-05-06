@@ -6,7 +6,7 @@
         <InputIcon class="text-surface-500">
           <Search :size="16" />
         </InputIcon>
-        <InputText
+        <BInputText
           ref="eltInput"
           v-model="searchKeyword"
           placeholder="메뉴 검색"

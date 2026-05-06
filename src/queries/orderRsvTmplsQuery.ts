@@ -62,6 +62,31 @@ export function useOrderRsvTmplActiveMutation() {
   })
 }
 
+/** 템플릿 자동 주문 토글. */
+export function useOrderRsvTmplAutoOrderMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ seq, autoOrder }: { seq: number; autoOrder: boolean }) =>
+      orderRsvTmplsApi.patchAutoOrder(seq, autoOrder),
+    onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.orderRsvTmpls }),
+  })
+}
+
+/**
+ * 수동 예약 인스턴스 생성 — 스케줄러 누락분 보충.
+ * 성공 시 lastRsvGenAt 갱신 + 새 t_order_rsv row 생성 → templates / orderRsvs 모두 invalidate.
+ */
+export function useOrderRsvTmplGenerateRsvMutation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (seq: number) => orderRsvTmplsApi.generateRsv(seq),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.orderRsvTmpls })
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.orderRsvs })
+    },
+  })
+}
+
 /** 템플릿 삭제 — 연결된 인스턴스는 백엔드가 rsv_tmpl_seq=NULL 처리. */
 export function useOrderRsvTmplRemoveMutation() {
   const qc = useQueryClient()

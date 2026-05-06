@@ -3,15 +3,23 @@ import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 
 import * as settingsApi from '@/apis/settingsApi'
 
-import type { ConfigByCode, SettingCode } from '@/types/setting'
+import type { ConfigByCode, Setting, SettingCode, SettingRaw } from '@/types/setting'
 
 import { QUERY_KEYS } from './queryKeys'
+
+/**
+ * Wire format → 도메인 모델 lift.
+ * `config = userConfig ?? defaultConfig` derive 추가 — 사용처는 `s.config.X` 로 단순 접근.
+ */
+function withConfig<C extends SettingCode>(s: SettingRaw<C>): Setting<C> {
+  return { ...s, config: s.userConfig ?? s.defaultConfig }
+}
 
 /** 전체 설정 목록 — 앱 진입 시 1회 조회 / 정렬 변경 후 invalidate. */
 export function useSettingsQuery() {
   return useQuery({
     queryKey: QUERY_KEYS.settings,
-    queryFn: () => settingsApi.fetchList(),
+    queryFn: async () => (await settingsApi.fetchList()).map((s) => withConfig(s)),
   })
 }
 
@@ -19,7 +27,7 @@ export function useSettingsQuery() {
 export function useSettingQuery<C extends SettingCode>(code: MaybeRefOrGetter<C>) {
   return useQuery({
     queryKey: computed<string[]>(() => [...QUERY_KEYS.settings, toValue(code)]),
-    queryFn: () => settingsApi.fetchByCode(toValue(code)),
+    queryFn: async () => withConfig(await settingsApi.fetchByCode(toValue(code))),
   })
 }
 

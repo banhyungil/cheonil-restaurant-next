@@ -29,6 +29,8 @@ export interface RsvTmplCreatePayload {
   endDt?: string | null
   cmt?: string
   active: boolean
+  /** 자동 주문 — 예약 시각 도래 시 주문 자동 생성. */
+  autoOrder: boolean
   menus: Pick<OrderRsvTmplMenu, 'menuSeq' | 'price' | 'cnt'>[]
 }
 
@@ -73,6 +75,19 @@ export async function update(
 /** 템플릿 활성 토글 — 목록 행의 토글에서 사용. */
 export async function patchActive(seq: number, active: boolean): Promise<void> {
   return api.patch(`/order-rsv-tmpls/${seq}/active`, { active }).then(() => undefined)
+}
+
+/** 자동 주문 토글 — 목록 행의 토글에서 사용. */
+export async function patchAutoOrder(seq: number, autoOrder: boolean): Promise<void> {
+  return api.patch(`/order-rsv-tmpls/${seq}/auto-order`, { autoOrder }).then(() => undefined)
+}
+
+/**
+ * 수동 예약 인스턴스 생성 — 스케줄러 누락분 보충용.
+ * 오늘 생성됐어야 하나 안 만들어진 케이스 (서버 다운 등) 에 사용.
+ */
+export async function generateRsv(seq: number): Promise<void> {
+  return api.post(`/order-rsv-tmpls/${seq}/generate-rsv`).then(() => undefined)
 }
 
 /** 템플릿 삭제. 연결된 인스턴스는 백엔드가 rsv_tmpl_seq=NULL 처리. */

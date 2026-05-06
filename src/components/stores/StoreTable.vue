@@ -5,6 +5,9 @@
     :value="stores"
     striped-rows
     data-key="seq"
+    scrollable
+    scroll-height="flex"
+    :virtual-scroller-options="{ itemSize: 56 }"
     :pt="{ thead: { class: 'bg-surface-50' } }"
   >
     <Column field="nm" header="매장명">
@@ -21,7 +24,7 @@
       </template>
     </Column>
 
-    <Column field="addr" header="구역">
+    <Column field="addr" header="주소">
       <template #body="{ data }">
         <span class="text-sm text-surface-600">{{ data.addr ?? '-' }}</span>
       </template>

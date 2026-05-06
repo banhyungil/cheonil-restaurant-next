@@ -9,7 +9,7 @@
       <span class="text-xl font-bold text-surface-900">{{ store.nm }}</span>
     </div>
     <div class="flex items-center gap-2">
-      <VTooltip v-if="store.cmt">
+      <Tooltip v-if="store.cmt">
         <span
           class="flex size-5 cursor-help items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-600"
           tabindex="0"
@@ -20,7 +20,7 @@
         <template #popper>
           <p class="whitespace-pre-wrap text-base text-surface-900">{{ store.cmt }}</p>
         </template>
-      </VTooltip>
+      </Tooltip>
       <span
         v-if="categoryName"
         class="flex h-6 items-center rounded-xl bg-surface-100 px-2.5 text-sm font-semibold text-surface-700"
@@ -32,6 +32,8 @@
 </template>
 
 <script setup lang="ts">
+import { Tooltip } from 'floating-vue'
+
 import type { Store } from '@/types/store'
 
 defineProps<{

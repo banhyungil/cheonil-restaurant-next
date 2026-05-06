@@ -21,5 +21,14 @@ export const QUERY_KEYS = {
   salesTransactions: ['sales', 'transactions'] as const,
   /** 수금 탭 미수 list — 날짜 무관. */
   salesUnpaid: ['sales', 'unpaid'] as const,
+  // 주문내역관리 (/sales 페이지) — 그리드 탭
+  salesOrders: ['sales', 'orders'] as const,
+  salesOrdersSummary: ['sales', 'orders', 'summary'] as const,
+  // 주문내역관리 — 통계 탭
+  salesStatsBasic: ['sales', 'stats', 'basic'] as const,
+  /** 매출 추이 — 차트 로컬 granularity 변경 시만 refetch. */
+  salesStatsTrend: ['sales', 'stats', 'trend'] as const,
+  salesStatsMenu: ['sales', 'stats', 'menu'] as const,
+  salesStatsStore: ['sales', 'stats', 'store'] as const,
   payments: ['payments'] as const,
 } as const

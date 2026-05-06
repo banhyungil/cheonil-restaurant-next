@@ -29,6 +29,8 @@ export const useOrderRsvTmplStore = defineStore('orderRsvTmpl', () => {
   const endDt = ref<string | null>(null)
   const cmt = ref('')
   const active = ref(true)
+  /** 자동 주문 — 예약 시각 도래 시 주문 자동 생성. 신규 default = false (보수적). */
+  const autoOrder = ref(true)
 
   const editingSeq = ref<number | null>(null)
 
@@ -52,6 +54,7 @@ export const useOrderRsvTmplStore = defineStore('orderRsvTmpl', () => {
     endDt.value = tmpl.endDt ?? null
     cmt.value = tmpl.cmt ?? ''
     active.value = tmpl.active
+    autoOrder.value = tmpl.autoOrder
     editingSeq.value = tmpl.seq
   }
 
@@ -99,6 +102,7 @@ export const useOrderRsvTmplStore = defineStore('orderRsvTmpl', () => {
     endDt.value = null
     cmt.value = ''
     active.value = true
+    autoOrder.value = false
     editingSeq.value = null
   }
 
@@ -112,6 +116,7 @@ export const useOrderRsvTmplStore = defineStore('orderRsvTmpl', () => {
     endDt,
     cmt,
     active,
+    autoOrder,
     editingSeq,
     isEditing,
     totalCount,

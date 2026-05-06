@@ -19,7 +19,8 @@
       description="좌측에서 단골 매장을 클릭하세요"
     />
 
-    <template v-else>
+    <!-- [scrollbar-gutter:stable]: 스크롤바 유무 상관없이 영역 확복, 요소 좌우 흔들림 방짐 -->
+    <div v-else class="flex flex-col flex-1 gap-2 overflow-auto [scrollbar-gutter:stable] pr-3">
       <!-- 템플릿 메타 -->
       <div class="flex flex-col gap-3">
         <!-- 템플릿명 -->
@@ -27,7 +28,7 @@
           <label for="tmpl-nm" class="text-sm font-semibold text-surface-900">
             📝 템플릿명 <span class="text-red-500">*</span>
           </label>
-          <InputText id="tmpl-nm" v-model="nm" placeholder="템플릿 명을 입력하세요" />
+          <BInputText id="tmpl-nm" v-model="nm" placeholder="템플릿 명을 입력하세요" />
         </div>
 
         <!-- 반복 요일 -->
@@ -38,10 +39,21 @@
             </label>
             <DayTypeSelector v-model="dayTypes" />
           </div>
-          <!-- active 토글 -->
-          <div class="flex flex-col">
-            <label class="text-sm font-semibold text-surface-900">활성</label>
-            <ToggleSwitch v-model="active" />
+          <!-- active / autoOrder 토글 -->
+          <div class="flex items-end gap-4">
+            <div class="flex flex-col items-center gap-1.5">
+              <label class="text-sm font-semibold text-surface-900">활성</label>
+              <ToggleSwitch v-model="active" />
+            </div>
+            <div class="flex flex-col items-center gap-1.5">
+              <label
+                v-tooltip="'예약 시각이 되면 주문을 자동 생성합니다'"
+                class="cursor-help text-sm font-semibold text-surface-900"
+              >
+                자동 주문
+              </label>
+              <ToggleSwitch v-model="autoOrder" />
+            </div>
           </div>
         </div>
 
@@ -52,18 +64,25 @@
               🕐 예약 시각 <span class="text-red-500">*</span>
             </label>
             <DatePicker
-              v-model="mRsvTime"
+              :model-value="mRsvTime"
               time-only
               hour-format="24"
               show-icon
               icon-display="input"
+              @update:model-value="(v) => (mRsvTime = v as Date | null)"
             />
           </div>
           <div class="flex flex-1 flex-col gap-1.5">
             <label class="text-sm font-semibold text-surface-900">
               📆 시작일 <span class="text-red-500">*</span>
             </label>
-            <DatePicker v-model="mStartDt" :min-date="MIN_TODAY" date-format="yy-mm-dd" show-icon />
+            <DatePicker
+              :model-value="mStartDt"
+              :min-date="MIN_TODAY"
+              date-format="yy-mm-dd"
+              show-icon
+              @update:model-value="(v) => (mStartDt = v as Date | null)"
+            />
           </div>
         </div>
 
@@ -72,12 +91,13 @@
           <label class="text-sm font-semibold text-surface-900">📆 종료일</label>
           <div class="flex items-center gap-2">
             <DatePicker
-              v-model="mEndDt"
+              :model-value="mEndDt"
               :min-date="cEndMinDate"
               :disabled="mIsEndless"
               date-format="yy-mm-dd"
               show-icon
               class="flex-1"
+              @update:model-value="(v) => (mEndDt = v as Date | null)"
             />
             <label class="flex items-center gap-1.5 text-sm">
               <Checkbox v-model="mIsEndless" binary />
@@ -90,7 +110,7 @@
       <div class="h-px w-full bg-surface-200" />
 
       <!-- 담긴 메뉴 -->
-      <div class="flex flex-1 flex-col gap-1.5 overflow-auto">
+      <div class="flex flex-1 flex-col gap-1.5">
         <label class="text-sm font-semibold text-surface-900">🧾 담긴 메뉴</label>
         <CartEmptyState
           v-if="cState === 'no-menu'"
@@ -98,7 +118,7 @@
           title="메뉴를 담아주세요"
           description="좌측 메뉴를 클릭하면 카트에 담깁니다"
         />
-        <div v-else class="flex flex-1 flex-col gap-2.5 overflow-y-auto p-2.5">
+        <div v-else class="flex flex-1 flex-col gap-2.5 p-2.5">
           <CartItemRow
             v-for="item in items"
             :key="item.menuSeq"
@@ -121,7 +141,7 @@
           class="resize-none text-sm"
         />
       </div>
-    </template>
+    </div>
 
     <!-- 합계 -->
     <CartSummary :total-count="cTotalCount" :total-amount="cTotalAmount" />
@@ -164,6 +184,8 @@ const startDt = defineModel<string>('startDt', { required: true })
 const endDt = defineModel<string | null>('endDt', { required: true })
 const cmt = defineModel<string>('cmt', { required: true })
 const active = defineModel<boolean>('active', { required: true })
+/** 자동 주문 — 예약 시각 도래 시 주문 자동 생성. */
+const autoOrder = defineModel<boolean>('autoOrder', { required: true })
 
 watch([() => props.store?.nm, rsvTime], ([newStoreNm], [oldStoreNm]) => {
   // 매장 선택했고, 템플릿 명에 이전 매장명이 포함되어있으면 갱신

@@ -50,7 +50,7 @@
           <label class="text-sm font-semibold text-surface-900">
             메뉴명 <span class="text-red-500">*</span>
           </label>
-          <InputText
+          <BInputText
             v-model="nm"
             :invalid="!!nmError"
             placeholder="예: 김치찌개"
@@ -64,7 +64,7 @@
           <label class="text-sm font-semibold text-surface-900">
             메뉴명 축약 <span class="text-red-500">*</span>
           </label>
-          <InputText v-model="nmS" maxlength="4" placeholder="예: 김치" />
+          <BInputText v-model="nmS" maxlength="4" placeholder="예: 김치" />
           <p class="text-xs text-surface-500">주방 화면 / 면수표 등 좁은 곳에 표시 (최대 4자)</p>
         </div>
       </div>

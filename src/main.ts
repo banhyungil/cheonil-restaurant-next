@@ -5,6 +5,7 @@ import ToastService from 'primevue/toastservice'
 import ConfirmationService from 'primevue/confirmationservice'
 import FloatingVue from 'floating-vue'
 import 'floating-vue/dist/style.css'
+import VueApexCharts from 'vue3-apexcharts'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { CheonilPreset } from './style/preset'
 import './style/theme.css'
@@ -12,7 +13,6 @@ import './style/theme.css'
 import App from './App.vue'
 import router from './router'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
-import type { PassThroughOptions } from 'primevue/passthrough'
 
 const app = createApp(App)
 
@@ -46,6 +46,9 @@ app.use(PrimeVue, {
 } as PrimeVueConfiguration)
 app.use(ToastService)
 app.use(ConfirmationService)
+
+//SECTION - ApexCharts (글로벌 <Apexchart> 등록)
+app.use(VueApexCharts)
 
 //SECTION - FloatingVue (tooltip / popover)
 app.use(FloatingVue, {

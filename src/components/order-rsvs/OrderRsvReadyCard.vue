@@ -16,17 +16,11 @@
         color="secondary"
         size="sm"
         aria-haspopup="true"
-        :aria-controls="`order-rsv-ready-menu-${rsv.seq}`"
         @click="onToggleMenu"
       >
         <EllipsisVertical :size="18" />
       </BButton>
-      <Menu
-        :id="`order-rsv-ready-menu-${rsv.seq}`"
-        ref="eltMenu"
-        :model="cMenuItems"
-        :popup="true"
-      />
+      <Menu ref="eltMenu" :model="cMenuItems" :popup="true" />
     </div>
 
     <!-- TODO 출처칩(#템플릿명 / #일회성) + 남은시간 배지 -->

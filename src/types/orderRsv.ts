@@ -61,10 +61,17 @@ export interface OrderRsvTmpl {
   dayTypes: DayType[]
   cmt?: string | null
   active: boolean
+  /** 자동 주문 — 예약 시각 도래 시 주문(`t_order`) 자동 생성 여부. */
+  autoOrder: boolean
   /** 패턴 시작일 'YYYY-MM-DD'. NOT NULL — 미입력 시 백엔드 default = today. */
   startDt: string
   /** 패턴 종료일 'YYYY-MM-DD'. null = 무기한. */
   endDt?: string | null
+  /**
+   * 스케줄러가 마지막으로 인스턴스를 생성한 시각 (ISO).
+   * null = 아직 생성된 적 없음. 인스턴스 삭제와 무관 (스케줄러 작동 사실 기록).
+   */
+  lastRsvGenAt: string | null
   regAt: string
   modAt: string
 }

@@ -33,6 +33,8 @@
         :tmpls="cTmpls"
         @edit="onEdit"
         @toggle-active="onToggleActive"
+        @toggle-auto-order="onToggleAutoOrder"
+        @generate-rsv="onGenerateRsv"
         @remove="onRemove"
       />
     </div>
@@ -45,6 +47,8 @@ import { useToast } from 'primevue/usetoast'
 
 import {
   useOrderRsvTmplActiveMutation,
+  useOrderRsvTmplAutoOrderMutation,
+  useOrderRsvTmplGenerateRsvMutation,
   useOrderRsvTmplRemoveMutation,
   useOrderRsvTmplsQuery,
 } from '@/queries/orderRsvTmplsQuery'
@@ -102,6 +106,8 @@ const toast = useToast()
 const orderRsvTmplStore = useOrderRsvTmplStore()
 const { data: stores } = useStoresQuery()
 const { mutate: patchActive } = useOrderRsvTmplActiveMutation()
+const { mutate: patchAutoOrder } = useOrderRsvTmplAutoOrderMutation()
+const { mutate: generateRsv } = useOrderRsvTmplGenerateRsvMutation()
 const { mutate: removeTmpl } = useOrderRsvTmplRemoveMutation()
 
 function onAdd() {
@@ -126,6 +132,26 @@ function onToggleActive(seq: number, active: boolean) {
         toast.add({ severity: 'success', summary: active ? '활성화' : '비활성화', life: 1500 }),
     },
   )
+}
+
+function onToggleAutoOrder(seq: number, autoOrder: boolean) {
+  patchAutoOrder(
+    { seq, autoOrder },
+    {
+      onSuccess: () =>
+        toast.add({
+          severity: 'success',
+          summary: autoOrder ? '자동 주문 ON' : '자동 주문 OFF',
+          life: 1500,
+        }),
+    },
+  )
+}
+
+function onGenerateRsv(seq: number) {
+  generateRsv(seq, {
+    onSuccess: () => toast.add({ severity: 'success', summary: '예약 인스턴스 생성', life: 2000 }),
+  })
 }
 
 function onRemove(seq: number) {
