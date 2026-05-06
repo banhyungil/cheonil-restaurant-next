@@ -3,7 +3,7 @@ import OrdersPage from '@/pages/OrdersPage.vue'
 
 // prettier-ignore
 import {
-  Blocks, BookOpen, Calculator, CalendarClock, CalendarDays, ClipboardList, Package, ReceiptText, Settings, Store, Utensils, Wallet,
+  Blocks, BookOpen, Calculator, CalendarClock, CalendarDays, ClipboardList, Cog, Package, ReceiptText, Settings, Store, Utensils, Wallet,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import type { RouteRecordRaw } from 'vue-router'
@@ -12,6 +12,7 @@ export const NAV_GROUPS = {
   SALES: '영업',
   SETTLEMENT: '정산',
   MANAGE: '관리',
+  SETTINGS: '설정',
   DEV: '개발',
 } as const
 export type NavGroup = (typeof NAV_GROUPS)[keyof typeof NAV_GROUPS]
@@ -154,6 +155,12 @@ export const routes: RouteRecordRaw[] = [
         name: 'master',
         component: () => import('@/pages/MasterPage.vue'),
         meta: { nav: { group: NAV_GROUPS.MANAGE, label: '마스터 관리', icon: Settings, order: 7 } },
+      },
+      {
+        path: 'settings',
+        name: 'settings',
+        component: () => import('@/pages/SettingsPage.vue'),
+        meta: { nav: { group: NAV_GROUPS.SETTINGS, label: '설정', icon: Cog, order: 1 } },
       },
       {
         path: 'dev/components',

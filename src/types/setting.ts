@@ -10,6 +10,7 @@ export type SettingCode =
   | 'MENU_ORDER'
   | 'STORE_CATEGORY_ORDER'
   | 'MENU_CATEGORY_ORDER'
+  | 'OPERATING_HOURS'
 
 /**
  * 정렬 setting config — `{ order: [seq, ...] }`.
@@ -17,6 +18,17 @@ export type SettingCode =
  */
 export interface OrderConfig {
   order: number[]
+}
+
+/**
+ * 운영 시간 — 우리 가게의 영업 시작/종료 시각 (시 단위).
+ * 영업 시간 외 주문 차단 / 통계 시간대 bucket 결정 등에 영향.
+ */
+export interface OperatingHoursConfig {
+  /** 시작 시각 (0~23). */
+  startHour: number
+  /** 종료 시각 (0~23). startHour 보다 커야 함. */
+  endHour: number
 }
 
 /**
@@ -28,6 +40,7 @@ export type ConfigByCode = {
   MENU_ORDER: OrderConfig
   STORE_CATEGORY_ORDER: OrderConfig
   MENU_CATEGORY_ORDER: OrderConfig
+  OPERATING_HOURS: OperatingHoursConfig
 }
 
 /**
