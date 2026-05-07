@@ -58,7 +58,7 @@
       v-model="sortableList"
       :animation="200"
       ghost-class="opacity-40"
-      class="grid grid-cols-5 gap-5 overflow-auto"
+      class="grid grid-cols-4 gap-5 overflow-auto"
       @end="onDragEnd"
     >
       <StoreCard
@@ -69,7 +69,7 @@
         class="cursor-grab"
       />
     </VueDraggable>
-    <div v-else class="grid grid-cols-5 gap-5 overflow-auto">
+    <div v-else class="grid grid-cols-4 gap-5 overflow-auto">
       <StoreCard
         v-for="store in cFilteredStores"
         :key="store.seq"

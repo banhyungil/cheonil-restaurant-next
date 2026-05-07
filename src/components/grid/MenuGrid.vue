@@ -129,6 +129,13 @@ const { cFiltered: cFilteredMenus } = useSearchFilter(cByCategory, searchKeyword
 
 useAutoFocus(eltInput, () => props.active && !isSortMode.value)
 
+watch(
+  () => props.active,
+  () => {
+    if (props.active == false) searchKeyword.value = ''
+  },
+)
+
 function onToggleSortMode() {
   isSortMode.value = !isSortMode.value
   if (isSortMode.value) {
@@ -142,7 +149,6 @@ function onToggleSortMode() {
 /** 카드 선택 시: 카트 추가 + 검색어 초기화 + 재포커스 (빠른 연속 검색을 위해) */
 function onSelect(menuSeq: number) {
   emit('add', menuSeq)
-  searchKeyword.value = ''
   nextTick(() => eltInput.value?.$el?.focus())
 }
 
