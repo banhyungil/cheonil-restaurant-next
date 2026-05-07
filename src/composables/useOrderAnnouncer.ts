@@ -24,7 +24,7 @@ const REPEAT_MIN = 1
 const REPEAT_MAX = 5
 
 const RATE_MIN = 0.9
-const RATE_MAX = 1.4
+const RATE_MAX = 2.0
 const RATE_STEP = 0.1
 const RATE_DEFAULT = 1.2
 
