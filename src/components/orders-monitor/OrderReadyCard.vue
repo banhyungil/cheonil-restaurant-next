@@ -6,11 +6,19 @@
       STATUS_CLASSES[cElapsed.status].border,
     ]"
   >
-    <!-- 헤더: 매장명 + 예약 배지 + ⓘ tooltip + ⋮ more menu -->
+    <!-- 헤더: 매장명 + 예약 배지 + ⓘ tooltip + ⋮ more menu — KITCHEN 모드는 매장명 full-width -->
     <div class="flex h-7 items-center gap-2">
-      <span class="font-bold text-surface-900" :class="cIsKichen ? 'text-2xl' : 'text-lg'">{{
-        order.storeNm
-      }}</span>
+      <!-- 좌측 컬러바 + bg / KITCHEN: full-width + text-center -->
+      <span
+        class="font-bold"
+        :class="
+          cIsKichen
+            ? 'flex-1 text-center text-2xl text-surface-900 border-l-4 border-primary-500 bg-primary-50 pl-3 pr-2 py-1 rounded-md'
+            : 'text-lg text-surface-900'
+        "
+        >{{ order.storeNm }}</span
+      >
+
       <span
         v-if="order.rsvSeq != null"
         class="flex items-center gap-1 rounded-md bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-700"
@@ -29,7 +37,7 @@
           <p class="whitespace-pre-wrap text-base text-surface-900">{{ order.storeCmt }}</p>
         </template>
       </vTooltip>
-      <div class="flex-1" />
+      <div v-if="cIsAll" class="flex-1" />
       <template v-if="cIsAll">
         <BButton
           variant="text"
