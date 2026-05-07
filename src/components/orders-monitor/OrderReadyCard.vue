@@ -8,7 +8,9 @@
   >
     <!-- 헤더: 매장명 + 예약 배지 + ⓘ tooltip + ⋮ more menu -->
     <div class="flex h-7 items-center gap-2">
-      <span class="text-lg font-bold text-surface-900">{{ order.storeNm }}</span>
+      <span class="font-bold text-surface-900" :class="cIsKichen ? 'text-2xl' : 'text-lg'">{{
+        order.storeNm
+      }}</span>
       <span
         v-if="order.rsvSeq != null"
         class="flex items-center gap-1 rounded-md bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-700"
@@ -43,7 +45,7 @@
     </div>
 
     <!-- 시간 row: 예약이면 rsvAt + 잔여/경과, 일반이면 orderAt + 경과 -->
-    <OrderTimeBar :order-at="order.orderAt" :rsv-at="order.rsvAt" />
+    <OrderTimeBar v-if="cIsAll" :order-at="order.orderAt" :rsv-at="order.rsvAt" />
 
     <!-- 메뉴 리스트 (자동 n열) -->
     <!-- 그리드 자식요소 크기는 row의 max-content 크기로 자동으로 설정됨 (align-items: stretch) -->
@@ -51,10 +53,15 @@
       class="grid flex-1 grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-y-2 gap-x-3 content-start mb-2"
     >
       <div v-for="item in order.menus" :key="item.menuSeq" class="flex h-8 items-center gap-2">
-        <span class="truncate text-lg font-semibold text-surface-900">{{ item.menuNm }}</span>
+        <span
+          class="truncate font-semibold text-surface-900"
+          :class="cIsKichen ? 'text-2xl' : 'text-lg'"
+          >{{ item.menuNmS }}</span
+        >
         <div class="flex-1" />
         <span
-          class="flex h-5.5 items-center justify-center rounded-lg bg-surface-100 px-2 text-base font-bold text-surface-900"
+          class="flex h-5.5 items-center justify-center rounded-lg bg-surface-100 px-2 text-2xl font-bold text-surface-900"
+          :class="cIsKichen ? 'text-2xl' : 'text-base'"
         >
           ×{{ item.cnt }}
         </span>
@@ -105,6 +112,7 @@ const emit = defineEmits<{
 }>()
 
 const cIsAll = computed(() => props.mode === 'ALL')
+const cIsKichen = computed(() => props.mode === 'KITCHEN')
 
 const cElapsed = useElapsedTime(() => props.order.rsvAt ?? props.order.orderAt)
 
