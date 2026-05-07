@@ -8,6 +8,7 @@
         </KeepAlive>
       </RouterView>
     </main>
+    <ShortcutsHelpDialog v-model:visible="showHelpDialog" />
   </div>
 </template>
 
@@ -15,9 +16,11 @@
 import { useEventListener } from '@vueuse/core'
 import { RouterView } from 'vue-router'
 import AppSidebar from './components/AppSidebar.vue'
+import ShortcutsHelpDialog from './components/ShortcutsHelpDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
+const showHelpDialog = ref(false)
 
 /**
  * 사이드바 페이지 단축키 — Alt + 숫자.
@@ -36,6 +39,14 @@ useEventListener(window, 'keydown', (e: KeyboardEvent) => {
   if (!target) return
   e.preventDefault()
   if (route.path !== target) router.push(target)
+})
+
+// Ctrl+/ (or Cmd+/) — 단축키 도움말 토글.
+useEventListener(window, 'keydown', (e: KeyboardEvent) => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return
+  if (e.code !== 'Slash') return
+  e.preventDefault()
+  showHelpDialog.value = !showHelpDialog.value
 })
 
 /**
