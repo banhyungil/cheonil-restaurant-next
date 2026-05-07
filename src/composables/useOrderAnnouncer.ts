@@ -29,7 +29,7 @@ const RATE_STEP = 0.1
 const RATE_DEFAULT = 1.2
 
 export function useOrderAnnouncer() {
-  const enabled = useLocalStorage(STORAGE_KEY_ENABLED, false)
+  const enabled = useLocalStorage(STORAGE_KEY_ENABLED, true)
   const repeatCount = useLocalStorage(STORAGE_KEY_REPEAT, 1)
   const rate = useLocalStorage(STORAGE_KEY_RATE, RATE_DEFAULT)
 
@@ -66,7 +66,7 @@ export function useOrderAnnouncer() {
   }
 
   function buildMenuText(order: OrderExt) {
-    return order.menus.map((m) => m.menuNm).join(', ')
+    return order.menus.map((m) => m.menuNm + m.cnt + '개').join(', ')
   }
 
   function announceCreated(order: OrderExt) {
