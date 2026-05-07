@@ -5,8 +5,10 @@
       STATUS_CLASSES[cElapsed.status].timeRowBg,
     ]"
   >
-    <Clock :size="14" class="text-surface-500" />
-    <span class="text-sm font-medium text-surface-500">{{ cOrderTime }}</span>
+    <component :is="cIcon" :size="14" class="text-surface-500" />
+    <span class="text-sm font-medium" :class="rsvAt ? '' : 'text-surface-500'">{{
+      cTimeLabel
+    }}</span>
     <div class="flex-1" />
     <span
       :class="[
@@ -20,17 +22,25 @@
 </template>
 
 <script setup lang="ts">
-import { STATUS_CLASSES } from '@/composables/useElapsedTime'
 import { format } from 'date-fns'
-import { Clock } from 'lucide-vue-next'
+import { CalendarClock, Clock } from 'lucide-vue-next'
+
+import { STATUS_CLASSES } from '@/composables/useElapsedTime'
 
 const props = defineProps<{
   /** 주문 시각 (ISO string). */
   orderAt: string
+  /** 예약 주문일 때만 — 있으면 rsvAt 기준으로 표시 (예약 14:30 + 잔여/경과). */
+  rsvAt?: string | null
 }>()
 
-const cElapsed = useElapsedTime(() => props.orderAt)
-const cOrderTime = computed(() => format(new Date(props.orderAt), 'hh:mm a'))
+const cAnchor = computed(() => props.rsvAt ?? props.orderAt)
+const cElapsed = useElapsedTime(cAnchor)
+const cIcon = computed(() => (props.rsvAt ? CalendarClock : Clock))
+const cTimeLabel = computed(() => {
+  const prefix = props.rsvAt ? '예약' : '주문'
+  return `${prefix} ${format(new Date(cAnchor.value), 'hh:mm a')}`
+})
 
 const BADGE_BG: Record<ElapsedStatus, string> = {
   fresh: 'bg-blue-500',

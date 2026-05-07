@@ -3,9 +3,16 @@
   <div
     class="order-cooked-card flex flex-col gap-2 rounded-[10px] border border-surface-200 bg-white p-3.5"
   >
-    <!-- 헤더: 매장명 + ✓ 완료시각 배지 -->
+    <!-- 헤더: 매장명 + (예약 배지) + ✓ 완료시각 배지 -->
     <div class="flex h-6 items-center gap-2">
       <span class="text-base font-bold text-surface-900">{{ order.storeNm }}</span>
+      <span
+        v-if="order.rsvSeq != null"
+        v-tooltip.right="'예약주문'"
+        class="flex items-center gap-1 rounded-md bg-violet-100 px-1.5 py-0.5 text-xs font-bold text-violet-700"
+      >
+        <CalendarCheck :size="12" />
+      </span>
       <div class="flex-1" />
       <span
         class="flex h-5.5 items-center gap-1 rounded-lg bg-primary-50 px-2 text-xs font-semibold text-primary-600"
@@ -34,7 +41,8 @@
 
 <script setup lang="ts">
 import { format } from 'date-fns'
-import { Check } from 'lucide-vue-next'
+import { vTooltip } from 'floating-vue'
+import { CalendarCheck, Check } from 'lucide-vue-next'
 import { computed } from 'vue'
 
 import type { OrderExt } from '@/types/order'

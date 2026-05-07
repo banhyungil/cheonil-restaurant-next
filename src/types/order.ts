@@ -7,6 +7,8 @@ export interface Order {
   storeSeq: number
   /** 예약 주문일 때만 값 존재. */
   rsvSeq?: number | null
+  /** 예약 주문일 때만 값 존재 — t_order_rsv.rsv_at. */
+  rsvAt?: string | null
   amount: number
   status: OrderStatus
   orderAt: string
