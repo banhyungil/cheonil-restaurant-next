@@ -13,7 +13,7 @@
         class="font-bold"
         :class="
           cIsKichen
-            ? 'flex-1 text-center text-2xl text-surface-900 border-l-4 border-primary-500 bg-primary-50 pl-3 pr-2 py-1 rounded-md'
+            ? 'flex-1 text-center text-3xl text-surface-900 border-l-4 border-primary-500 bg-primary-50 pl-3 pr-2 py-1 rounded-md'
             : 'text-lg text-surface-900'
         "
         >{{ order.storeNm }}</span
@@ -63,13 +63,13 @@
       <div v-for="item in order.menus" :key="item.menuSeq" class="flex h-8 items-center gap-2">
         <span
           class="truncate font-semibold text-surface-900"
-          :class="cIsKichen ? 'text-2xl' : 'text-lg'"
+          :class="cIsKichen ? 'text-3xl' : 'text-lg'"
           >{{ item.menuNmS }}</span
         >
         <div class="flex-1" />
         <span
-          class="flex h-5.5 items-center justify-center rounded-lg bg-surface-100 px-2 text-2xl font-bold text-surface-900"
-          :class="cIsKichen ? 'text-2xl' : 'text-base'"
+          class="flex h-5.5 items-center justify-center rounded-lg bg-surface-100 px-2 ext-base font-bold text-surface-900"
+          :class="cIsKichen ? 'text-3xl' : 'text-base'"
         >
           ×{{ item.cnt }}
         </span>

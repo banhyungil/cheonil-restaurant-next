@@ -66,7 +66,14 @@
             {{ cReadyOrders.length }}
           </span>
         </div>
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
+        <div
+          class="grid gap-4"
+          :class="
+            selMode === 'KITCHEN'
+              ? 'grid-cols-[repeat(auto-fill,minmax(360px,1fr))]'
+              : 'grid-cols-[repeat(auto-fill,minmax(320px,1fr))]'
+          "
+        >
           <OrderReadyCard
             v-for="order in cReadyOrders"
             :key="order.seq"
