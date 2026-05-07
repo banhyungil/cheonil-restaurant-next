@@ -66,14 +66,7 @@
             {{ cReadyOrders.length }}
           </span>
         </div>
-        <div
-          class="grid gap-4"
-          :class="
-            selMode === 'KITCHEN'
-              ? 'grid-cols-[repeat(auto-fill,minmax(360px,1fr))]'
-              : 'grid-cols-[repeat(auto-fill,minmax(320px,1fr))]'
-          "
-        >
+        <div class="grid gap-4" :class="cReadyGridColsClass">
           <OrderReadyCard
             v-for="order in cReadyOrders"
             :key="order.seq"
@@ -116,6 +109,7 @@ import type Popover from 'primevue/popover'
 
 import { useOrderCartStore } from '@/stores/orderCartStore'
 import { useOrderAnnouncer } from '@/composables/useOrderAnnouncer'
+import { useSidebarCollapsed } from '@/composables/useSidebarCollapsed'
 import { useStoresQuery } from '@/queries/storesQuery'
 import {
   useOrderRemoveMutation,
@@ -149,6 +143,15 @@ function onToggleAnnouncerPopover(e: Event) {
 }
 
 const selMode = ref<ModeVal>('ALL')
+
+const sidebarCollapsed = useSidebarCollapsed()
+
+/** 진행중 카드 grid 폭 — 사이드바 접힘 우선, 그 외엔 모드별 분기. */
+const cReadyGridColsClass = computed(() => {
+  if (sidebarCollapsed.value) return 'grid-cols-[repeat(auto-fill,minmax(380px,1fr))]'
+  if (selMode.value === 'KITCHEN') return 'grid-cols-[repeat(auto-fill,minmax(360px,1fr))]'
+  return 'grid-cols-[repeat(auto-fill,minmax(320px,1fr))]'
+})
 
 const { data: orders } = useOrdersMonitorQuery()
 const { data: stores } = useStoresQuery()

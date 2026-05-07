@@ -60,9 +60,9 @@
     <div
       class="grid flex-1 grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-y-2 gap-x-3 content-start mb-2"
     >
-      <div v-for="item in order.menus" :key="item.menuSeq" class="flex h-8 items-center gap-2">
+      <div v-for="item in order.menus" :key="item.menuSeq" class="flex min-h-8 items-center gap-2">
         <span
-          class="truncate font-semibold text-surface-900"
+          class="line-clamp-2 font-semibold text-surface-900"
           :class="cIsKichen ? 'text-3xl' : 'text-lg'"
           >{{ item.menuNmS }}</span
         >

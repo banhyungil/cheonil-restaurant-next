@@ -18,10 +18,12 @@ import { RouterView } from 'vue-router'
 import AppSidebar from './components/AppSidebar.vue'
 import ShortcutsHelpDialog from './components/ShortcutsHelpDialog.vue'
 
+import { useSidebarCollapsed } from '@/composables/useSidebarCollapsed'
+
 const route = useRoute()
 const router = useRouter()
 const showHelpDialog = ref(false)
-const sidebarCollapsed = ref(false)
+const sidebarCollapsed = useSidebarCollapsed()
 
 /**
  * 사이드바 페이지 단축키 — Alt + 숫자.
