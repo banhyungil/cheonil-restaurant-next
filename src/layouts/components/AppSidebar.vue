@@ -82,7 +82,7 @@
 
 <script setup lang="ts">
 import { ChevronsLeft, Menu, UtensilsCrossed } from 'lucide-vue-next'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import _ from 'lodash'
 
@@ -112,6 +112,7 @@ const cNavGroups = computed(() =>
         )
         .sort((a, b) => a.order - b.order),
     }))
-    .filter((g) => g.items.length > 0),
+    .filter((g) => g.items.length > 0)
+    .filter((g) => import.meta.env.DEV || g.label !== NAV_GROUPS.DEV),
 )
 </script>
