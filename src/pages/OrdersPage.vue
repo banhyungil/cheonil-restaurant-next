@@ -43,6 +43,7 @@
 </template>
 
 <script setup lang="ts">
+import { useEventListener } from '@vueuse/core'
 import { useToast } from 'primevue/usetoast'
 
 import { useSortedItems } from '@/composables/useSortedItems'
@@ -63,7 +64,9 @@ const { data: storeCategories } = useStoreCtgsQuery()
 const { data: settings } = useSettingsQuery()
 
 // 정렬: settings 의 *_ORDER 적용 — 매장/메뉴/카테고리 4종
-const cOrderOf = <C extends 'STORE_ORDER' | 'MENU_ORDER' | 'STORE_CATEGORY_ORDER' | 'MENU_CATEGORY_ORDER'>(
+const cOrderOf = <
+  C extends 'STORE_ORDER' | 'MENU_ORDER' | 'STORE_CATEGORY_ORDER' | 'MENU_CATEGORY_ORDER',
+>(
   code: C,
 ) =>
   computed(
@@ -168,4 +171,14 @@ function onOrder() {
     },
   })
 }
+
+// 주문완료 단축키 — Ctrl+Shift+Space. KeepAlive 캐시 상태에서도 다른 페이지 활성 시엔 안 발동.
+const route = useRoute()
+useEventListener(window, 'keydown', (e: KeyboardEvent) => {
+  if (route.name !== 'order') return
+  console.log(e)
+  if (!(e.ctrlKey && e.shiftKey && e.code === 'Space')) return
+  e.preventDefault()
+  onOrder()
+})
 </script>

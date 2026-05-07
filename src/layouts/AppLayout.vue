@@ -12,10 +12,31 @@
 </template>
 
 <script setup lang="ts">
+import { useEventListener } from '@vueuse/core'
 import { RouterView } from 'vue-router'
 import AppSidebar from './components/AppSidebar.vue'
 
 const route = useRoute()
+const router = useRouter()
+
+/**
+ * 사이드바 페이지 단축키 — Alt + 숫자.
+ *
+ * `e.code` 사용 이유: Alt+1 입력 시 Mac 의 `e.key` 는 layout 에 따라 `¡` 등 특수문자.
+ * `Digit1` 처럼 물리키 기반이라 layout 무관 안정.
+ */
+const ALT_SHORTCUT_ROUTES: Record<string, string> = {
+  Digit1: '/orders',
+  Digit2: '/orders/monitor',
+}
+
+useEventListener(window, 'keydown', (e: KeyboardEvent) => {
+  if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+  const target = ALT_SHORTCUT_ROUTES[e.code]
+  if (!target) return
+  e.preventDefault()
+  if (route.path !== target) router.push(target)
+})
 
 /**
  * KeepAlive 정책:
