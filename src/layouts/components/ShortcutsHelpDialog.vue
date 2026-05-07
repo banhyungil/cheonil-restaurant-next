@@ -54,6 +54,10 @@ const SHORTCUT_GROUPS: { label: string; items: Shortcut[] }[] = [
     items: [{ keys: ['Ctrl', 'Shift', 'Space'], desc: '주문 접수', scope: '주문 페이지' }],
   },
   {
+    label: '레이아웃',
+    items: [{ keys: ['Ctrl', 'B'], desc: '사이드바 토글' }],
+  },
+  {
     label: '도움말',
     items: [{ keys: ['Ctrl', '/'], desc: '단축키 보기' }],
   },

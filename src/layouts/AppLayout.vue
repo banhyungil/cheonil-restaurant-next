@@ -1,6 +1,6 @@
 <template>
   <div class="flex h-screen">
-    <AppSidebar />
+    <AppSidebar v-model:collapsed="sidebarCollapsed" />
     <main class="flex-1 overflow-auto">
       <RouterView v-slot="{ Component }">
         <KeepAlive :include="cKeepAlivePages">
@@ -21,6 +21,7 @@ import ShortcutsHelpDialog from './components/ShortcutsHelpDialog.vue'
 const route = useRoute()
 const router = useRouter()
 const showHelpDialog = ref(false)
+const sidebarCollapsed = ref(false)
 
 /**
  * 사이드바 페이지 단축키 — Alt + 숫자.
@@ -47,6 +48,14 @@ useEventListener(window, 'keydown', (e: KeyboardEvent) => {
   if (e.code !== 'Slash') return
   e.preventDefault()
   showHelpDialog.value = !showHelpDialog.value
+})
+
+// Ctrl+B (or Cmd+B) — 사이드바 토글.
+useEventListener(window, 'keydown', (e: KeyboardEvent) => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return
+  if (e.code !== 'KeyB') return
+  e.preventDefault()
+  sidebarCollapsed.value = !sidebarCollapsed.value
 })
 
 /**

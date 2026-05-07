@@ -90,7 +90,7 @@ import { useOrderRsvsMonitorQuery } from '@/queries/orderRsvsQuery'
 import { NAV_GROUPS } from '@/router/routes'
 
 const router = useRouter()
-const collapsed = ref(false)
+const collapsed = defineModel<boolean>('collapsed', { default: false })
 
 /** 예약 관리 nav badge — 전체 매장의 진행 중 예약 개수 (OrderRsvsPage 와 query cache 공유). */
 const { data: rsvMonitor } = useOrderRsvsMonitorQuery('ALL', null)
