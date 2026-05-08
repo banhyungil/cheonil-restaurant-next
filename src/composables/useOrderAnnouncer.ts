@@ -1,24 +1,47 @@
-import { useLocalStorage } from '@vueuse/core'
-import { onBeforeUnmount, watch } from 'vue'
+import { promiseTimeout, useLocalStorage } from '@vueuse/core'
+import {
+  computed,
+  type MaybeRefOrGetter,
+  onActivated,
+  onDeactivated,
+  toValue,
+  watch,
+  type WatchStopHandle,
+} from 'vue'
 
 import type { OrderExt } from '@/types/order'
+import { clearAnnounceQueue, enqueueAnnounce, playAlert, speakAsync } from '@/utils/announceQueue'
 import { orderCreatedBus, orderUpdatedBus } from '@/utils/orderEventBus'
 
 /**
- * 주문 음성 알림 (TTS).
+ * 주문 음성 알림 (이벤트 발화 + 임계치 알람 통합).
  *
- * `useOrderStream` 이 발행하는 주문 이벤트를 구독해 Web Speech API 로 발화.
- * - `order:created` → "주문 접수, 주문, <메뉴들>"
- * - `order:updated` → "주문 수정, 주문 수정, <메뉴들>"
+ * 두 가지 트리거를 한 곳에서 처리:
+ *  1. SSE 주문 이벤트 — `useOrderStream` 발행 버스 구독
+ *     - `order:created` → Door Bell + "<매장명>, <메뉴들>" (반복 N회)
+ *     - `order:updated` → Door Bell + "주문 수정, <매장명>, <메뉴들>"
+ *  2. READY 카운트 임계치 — orders ref 의 변화 감시
+ *     - 9 ↓ → 10 ↑  : CRAZY (폭주)
+ *     - 1 ↑ → 0    : CLEAR (전부 처리)
+ *     - 0   → 1 ↑  : WELCOME (첫 주문)
  *
- * 상태:
- * - `enabled` — localStorage 영속. 사용자 첫 클릭이 자동재생 정책의 user gesture 역할.
+ * 모든 발화는 단일 큐(`announceQueue`) 직렬화 → 사운드 겹침 없음.
+ * `OrdersMonitorPage` 가 keepAlive 이므로 `onActivated`/`onDeactivated` 로 활성 lifecycle 제어 —
+ * 다른 페이지 체류 시 SSE 갱신/임계치 변화에 무반응.
  *
- * 호출 위치: `OrdersMonitorPage` (매장 모니터 화면에서만 동작).
+ * 설정은 모듈 레벨 singleton (LocalStorage):
+ *  - 마스터: enabled / repeat / rate
+ *  - 임계치: alertCrazy / alertClear / alertWelcome (개별 ON/OFF)
+ *
+ * 호출 위치: `OrderAnnouncerButton` (매장 모니터 화면 헤더 단일 인스턴스).
  */
+
 const STORAGE_KEY_ENABLED = 'order-announcer-enabled'
 const STORAGE_KEY_REPEAT = 'order-announcer-repeat'
 const STORAGE_KEY_RATE = 'order-announcer-rate'
+const STORAGE_KEY_ALERT_CRAZY = 'order-announcer-alert-crazy'
+const STORAGE_KEY_ALERT_CLEAR = 'order-announcer-alert-clear'
+const STORAGE_KEY_ALERT_WELCOME = 'order-announcer-alert-welcome'
 
 const REPEAT_MIN = 1
 const REPEAT_MAX = 5
@@ -28,70 +51,147 @@ const RATE_MAX = 2.0
 const RATE_STEP = 0.1
 const RATE_DEFAULT = 1.2
 
-export function useOrderAnnouncer() {
-  const enabled = useLocalStorage(STORAGE_KEY_ENABLED, true)
-  const repeatCount = useLocalStorage(STORAGE_KEY_REPEAT, 1)
-  const rate = useLocalStorage(STORAGE_KEY_RATE, RATE_DEFAULT)
+/** 폭주 알람 임계치 — 추후 설정 화면으로 이관 가능. */
+const THRESHOLD_BUSY = 10
 
-  function speak(text: string) {
-    if (!enabled.value) return
-    const times = Math.min(REPEAT_MAX, Math.max(REPEAT_MIN, repeatCount.value))
-    for (let i = 0; i < times; i++) {
-      const utterance = new SpeechSynthesisUtterance(text)
+// ─── 모듈 레벨 settings (singleton, useSidebarCollapsed 패턴) ─────────
+export const announcerEnabled = useLocalStorage(STORAGE_KEY_ENABLED, true)
+export const announcerRepeat = useLocalStorage(STORAGE_KEY_REPEAT, 1)
+export const announcerRate = useLocalStorage(STORAGE_KEY_RATE, RATE_DEFAULT)
+export const alertCrazyEnabled = useLocalStorage(STORAGE_KEY_ALERT_CRAZY, true)
+export const alertClearEnabled = useLocalStorage(STORAGE_KEY_ALERT_CLEAR, true)
+export const alertWelcomeEnabled = useLocalStorage(STORAGE_KEY_ALERT_WELCOME, true)
 
-      // ─── SpeechSynthesisUtterance 옵션 (Web Speech API) ────────────────
-      // 모두 기본값으로 명시. 매장 환경에 맞게 튜닝 시 값만 바꾸면 됨.
-
-      /** 언어/로케일 — 한국어 음성 선택. default: '' (HTML lang 상속) */
-      utterance.lang = 'ko-KR'
-
-      /** 발화 속도 — 1.0 = 보통. 범위 0.1 ~ 10. default: 1
-       *  매장 시끄러우면 0.9 정도로 천천히 발화 권장. UI 슬라이더로 조절. */
-      utterance.rate = rate.value
-
-      /** 음높이 — 1.0 = 보통. 범위 0 ~ 2. default: 1
-       *  값↑ = 여성/높은 톤, 값↓ = 남성/낮은 톤 느낌. */
-      utterance.pitch = 1.0
-
-      /** 볼륨 — 0 ~ 1. default: 1 (시스템 볼륨에 곱해짐) */
-      utterance.volume = 1.0
-
-      /** 음성(화자) — null 이면 OS/브라우저 기본 한국어 화자 사용. default: null
-       *  특정 화자 강제 시 speechSynthesis.getVoices() 결과 중 하나 할당.
-       *  예) utterance.voice = speechSynthesis.getVoices().find(v => v.name === 'Yuna') ?? null */
-      utterance.voice = null
-
-      speechSynthesis.speak(utterance)
-    }
-  }
-
-  function buildMenuText(order: OrderExt) {
-    return order.menus.map((m) => m.menuNm + m.cnt + '개').join(', ')
-  }
-
+export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefined>) {
   function announceCreated(order: OrderExt) {
-    speak(`주문 접수, ${order.storeNm}, ${buildMenuText(order)}`)
+    enqueueOrderAnnouncement(`${order.storeNm}, ${buildMenuText(order)}`)
   }
 
   function announceUpdated(order: OrderExt) {
-    speak(`주문 수정, ${order.storeNm}, ${buildMenuText(order)}`)
+    enqueueOrderAnnouncement(`주문 수정, ${order.storeNm}, ${buildMenuText(order)}`)
   }
 
   // 토글 전환 — ON 시 사용자 클릭(user gesture) 직후 첫 발화로 autoplay 정책 통과 확인 겸 확신,
-  // OFF 시 큐에 남은 발화 즉시 중단.
-  watch(enabled, (v) => {
-    if (v) speak('음성 알림 시작')
-    else speechSynthesis.cancel()
+  // OFF 시 큐 + 진행 중 TTS 즉시 정리.
+  watch(announcerEnabled, (v) => {
+    if (v) {
+      enqueueAnnounce(() => speakAsync('음성 알림 시작', { rate: announcerRate.value }))
+    } else {
+      clearAnnounceQueue()
+    }
   })
 
-  const offCreated = orderCreatedBus.on(announceCreated)
-  const offUpdated = orderUpdatedBus.on(announceUpdated)
+  // ─── 임계치 알람 (READY 카운트 watch) ─────────────────────────────────
+  const cReadyCount = computed(
+    () => (toValue(orders) ?? []).filter((o) => o.status === 'READY').length,
+  )
 
-  onBeforeUnmount(() => {
-    offCreated()
-    offUpdated()
-    speechSynthesis.cancel()
+  let stopReadyWatch: WatchStopHandle | null = null
+
+  function startReadyWatch() {
+    if (stopReadyWatch) return
+    stopReadyWatch = watch(cReadyCount, (newCnt, oldCnt) => {
+      if (oldCnt === undefined) return // 초기 / 재진입 직후는 알림 X
+
+      // 폭주: 9 이하 → 10 이상
+      if (oldCnt < THRESHOLD_BUSY && newCnt >= THRESHOLD_BUSY) {
+        enqueueAnnounce(async () => {
+          if (!announcerEnabled.value || !alertCrazyEnabled.value) return
+          await playAlert('CRAZY')
+        })
+      }
+
+      // 전부 처리: 1 이상 → 0
+      if (oldCnt > 0 && newCnt === 0) {
+        enqueueAnnounce(async () => {
+          if (!announcerEnabled.value || !alertClearEnabled.value) return
+          await playAlert('CLEAR')
+        })
+      }
+
+      // 첫 주문: 0 → 1 이상
+      if (oldCnt === 0 && newCnt > 0) {
+        enqueueAnnounce(async () => {
+          if (!announcerEnabled.value || !alertWelcomeEnabled.value) return
+          await playAlert('WELCOME')
+        })
+      }
+    })
+  }
+
+  function stopReadyWatchFn() {
+    stopReadyWatch?.()
+    stopReadyWatch = null
+  }
+
+  // ─── Activation lifecycle ─────────────────────────────────────────────
+  // OrdersMonitorPage 가 keepAlive — 활성 시에만 구독/watch 동작.
+  // onActivated 가 첫 mount 시점에도 fire 되므로 setup 단계 호출 불필요.
+
+  let offCreated: (() => void) | null = null
+  let offUpdated: (() => void) | null = null
+
+  onActivated(() => {
+    if (!offCreated) offCreated = orderCreatedBus.on(announceCreated)
+    if (!offUpdated) offUpdated = orderUpdatedBus.on(announceUpdated)
+    startReadyWatch()
   })
 
-  return { enabled, repeatCount, rate, REPEAT_MIN, REPEAT_MAX, RATE_MIN, RATE_MAX, RATE_STEP }
+  onDeactivated(() => {
+    offCreated?.()
+    offUpdated?.()
+    offCreated = null
+    offUpdated = null
+    stopReadyWatchFn()
+    clearAnnounceQueue()
+  })
+
+  return {
+    enabled: announcerEnabled,
+    repeatCount: announcerRepeat,
+    rate: announcerRate,
+    alertCrazy: alertCrazyEnabled,
+    alertClear: alertClearEnabled,
+    alertWelcome: alertWelcomeEnabled,
+    REPEAT_MIN,
+    REPEAT_MAX,
+    RATE_MIN,
+    RATE_MAX,
+    RATE_STEP,
+    THRESHOLD_BUSY,
+  }
+}
+
+function clamp(v: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, v))
+}
+
+function buildMenuText(order: OrderExt) {
+  return order.menus.map((m) => m.menuNm + m.cnt + '개').join(', ')
+}
+
+/** Door Bell + TTS(반복 N회) 1개 task 로 enqueue. 진행 도중 OFF 되면 즉시 중단. */
+function enqueueOrderAnnouncement(text: string) {
+  if (!announcerEnabled.value) return
+  enqueueAnnounce(async () => {
+    if (!announcerEnabled.value) return
+    playAlert('BELL')
+    await promiseTimeout(1000)
+
+    const times = clamp(announcerRepeat.value, REPEAT_MIN, REPEAT_MAX)
+    for (let i = 0; i < times; i++) {
+      if (!announcerEnabled.value) break
+      await speakAsync(text, { rate: announcerRate.value })
+    }
+  })
+}
+
+/**
+ * 임의 텍스트 발화 — 사용자 능동 조작이라 master `enabled` 무관.
+ * 큐 enqueue 로 다른 발화와 직렬화. rate 만 적용 (repeat 미적용 — 1회).
+ */
+export function announceCustom(text: string) {
+  const trimmed = text.trim()
+  if (!trimmed) return
+  enqueueAnnounce(() => speakAsync(trimmed, { rate: announcerRate.value }))
 }

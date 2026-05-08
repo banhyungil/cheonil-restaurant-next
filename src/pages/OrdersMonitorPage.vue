@@ -6,51 +6,7 @@
       <h1 class="text-2xl font-bold text-surface-900">주문현황</h1>
       <span class="text-base text-surface-500">· 실시간 주문 상태를 확인하세요</span>
       <div class="flex-1" />
-      <BButton
-        :variant="announcerEnabled ? 'filled' : 'outlined'"
-        color="secondary"
-        title="음성 알림 설정"
-        @click="onToggleAnnouncerPopover"
-      >
-        <Volume2 v-if="announcerEnabled" :size="16" />
-        <VolumeX v-else :size="16" />
-      </BButton>
-      <Popover ref="announcerPopoverRef">
-        <div class="flex min-w-52 flex-col gap-3 p-1">
-          <label class="flex items-center justify-between gap-3">
-            <span class="text-sm font-medium text-surface-700">음성 알림</span>
-            <ToggleSwitch v-model="announcerEnabled" />
-          </label>
-          <label class="flex items-center justify-between gap-3">
-            <span class="text-sm font-medium text-surface-700">반복 횟수</span>
-            <InputNumber
-              v-model="announcerRepeat"
-              :min="REPEAT_MIN"
-              :max="REPEAT_MAX"
-              show-buttons
-              button-layout="horizontal"
-              :input-class="'w-10 text-center'"
-              :disabled="!announcerEnabled"
-            />
-          </label>
-          <label class="flex items-center justify-between gap-3">
-            <span class="text-sm font-medium text-surface-700">속도</span>
-            <InputNumber
-              v-model="announcerRate"
-              :min="RATE_MIN"
-              :max="RATE_MAX"
-              :step="RATE_STEP"
-              :min-fraction-digits="1"
-              :max-fraction-digits="2"
-              suffix="x"
-              show-buttons
-              button-layout="horizontal"
-              :input-class="'w-18 text-center'"
-              :disabled="!announcerEnabled"
-            />
-          </label>
-        </div>
-      </Popover>
+      <OrderAnnouncerButton :orders="orders" />
       <BTabs v-model="selMode" :options="MODE_OPTIONS" />
     </header>
 
@@ -104,11 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { Volume2, VolumeX } from 'lucide-vue-next'
-import type Popover from 'primevue/popover'
-
 import { useOrderCartStore } from '@/stores/orderCartStore'
-import { useOrderAnnouncer } from '@/composables/useOrderAnnouncer'
 import { useSidebarCollapsed } from '@/composables/useSidebarCollapsed'
 import { useStoresQuery } from '@/queries/storesQuery'
 import {
@@ -125,22 +77,6 @@ const MODE_OPTIONS = [
 // Indexed Access Type
 // 배열/튜플 타입에서 number는 "유효한 모든 인덱스"를 의미
 type ModeVal = (typeof MODE_OPTIONS)[number]['val']
-
-const {
-  enabled: announcerEnabled,
-  repeatCount: announcerRepeat,
-  rate: announcerRate,
-  REPEAT_MIN,
-  REPEAT_MAX,
-  RATE_MIN,
-  RATE_MAX,
-  RATE_STEP,
-} = useOrderAnnouncer()
-
-const announcerPopoverRef = ref<InstanceType<typeof Popover> | null>(null)
-function onToggleAnnouncerPopover(e: Event) {
-  announcerPopoverRef.value?.toggle(e)
-}
 
 const selMode = ref<ModeVal>('ALL')
 
@@ -174,10 +110,12 @@ const router = useRouter()
 const toast = useToast()
 const orderCartStore = useOrderCartStore()
 
+/** 주문 완료 처리 */
 function onComplete(seq: number) {
   updateStatus({ seq, status: 'COOKED' })
 }
 
+/** 주문 완료 취소 처리 */
 function onCancel(seq: number) {
   updateStatus({ seq, status: 'READY' })
 }
