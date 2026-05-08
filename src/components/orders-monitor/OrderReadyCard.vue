@@ -7,14 +7,14 @@
     ]"
   >
     <!-- 헤더: 매장명 + 예약 배지 + ⓘ tooltip + ⋮ more menu — KITCHEN 모드는 매장명 full-width -->
-    <div class="flex h-7 items-center gap-2">
+    <div class="flex h-7 items-center gap-2" :class="cIsKichen ? 'mb-4' : ''">
       <!-- 좌측 컬러바 + bg / KITCHEN: full-width + text-center -->
       <span
         class="font-bold text-surface-900"
         :class="
           cIsKichen
             ? [
-                'flex-1 text-center text-3xl border-l-4 pl-3 pr-2 py-1 rounded-md',
+                'flex-1 text-center text-3xl border-l-4 pl-3 pr-2 py-2 rounded-md',
                 STATUS_CLASSES[cElapsed.status].border,
                 STATUS_CLASSES[cElapsed.status].timeRowBg,
               ]
