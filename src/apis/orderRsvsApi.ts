@@ -10,10 +10,12 @@ import { api } from './api'
 export interface RsvsListParams {
   /** 조회 상태들. 미지정 시 전체. */
   statuses?: RsvStatus[]
-  /** 당일 / 모두. 메인 페이지 세그먼트 필터. */
-  dayMode?: 'TODAY' | 'ALL'
   /** 매장 필터. */
   storeSeq?: number
+  /** 예약일(rsvAt) 기간 시작 — 'YYYY-MM-DD'. inclusive. 미지정 시 무제한. */
+  fromDate?: string
+  /** 예약일(rsvAt) 기간 종료 — 'YYYY-MM-DD'. inclusive. 미지정 시 무제한. */
+  toDate?: string
 }
 
 /**

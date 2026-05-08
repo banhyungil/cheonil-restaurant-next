@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-import { subMinutes } from 'date-fns'
+import { format, subMinutes } from 'date-fns'
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 
 import * as orderRsvsApi from '@/apis/orderRsvsApi'
@@ -16,13 +16,17 @@ import { QUERY_KEYS } from './queryKeys'
  *   사용자 액션으로 발생하는 변경(create/update/status/remove) 은 SSE 가 아니라 mutation 이 캐시 갱신 책임을 진다.
  */
 
-/** 처리 이력 윈도우 — 1시간 이내 처리분만 카드 표시 + 복구 가능. */
+/** 처리 이력 윈도우 — 현황 탭 인라인 미리보기에서 1시간 이내 처리분만 카드 표시. 액션 정책과 무관. */
 const HISTORY_WINDOW_MINUTES = 60
 
 /**
  * 예약 메인 페이지용 쿼리 — RESERVED 전체 + 1시간 이내 COMPLETED/CANCELED.
  * select 에서 ready/history 로 분리해 페이지의 computed 부담을 줄임.
  * dayMode / storeSeq 변경 시 자동 refetch.
+ *
+ * 인자 `dayMode` 는 호출부 표현력 유지용 — 내부에서 `fromDate`/`toDate` 로 변환해 백엔드 호출.
+ *  - TODAY → today ~ today
+ *  - ALL   → 무제한
  */
 export function useOrderRsvsMonitorQuery(
   dayMode: MaybeRefOrGetter<'TODAY' | 'ALL'>,
@@ -34,9 +38,11 @@ export function useOrderRsvsMonitorQuery(
     ),
     queryFn: () => {
       const seq = toValue(storeSeq)
+      const today = format(new Date(), 'yyyy-MM-dd')
+      const isToday = toValue(dayMode) === 'TODAY'
       return orderRsvsApi.fetchList({
-        dayMode: toValue(dayMode),
         ...(seq != null && { storeSeq: seq }),
+        ...(isToday && { fromDate: today, toDate: today }),
       })
     },
     select: (list) => {
@@ -49,6 +55,42 @@ export function useOrderRsvsMonitorQuery(
         ),
       }
     },
+  })
+}
+
+/**
+ * 처리 이력 조회 (COMPLETED / CANCELED).
+ *
+ * 예약일(rsvAt) 기간 + 매장 + 상태 필터 — 모두 서버 처리.
+ * 결과는 rsvAt 기준 내림차순 정렬.
+ */
+export function useOrderRsvsHistoryQuery(
+  from: MaybeRefOrGetter<string>,
+  to: MaybeRefOrGetter<string>,
+  storeSeq?: MaybeRefOrGetter<number | null>,
+  statuses?: MaybeRefOrGetter<RsvStatus[]>,
+) {
+  return useQuery({
+    queryKey: computed(
+      () =>
+        [
+          ...QUERY_KEYS.orderRsvsHistory,
+          toValue(from),
+          toValue(to),
+          toValue(storeSeq) ?? null,
+          [...(toValue(statuses) ?? ['COMPLETED', 'CANCELED'])].sort().join(','),
+        ] as const,
+    ),
+    queryFn: () => {
+      const seq = toValue(storeSeq)
+      return orderRsvsApi.fetchList({
+        statuses: toValue(statuses) ?? ['COMPLETED', 'CANCELED'],
+        fromDate: toValue(from),
+        toDate: toValue(to),
+        ...(seq != null && { storeSeq: seq }),
+      })
+    },
+    select: (list) => [...list].sort((a, b) => b.rsvAt.localeCompare(a.rsvAt)),
   })
 }
 
