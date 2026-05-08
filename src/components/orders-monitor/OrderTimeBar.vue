@@ -25,7 +25,7 @@
 import { format } from 'date-fns'
 import { CalendarClock, Clock } from 'lucide-vue-next'
 
-import { STATUS_CLASSES } from '@/composables/useElapsedTime'
+import { STATUS_CLASSES, type ElapsedMode } from '@/composables/useElapsedTime'
 
 const props = defineProps<{
   /** 주문 시각 (ISO string). */
@@ -34,12 +34,13 @@ const props = defineProps<{
   rsvAt?: string | null
 }>()
 
-const cAnchor = computed(() => props.rsvAt ?? props.orderAt)
-const cElapsed = useElapsedTime(cAnchor)
+const cBaseAt = computed(() => props.rsvAt ?? props.orderAt)
+const cMode = computed<ElapsedMode>(() => (props.rsvAt ? 'rsv' : 'order'))
+const cElapsed = useElapsedTime(cBaseAt, cMode)
 const cIcon = computed(() => (props.rsvAt ? CalendarClock : Clock))
 const cTimeLabel = computed(() => {
   const prefix = props.rsvAt ? '예약' : '주문'
-  return `${prefix} ${format(new Date(cAnchor.value), 'hh:mm a')}`
+  return `${prefix} ${format(new Date(cBaseAt.value), 'hh:mm a')}`
 })
 
 const BADGE_BG: Record<ElapsedStatus, string> = {

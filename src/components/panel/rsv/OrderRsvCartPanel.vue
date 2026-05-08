@@ -134,8 +134,6 @@ const cRsvAtDate = computed(() => (rsvAt.value ? new Date(rsvAt.value) : null))
 
 function onUpdateDate(d: Date | Date[] | (Date | null)[] | null | undefined) {
   if (!(d instanceof Date)) return
-  const cur = rsvAt.value ? new Date(rsvAt.value) : new Date()
-  cur.setFullYear(d.getFullYear(), d.getMonth(), d.getDate())
-  rsvAt.value = cur.toISOString()
+  rsvAt.value = d.toISOString()
 }
 </script>

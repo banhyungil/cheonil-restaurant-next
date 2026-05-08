@@ -3,36 +3,61 @@ import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 
 export type ElapsedStatus = 'fresh' | 'caution' | 'warning' | 'danger'
 
+export type ElapsedMode = 'order' | 'rsv'
+
 export interface ElapsedTime {
   minutes: number
   label: string
   status: ElapsedStatus
 }
 
+/** 예약 카드의 lead time — 이 시간만큼 앞당겨 status 가 escalate (rsvAt 도래 시 danger). */
+export const RSV_LEAD_TIME_MIN = 35
+
 /**
  * 기준 시각 대비 경과/잔여 시간을 1분 단위로 계산.
  *
- * - 주문 시각 (`orderAt`) 기준: 항상 미래가 아니라 minutes >= 0.
- * - 예약 시각 (`rsvAt`) 기준: 예약시각이 아직 도래 전이면 minutes 음수 → "{N}분 후".
+ * - `mode === 'order'`: `baseAt` = 주문 시각. 일반 경과시간 ("X분 경과"/"방금"/"X분 후").
+ * - `mode === 'rsv'`: `baseAt` = 예약 시각. 라벨은 "X분 후"/"도래"/"X분 지남".
+ *   status 는 {@link RSV_LEAD_TIME_MIN} 만큼 앞당겨 계산 — 예약 도래 직전부터 자연스럽게 escalate
+ *   (lead 35 기준: rsvAt 35분 전부터 fresh, 20분 전 caution, 10분 전 warning, 도래 시 danger).
  *
  * 임계치는 theme.css 의 --color-status-* 토큰 기준 (caution 15+, warning 25+, danger 35+).
  */
-export function useElapsedTime(anchor: MaybeRefOrGetter<string>) {
+export function useElapsedTime(
+  baseAt: MaybeRefOrGetter<string>,
+  mode: MaybeRefOrGetter<ElapsedMode> = 'order',
+) {
   const now = useNow({ interval: 60_000 })
 
   return computed<ElapsedTime>(() => {
-    const diffMs = now.value.getTime() - new Date(toValue(anchor)).getTime()
+    const diffMs = now.value.getTime() - new Date(toValue(baseAt)).getTime()
     const minutes = Math.floor(diffMs / 60_000)
-    if (minutes < 0) {
-      return { minutes, label: `${-minutes}분 후`, status: 'fresh' }
-    }
+    const m = toValue(mode)
+
+    // status 계산용 — rsv 는 leadTime 만큼 앞당겨 escalate.
+    const urgencyMinutes = m === 'rsv' ? minutes + RSV_LEAD_TIME_MIN : minutes
     const status: ElapsedStatus =
-      minutes >= 35 ? 'danger' : minutes >= 25 ? 'warning' : minutes >= 15 ? 'caution' : 'fresh'
-    return {
-      minutes,
-      label: minutes < 1 ? '방금' : `${minutes}분 경과`,
-      status,
+      urgencyMinutes >= 35
+        ? 'danger'
+        : urgencyMinutes >= 25
+          ? 'warning'
+          : urgencyMinutes >= 15
+            ? 'caution'
+            : 'fresh'
+
+    let label: string
+    if (m === 'rsv') {
+      if (minutes < 0) label = `${-minutes}분 후`
+      else if (minutes < 1) label = '도래'
+      else label = `${minutes}분 지남`
+    } else {
+      if (minutes < 0) label = `${-minutes}분 후`
+      else if (minutes < 1) label = '방금'
+      else label = `${minutes}분 경과`
     }
+
+    return { minutes, label, status }
   })
 }
 

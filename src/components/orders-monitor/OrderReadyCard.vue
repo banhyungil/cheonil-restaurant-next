@@ -53,7 +53,7 @@
     </div>
 
     <!-- 시간 row: 예약이면 rsvAt + 잔여/경과, 일반이면 orderAt + 경과 -->
-    <OrderTimeBar v-if="cIsAll" :order-at="order.orderAt" :rsv-at="order.rsvAt" />
+    <OrderTimeBar :order-at="order.orderAt" :rsv-at="order.rsvAt" />
 
     <!-- 메뉴 리스트 (자동 n열) -->
     <!-- 그리드 자식요소 크기는 row의 max-content 크기로 자동으로 설정됨 (align-items: stretch) -->
@@ -122,7 +122,10 @@ const emit = defineEmits<{
 const cIsAll = computed(() => props.mode === 'ALL')
 const cIsKichen = computed(() => props.mode === 'KITCHEN')
 
-const cElapsed = useElapsedTime(() => props.order.rsvAt ?? props.order.orderAt)
+const cElapsed = useElapsedTime(
+  () => props.order.rsvAt ?? props.order.orderAt,
+  () => (props.order.rsvAt ? 'rsv' : 'order'),
+)
 
 const eltMenu = ref<{ toggle: (e: Event) => void } | null>(null)
 
