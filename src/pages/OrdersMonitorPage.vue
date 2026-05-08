@@ -148,7 +148,9 @@ const sidebarCollapsed = useSidebarCollapsed()
 
 /** 진행중 카드 grid 폭 — 사이드바 접힘 우선, 그 외엔 모드별 분기. */
 const cReadyGridColsClass = computed(() => {
-  if (sidebarCollapsed.value) return 'grid-cols-[repeat(auto-fill,minmax(380px,1fr))]'
+  if (selMode.value === 'KITCHEN' && sidebarCollapsed.value)
+    return 'grid-cols-[repeat(auto-fill,minmax(380px,1fr))]'
+
   if (selMode.value === 'KITCHEN') return 'grid-cols-[repeat(auto-fill,minmax(360px,1fr))]'
   return 'grid-cols-[repeat(auto-fill,minmax(320px,1fr))]'
 })

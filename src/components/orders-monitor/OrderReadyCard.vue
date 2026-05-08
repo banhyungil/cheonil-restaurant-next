@@ -10,11 +10,15 @@
     <div class="flex h-7 items-center gap-2">
       <!-- 좌측 컬러바 + bg / KITCHEN: full-width + text-center -->
       <span
-        class="font-bold"
+        class="font-bold text-surface-900"
         :class="
           cIsKichen
-            ? 'flex-1 text-center text-3xl text-surface-900 border-l-4 border-primary-500 bg-primary-50 pl-3 pr-2 py-1 rounded-md'
-            : 'text-lg text-surface-900'
+            ? [
+                'flex-1 text-center text-3xl border-l-4 pl-3 pr-2 py-1 rounded-md',
+                STATUS_CLASSES[cElapsed.status].border,
+                STATUS_CLASSES[cElapsed.status].timeRowBg,
+              ]
+            : 'text-lg'
         "
         >{{ order.storeNm }}</span
       >
