@@ -221,6 +221,7 @@ import {
   PRESET_MAX_LEN,
   useOrderAnnouncer,
 } from '@/composables/useOrderAnnouncer'
+import { alertWarningEnabled as alertWarning } from '@/composables/useOrderElapsedAlarm'
 import type { OrderExt } from '@/types/order'
 import { enqueueAnnounce, playAlert, speakAsync, type Sounds } from '@/utils/announceQueue'
 
@@ -237,7 +238,6 @@ const {
   alertCrazy,
   alertClear,
   alertWelcome,
-  alertWarning,
   REPEAT_MIN,
   REPEAT_MAX,
   RATE_MIN,

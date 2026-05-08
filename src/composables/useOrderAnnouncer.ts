@@ -1,4 +1,4 @@
-import { promiseTimeout, useLocalStorage, useNow } from '@vueuse/core'
+import { promiseTimeout, useLocalStorage } from '@vueuse/core'
 import {
   computed,
   type MaybeRefOrGetter,
@@ -9,17 +9,13 @@ import {
   type WatchStopHandle,
 } from 'vue'
 
-import {
-  DANGER_THRESHOLD_MIN,
-  RSV_LEAD_TIME_MIN,
-  WARN_THRESHOLD_MIN,
-} from '@/composables/useElapsedTime'
+import { useOrderElapsedAlarm } from '@/composables/useOrderElapsedAlarm'
 import type { OrderExt } from '@/types/order'
 import { clearAnnounceQueue, enqueueAnnounce, playAlert, speakAsync } from '@/utils/announceQueue'
 import { orderCreatedBus, orderUpdatedBus } from '@/utils/orderEventBus'
 
 /**
- * 주문 음성 알림 (이벤트 발화 + 임계치 알람 통합).
+ * 주문 음성 알림 (이벤트 발화 + 카운트 임계 알람 통합).
  *
  * 두 가지 트리거를 한 곳에서 처리:
  *  1. SSE 주문 이벤트 — `useOrderStream` 발행 버스 구독
@@ -30,13 +26,15 @@ import { orderCreatedBus, orderUpdatedBus } from '@/utils/orderEventBus'
  *     - 1 ↑ → 0    : CLEAR (전부 처리)
  *     - 0   → 1 ↑  : WELCOME (첫 주문)
  *
+ * 단계별 지연 알람(caution/warning/danger)은 `useOrderStageAlarm` 으로 분리되어 내부에서 호출.
+ *
  * 모든 발화는 단일 큐(`announceQueue`) 직렬화 → 사운드 겹침 없음.
- * `OrdersMonitorPage` 가 keepAlive 이므로 `onActivated`/`onDeactivated` 로 활성 lifecycle 제어 —
+ * `OrdersMonitorPage` keepAlive 라 `onActivated`/`onDeactivated` 로 활성 lifecycle 제어 —
  * 다른 페이지 체류 시 SSE 갱신/임계치 변화에 무반응.
  *
  * 설정은 모듈 레벨 singleton (LocalStorage):
- *  - 마스터: enabled / repeat / rate
- *  - 임계치: alertCrazy / alertClear / alertWelcome (개별 ON/OFF)
+ *  - 마스터: enabled / repeat / rate / pitch
+ *  - 카운트 임계: alertCrazy / alertClear / alertWelcome
  *
  * 호출 위치: `OrderAnnouncerButton` (매장 모니터 화면 헤더 단일 인스턴스).
  */
@@ -48,7 +46,6 @@ const STORAGE_KEY_PITCH = 'order-announcer-pitch'
 const STORAGE_KEY_ALERT_CRAZY = 'order-announcer-alert-crazy'
 const STORAGE_KEY_ALERT_CLEAR = 'order-announcer-alert-clear'
 const STORAGE_KEY_ALERT_WELCOME = 'order-announcer-alert-welcome'
-const STORAGE_KEY_ALERT_WARNING = 'order-announcer-alert-warning'
 const STORAGE_KEY_PRESETS = 'order-announcer-presets'
 
 /** 임의 발화 프리셋 최대 개수. */
@@ -80,7 +77,6 @@ export const announcerPitch = useLocalStorage(STORAGE_KEY_PITCH, PITCH_DEFAULT)
 export const alertCrazyEnabled = useLocalStorage(STORAGE_KEY_ALERT_CRAZY, true)
 export const alertClearEnabled = useLocalStorage(STORAGE_KEY_ALERT_CLEAR, true)
 export const alertWelcomeEnabled = useLocalStorage(STORAGE_KEY_ALERT_WELCOME, true)
-export const alertWarningEnabled = useLocalStorage(STORAGE_KEY_ALERT_WARNING, true)
 /** 임의 발화 프리셋 — 사용자가 popover 에서 추가/삭제/드래그 정렬. localStorage 단일 소스. */
 export const announcerPresets = useLocalStorage<string[]>(STORAGE_KEY_PRESETS, [])
 
@@ -105,7 +101,7 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
     }
   })
 
-  // ─── 임계치 알람 (READY 카운트 watch) ─────────────────────────────────
+  // ─── 카운트 임계치 알람 (READY 카운트 watch) ─────────────────────────
   const cReadyCount = computed(
     () => (toValue(orders) ?? []).filter((o) => o.status === 'READY').length,
   )
@@ -148,86 +144,8 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
     stopReadyWatch = null
   }
 
-  // ─── 지연 알람 (READY 주문 단계별 transition) ──────────────────────────
-  // 단계별 1회 발화: warning 진입 → 1회, danger 진입 → 1회 더. 첫 로드는 발화 X (Map 에 등록만).
-  type Stage = 'warning' | 'danger'
-  const orderAlarmedStage = new Map<number, Stage>()
-  const now = useNow({ interval: 60_000 })
-
-  /** 주문별 현재 stage 산출 — useElapsedTime 동일 임계치. rsv 보정 포함. */
-  const cOrderStages = computed(() => {
-    const nowMs = now.value.getTime()
-    return (toValue(orders) ?? [])
-      .filter((o) => o.status === 'READY')
-      .map((o) => {
-        const baseMs = new Date(o.rsvAt ?? o.orderAt).getTime()
-        const minutes = Math.floor((nowMs - baseMs) / 60_000)
-        const urgency = o.rsvAt ? minutes + RSV_LEAD_TIME_MIN : minutes
-        const stage: Stage | null =
-          urgency >= DANGER_THRESHOLD_MIN
-            ? 'danger'
-            : urgency >= WARN_THRESHOLD_MIN
-              ? 'warning'
-              : null
-        return { seq: o.seq, storeNm: o.storeNm, minutes, stage }
-      })
-  })
-
-  let stopStageWatch: WatchStopHandle | null = null
-
-  /** 주문 일정시간 경과 시 알림 Watch  */
-  function startStageWatch() {
-    if (stopStageWatch) return
-    let initialized = false
-    stopStageWatch = watch(
-      cOrderStages,
-      (current) => {
-        if (!initialized) {
-          // 첫 로드 — 이미 warn/danger 인 항목은 발화 없이 Map 에만 등록 (재진입/새로고침 시 무더기 발화 방지).
-          for (const o of current) {
-            if (o.stage) orderAlarmedStage.set(o.seq, o.stage)
-          }
-          initialized = true
-          return
-        }
-
-        // 단계 escalate 감지 — warning 첫 진입 또는 danger 첫 진입.
-        for (const o of current) {
-          if (!o.stage) continue
-          const last = orderAlarmedStage.get(o.seq)
-          const escalated =
-            (o.stage === 'warning' && last === undefined) ||
-            (o.stage === 'danger' && last !== 'danger')
-          if (escalated) {
-            orderAlarmedStage.set(o.seq, o.stage)
-            const text = `${o.storeNm}, ${o.minutes}분 지연`
-            enqueueAnnounce(async () => {
-              if (!announcerEnabled.value || !alertWarningEnabled.value) return
-              playAlert('BELL')
-              await promiseTimeout(1000)
-              await speakAsync(text, {
-                rate: announcerRate.value,
-                pitch: announcerPitch.value,
-              })
-            })
-          }
-        }
-
-        // READY 에서 빠진 주문 cleanup (메모리 누수 방지). Map 순회 중 delete 는 ECMA 스펙상 안전.
-        const currentSeqs = new Set(current.map((o) => o.seq))
-        for (const seq of orderAlarmedStage.keys()) {
-          if (!currentSeqs.has(seq)) orderAlarmedStage.delete(seq)
-        }
-      },
-      { immediate: true },
-    )
-  }
-
-  function stopStageWatchFn() {
-    stopStageWatch?.()
-    stopStageWatch = null
-    orderAlarmedStage.clear()
-  }
+  // 단계별 지연 알람 — 자체 onActivated/onDeactivated 보유 (응집형).
+  useOrderElapsedAlarm(orders)
 
   // ─── Activation lifecycle ─────────────────────────────────────────────
   // OrdersMonitorPage 가 keepAlive — 활성 시에만 구독/watch 동작.
@@ -240,7 +158,6 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
     if (!offCreated) offCreated = orderCreatedBus.on(announceCreated)
     if (!offUpdated) offUpdated = orderUpdatedBus.on(announceUpdated)
     startReadyWatch()
-    startStageWatch()
   })
 
   onDeactivated(() => {
@@ -249,7 +166,6 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
     offCreated = null
     offUpdated = null
     stopReadyWatchFn()
-    stopStageWatchFn()
     clearAnnounceQueue()
   })
 
@@ -261,7 +177,6 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
     alertCrazy: alertCrazyEnabled,
     alertClear: alertClearEnabled,
     alertWelcome: alertWelcomeEnabled,
-    alertWarning: alertWarningEnabled,
     REPEAT_MIN,
     REPEAT_MAX,
     RATE_MIN,
@@ -300,7 +215,7 @@ function enqueueOrderAnnouncement(text: string) {
 
 /**
  * 임의 텍스트 발화 — 사용자 능동 조작이라 master `enabled` 무관.
- * 큐 enqueue 로 다른 발화와 직렬화. rate 만 적용 (repeat 미적용 — 1회).
+ * 큐 enqueue 로 다른 발화와 직렬화. rate / pitch 적용, repeat 미적용.
  */
 export function announceCustom(text: string) {
   const trimmed = text.trim()

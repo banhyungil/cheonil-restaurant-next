@@ -15,10 +15,13 @@ export interface ElapsedTime {
 export const RSV_LEAD_TIME_MIN = 35
 
 /** status escalate 임계치 (urgency 분 기준). */
-export const CAUTION_THRESHOLD_MIN = 0
-export const WARN_THRESHOLD_MIN = 25
-export const DANGER_THRESHOLD_MIN = 35
+// export const CAUTION_THRESHOLD_MIN = 15
+// export const WARN_THRESHOLD_MIN = 25
+// export const DANGER_THRESHOLD_MIN = 35
 
+export const CAUTION_THRESHOLD_MIN = 1
+export const WARN_THRESHOLD_MIN = 2
+export const DANGER_THRESHOLD_MIN = 3
 /**
  * 기준 시각 대비 경과/잔여 시간을 1분 단위로 계산.
  *

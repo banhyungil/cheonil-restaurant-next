@@ -45,7 +45,7 @@ export function clearAnnounceQueue() {
 
 // ─── 알림 primitives ─────────────────────────────────────────────────
 
-export type Sounds = 'BELL' | 'CRAZY' | 'CLEAR' | 'WELCOME'
+export type Sounds = 'BELL' | 'CRAZY' | 'CLEAR' | 'WELCOME' | 'ALAM_LV1' | 'ALAM_LV2' | 'ALAM_LV3'
 const CRAZY_URLS = ['/sounds/마무리.mp3', '/sounds/펜타킬.mp3'] as const
 function getURL(sounds: Sounds): string {
   switch (sounds) {
@@ -57,10 +57,18 @@ function getURL(sounds: Sounds): string {
     case 'CLEAR':
       const url = CRAZY_URLS[Math.floor(Math.random() * 2)] as string
       return encodeURI(url)
-    default:
+    case 'WELCOME':
       return encodeURI('/sounds/소환사협곡환영.mp3')
+    case 'ALAM_LV1':
+      return encodeURI('/sounds/Bell-level1.mp3')
+    case 'ALAM_LV2':
+      return encodeURI('/sounds/Bell Sound Ring Sound-level2.mp3')
+    case 'ALAM_LV3':
+    default:
+      return encodeURI('/sounds/Ship Bell Sound-level3.mp3')
   }
 }
+
 /** 알림음 1회 재생 후 ended/에러까지 대기. play 차단/로딩 실패 시 silent fallthrough. */
 export function playAlert(sounds: Sounds): Promise<void> {
   return new Promise((resolve) => {
