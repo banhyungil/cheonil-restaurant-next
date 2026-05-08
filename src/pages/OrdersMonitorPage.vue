@@ -68,7 +68,12 @@ import {
   useOrdersMonitorQuery,
   useOrderStatusMutation,
 } from '@/queries/ordersQuery'
+import { unlockAudio } from '@/utils/announceQueue'
 import { useToast } from 'primevue/usetoast'
+
+// 페이지 첫 클릭 시 autoplay 정책 잠금 해제 — 새로고침 직후 SSE 자동 발화 차단 회피.
+// once: true 라 첫 fire 후 자동 해제. capture: true 로 다른 핸들러보다 먼저 실행.
+useEventListener(document, 'click', unlockAudio, { once: true, capture: true })
 
 const MODE_OPTIONS = [
   { val: 'ALL', label: '전체 보기' },

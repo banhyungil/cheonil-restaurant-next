@@ -82,6 +82,37 @@ export interface SpeakOptions {
   voice?: SpeechSynthesisVoice | null
 }
 
+// ─── Autoplay unlock ─────────────────────────────────────────────────
+
+let unlocked = false
+
+/**
+ * 브라우저 autoplay 정책 우회 — 첫 user gesture 시점에 호출해 HTMLAudio + SpeechSynthesis 를 잠금 해제.
+ *
+ * - HTMLAudio: 기존 Door Bell mp3 를 volume=0 로 짧게 play+pause → 이후 `new Audio().play()` 허용
+ * - SpeechSynthesis: 빈 utterance(volume=0) speak → 이후 `speak()` 발화 허용
+ *
+ * idempotent — 이미 unlock 됐으면 no-op.
+ */
+export function unlockAudio() {
+  if (unlocked) return
+  unlocked = true
+
+  const audio = new Audio(encodeURI('/sounds/Door Bell.mp3'))
+  audio.volume = 0
+  audio
+    .play()
+    .then(() => {
+      audio.pause()
+      audio.currentTime = 0
+    })
+    .catch(() => {})
+
+  const u = new SpeechSynthesisUtterance(' ')
+  u.volume = 0
+  speechSynthesis.speak(u)
+}
+
 /** TTS 1회 발화 후 onend/onerror 까지 대기. 이전 발화 cancel 시도 즉시 resolve. */
 export function speakAsync(text: string, opts: SpeakOptions = {}): Promise<void> {
   return new Promise((resolve) => {
