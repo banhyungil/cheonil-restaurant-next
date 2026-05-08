@@ -109,6 +109,22 @@
             <ToggleSwitch v-model="row.model.value" :disabled="!enabled" />
           </div>
         </div>
+        <!-- 지연 알람 — BELL + TTS (단계별 1회: warning, danger 진입 시 각각 발화) -->
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-sm font-medium text-surface-700">지연 (warning↑)</span>
+          <div class="flex items-center gap-1.5">
+            <BButton
+              variant="text"
+              color="secondary"
+              size="sm"
+              v-tooltip="'미리듣기'"
+              @click="onPreviewWarn"
+            >
+              <Play :size="14" />
+            </BButton>
+            <ToggleSwitch v-model="alertWarning" :disabled="!enabled" />
+          </div>
+        </div>
       </section>
 
       <div class="h-px bg-surface-200" />
@@ -192,6 +208,7 @@
 </template>
 
 <script setup lang="ts">
+import { promiseTimeout } from '@vueuse/core'
 import { vTooltip } from 'floating-vue'
 import { BookmarkPlus, Info, Play, Volume2, VolumeX, X } from 'lucide-vue-next'
 import type Popover from 'primevue/popover'
@@ -205,7 +222,7 @@ import {
   useOrderAnnouncer,
 } from '@/composables/useOrderAnnouncer'
 import type { OrderExt } from '@/types/order'
-import { playAlert, type Sounds } from '@/utils/announceQueue'
+import { enqueueAnnounce, playAlert, speakAsync, type Sounds } from '@/utils/announceQueue'
 
 const props = defineProps<{
   /** 임계치 알람용 — useOrderAnnouncer 가 내부에서 READY 카운트 watch. */
@@ -220,6 +237,7 @@ const {
   alertCrazy,
   alertClear,
   alertWelcome,
+  alertWarning,
   REPEAT_MIN,
   REPEAT_MAX,
   RATE_MIN,
@@ -256,6 +274,18 @@ function onPreview(sound: Sounds) {
 /** 발화 테스트 — 현재 rate/pitch 설정으로 샘플 멘트 발화. master enabled 무관 (announceCustom 정책). */
 function onPreviewSpeech() {
   announceCustom('음성 알림 테스트')
+}
+
+/** 지연 알람 미리듣기 — 실제 발화 시퀀스(BELL + TTS) 그대로 큐 enqueue. master 무관. */
+function onPreviewWarn() {
+  enqueueAnnounce(async () => {
+    playAlert('BELL')
+    await promiseTimeout(1000)
+    await speakAsync('테스트 매장, 25분 지연', {
+      rate: rate.value,
+      pitch: pitch.value,
+    })
+  })
 }
 
 const customText = ref('')

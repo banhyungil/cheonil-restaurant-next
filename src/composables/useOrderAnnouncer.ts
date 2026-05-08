@@ -1,4 +1,4 @@
-import { promiseTimeout, useLocalStorage } from '@vueuse/core'
+import { promiseTimeout, useLocalStorage, useNow } from '@vueuse/core'
 import {
   computed,
   type MaybeRefOrGetter,
@@ -9,6 +9,11 @@ import {
   type WatchStopHandle,
 } from 'vue'
 
+import {
+  DANGER_THRESHOLD_MIN,
+  RSV_LEAD_TIME_MIN,
+  WARN_THRESHOLD_MIN,
+} from '@/composables/useElapsedTime'
 import type { OrderExt } from '@/types/order'
 import { clearAnnounceQueue, enqueueAnnounce, playAlert, speakAsync } from '@/utils/announceQueue'
 import { orderCreatedBus, orderUpdatedBus } from '@/utils/orderEventBus'
@@ -43,6 +48,7 @@ const STORAGE_KEY_PITCH = 'order-announcer-pitch'
 const STORAGE_KEY_ALERT_CRAZY = 'order-announcer-alert-crazy'
 const STORAGE_KEY_ALERT_CLEAR = 'order-announcer-alert-clear'
 const STORAGE_KEY_ALERT_WELCOME = 'order-announcer-alert-welcome'
+const STORAGE_KEY_ALERT_WARNING = 'order-announcer-alert-warning'
 const STORAGE_KEY_PRESETS = 'order-announcer-presets'
 
 /** 임의 발화 프리셋 최대 개수. */
@@ -74,6 +80,7 @@ export const announcerPitch = useLocalStorage(STORAGE_KEY_PITCH, PITCH_DEFAULT)
 export const alertCrazyEnabled = useLocalStorage(STORAGE_KEY_ALERT_CRAZY, true)
 export const alertClearEnabled = useLocalStorage(STORAGE_KEY_ALERT_CLEAR, true)
 export const alertWelcomeEnabled = useLocalStorage(STORAGE_KEY_ALERT_WELCOME, true)
+export const alertWarningEnabled = useLocalStorage(STORAGE_KEY_ALERT_WARNING, true)
 /** 임의 발화 프리셋 — 사용자가 popover 에서 추가/삭제/드래그 정렬. localStorage 단일 소스. */
 export const announcerPresets = useLocalStorage<string[]>(STORAGE_KEY_PRESETS, [])
 
@@ -141,6 +148,87 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
     stopReadyWatch = null
   }
 
+  // ─── 지연 알람 (READY 주문 단계별 transition) ──────────────────────────
+  // 단계별 1회 발화: warning 진입 → 1회, danger 진입 → 1회 더. 첫 로드는 발화 X (Map 에 등록만).
+  type Stage = 'warning' | 'danger'
+  const orderAlarmedStage = new Map<number, Stage>()
+  const now = useNow({ interval: 60_000 })
+
+  /** 주문별 현재 stage 산출 — useElapsedTime 동일 임계치. rsv 보정 포함. */
+  const cOrderStages = computed(() => {
+    const nowMs = now.value.getTime()
+    return (toValue(orders) ?? [])
+      .filter((o) => o.status === 'READY')
+      .map((o) => {
+        const baseMs = new Date(o.rsvAt ?? o.orderAt).getTime()
+        const minutes = Math.floor((nowMs - baseMs) / 60_000)
+        const urgency = o.rsvAt ? minutes + RSV_LEAD_TIME_MIN : minutes
+        const stage: Stage | null =
+          urgency >= DANGER_THRESHOLD_MIN
+            ? 'danger'
+            : urgency >= WARN_THRESHOLD_MIN
+              ? 'warning'
+              : null
+        return { seq: o.seq, storeNm: o.storeNm, minutes, stage }
+      })
+  })
+
+  let stopStageWatch: WatchStopHandle | null = null
+
+  /** 주문 일정시간 경과 시 알림 Watch  */
+  function startStageWatch() {
+    if (stopStageWatch) return
+    let initialized = false
+    stopStageWatch = watch(
+      cOrderStages,
+      (current) => {
+        if (!initialized) {
+          // 첫 로드 — 이미 warn/danger 인 항목은 발화 없이 Map 에만 등록 (재진입/새로고침 시 무더기 발화 방지).
+          for (const o of current) {
+            if (o.stage) orderAlarmedStage.set(o.seq, o.stage)
+          }
+          initialized = true
+          return
+        }
+
+        // 단계 escalate 감지 — warning 첫 진입 또는 danger 첫 진입.
+        for (const o of current) {
+          if (!o.stage) continue
+          const last = orderAlarmedStage.get(o.seq)
+          const escalated =
+            (o.stage === 'warning' && last === undefined) ||
+            (o.stage === 'danger' && last !== 'danger')
+          if (escalated) {
+            orderAlarmedStage.set(o.seq, o.stage)
+            const text = `${o.storeNm}, ${o.minutes}분 지연`
+            enqueueAnnounce(async () => {
+              if (!announcerEnabled.value || !alertWarningEnabled.value) return
+              playAlert('BELL')
+              await promiseTimeout(1000)
+              await speakAsync(text, {
+                rate: announcerRate.value,
+                pitch: announcerPitch.value,
+              })
+            })
+          }
+        }
+
+        // READY 에서 빠진 주문 cleanup (메모리 누수 방지). Map 순회 중 delete 는 ECMA 스펙상 안전.
+        const currentSeqs = new Set(current.map((o) => o.seq))
+        for (const seq of orderAlarmedStage.keys()) {
+          if (!currentSeqs.has(seq)) orderAlarmedStage.delete(seq)
+        }
+      },
+      { immediate: true },
+    )
+  }
+
+  function stopStageWatchFn() {
+    stopStageWatch?.()
+    stopStageWatch = null
+    orderAlarmedStage.clear()
+  }
+
   // ─── Activation lifecycle ─────────────────────────────────────────────
   // OrdersMonitorPage 가 keepAlive — 활성 시에만 구독/watch 동작.
   // onActivated 가 첫 mount 시점에도 fire 되므로 setup 단계 호출 불필요.
@@ -152,6 +240,7 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
     if (!offCreated) offCreated = orderCreatedBus.on(announceCreated)
     if (!offUpdated) offUpdated = orderUpdatedBus.on(announceUpdated)
     startReadyWatch()
+    startStageWatch()
   })
 
   onDeactivated(() => {
@@ -160,6 +249,7 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
     offCreated = null
     offUpdated = null
     stopReadyWatchFn()
+    stopStageWatchFn()
     clearAnnounceQueue()
   })
 
@@ -171,6 +261,7 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
     alertCrazy: alertCrazyEnabled,
     alertClear: alertClearEnabled,
     alertWelcome: alertWelcomeEnabled,
+    alertWarning: alertWarningEnabled,
     REPEAT_MIN,
     REPEAT_MAX,
     RATE_MIN,

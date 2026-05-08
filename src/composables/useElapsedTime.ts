@@ -14,6 +14,11 @@ export interface ElapsedTime {
 /** 예약 카드의 lead time — 이 시간만큼 앞당겨 status 가 escalate (rsvAt 도래 시 danger). */
 export const RSV_LEAD_TIME_MIN = 35
 
+/** status escalate 임계치 (urgency 분 기준). */
+export const CAUTION_THRESHOLD_MIN = 0
+export const WARN_THRESHOLD_MIN = 25
+export const DANGER_THRESHOLD_MIN = 35
+
 /**
  * 기준 시각 대비 경과/잔여 시간을 1분 단위로 계산.
  *
@@ -38,11 +43,11 @@ export function useElapsedTime(
     // status 계산용 — rsv 는 leadTime 만큼 앞당겨 escalate.
     const urgencyMinutes = m === 'rsv' ? minutes + RSV_LEAD_TIME_MIN : minutes
     const status: ElapsedStatus =
-      urgencyMinutes >= 35
+      urgencyMinutes >= DANGER_THRESHOLD_MIN
         ? 'danger'
-        : urgencyMinutes >= 25
+        : urgencyMinutes >= WARN_THRESHOLD_MIN
           ? 'warning'
-          : urgencyMinutes >= 15
+          : urgencyMinutes >= CAUTION_THRESHOLD_MIN
             ? 'caution'
             : 'fresh'
 
