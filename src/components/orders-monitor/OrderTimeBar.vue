@@ -1,18 +1,22 @@
 <template>
   <div
     :class="[
-      'order-time-bar flex h-9 items-center gap-2 rounded-lg px-3',
+      'order-time-bar flex items-center gap-2 rounded-lg px-3',
+      kitchen ? 'h-11' : 'h-9',
       STATUS_CLASSES[cElapsed.status].timeRowBg,
     ]"
   >
-    <component :is="cIcon" :size="14" class="text-surface-500" />
-    <span class="text-sm font-medium" :class="rsvAt ? '' : 'text-surface-500'">{{
-      cTimeLabel
-    }}</span>
+    <component :is="cIcon" :size="kitchen ? 18 : 14" class="text-surface-500" />
+    <span
+      class="font-medium"
+      :class="[kitchen ? 'text-2xl' : 'text-sm', rsvAt ? '' : 'text-surface-500']"
+      >{{ cTimeLabel }}</span
+    >
     <div class="flex-1" />
     <span
       :class="[
-        'order-elapsed-badge flex h-5 items-center justify-center rounded-full px-2 text-xs font-bold text-white',
+        'order-elapsed-badge flex items-center justify-center rounded-full font-bold text-white',
+        kitchen ? 'h-7 px-2.5 text-base' : 'h-5 px-2 text-xs',
         BADGE_BG[cElapsed.status],
       ]"
     >
@@ -32,6 +36,8 @@ const props = defineProps<{
   orderAt: string
   /** 예약 주문일 때만 — 있으면 rsvAt 기준으로 표시 (예약 14:30 + 잔여/경과). */
   rsvAt?: string | null
+  /** 주방용 모드 — 글자/배지/아이콘 크기 확대. */
+  kitchen?: boolean
 }>()
 
 const cBaseAt = computed(() => props.rsvAt ?? props.orderAt)

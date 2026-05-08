@@ -20,7 +20,7 @@
       >
 
       <span
-        v-if="order.rsvSeq != null"
+        v-if="order.rsvSeq != null && cIsAll"
         class="flex items-center gap-1 rounded-md bg-violet-100 px-2 py-0.5 text-xs font-bold text-violet-700"
         v-tooltip.right="'예약주문'"
       >
@@ -52,8 +52,13 @@
       </template>
     </div>
 
-    <!-- 시간 row: 예약이면 rsvAt + 잔여/경과, 일반이면 orderAt + 경과 -->
-    <OrderTimeBar :order-at="order.orderAt" :rsv-at="order.rsvAt" />
+    <!-- 시간 row: 예약이면 rsvAt + 잔여/경과, 일반이면 orderAt + 경과. KITCHEN 은 예약 주문에만 노출. -->
+    <OrderTimeBar
+      v-if="cIsAll || order.rsvAt"
+      :order-at="order.orderAt"
+      :rsv-at="order.rsvAt"
+      :kitchen="cIsKichen"
+    />
 
     <!-- 메뉴 리스트 (자동 n열) -->
     <!-- 그리드 자식요소 크기는 row의 max-content 크기로 자동으로 설정됨 (align-items: stretch) -->
