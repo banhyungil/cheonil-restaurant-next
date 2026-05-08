@@ -16,6 +16,7 @@
 
     <div class="flex flex-col gap-1">
       <OperatingHoursSection ref="operatingRef" :setting="cOperatingHours" />
+      <RsvSchedulerSection ref="rsvSchedulerRef" :setting="cRsvScheduler" />
     </div>
   </section>
 </template>
@@ -29,6 +30,7 @@ import { useSettingsQuery } from '@/queries/settingsQuery'
 import type { Setting } from '@/types/setting'
 
 import OperatingHoursSection from '@/components/settings/OperatingHoursSection.vue'
+import RsvSchedulerSection from '@/components/settings/RsvSchedulerSection.vue'
 
 const toast = useToast()
 const { data: settings } = useSettingsQuery()
@@ -36,10 +38,16 @@ const { data: settings } = useSettingsQuery()
 const cOperatingHours = computed(() =>
   (settings.value ?? []).find((s): s is Setting<'OPERATING_HOURS'> => s.code === 'OPERATING_HOURS'),
 )
+const cRsvScheduler = computed(() =>
+  (settings.value ?? []).find((s): s is Setting<'RSV_SCHEDULER'> => s.code === 'RSV_SCHEDULER'),
+)
 
 // 섹션 ref — 신규 섹션 추가 시 sections 배열에 같이 등록.
 const operatingRef = ref<InstanceType<typeof OperatingHoursSection> | null>(null)
-const cSections = computed(() => [operatingRef.value].filter((s) => s != null))
+const rsvSchedulerRef = ref<InstanceType<typeof RsvSchedulerSection> | null>(null)
+const cSections = computed(() =>
+  [operatingRef.value, rsvSchedulerRef.value].filter((s) => s != null),
+)
 
 const cDirtyCount = computed(() => cSections.value.filter((s) => s.isDirty).length)
 const cAllValid = computed(() => cSections.value.every((s) => s.isValid))

@@ -11,6 +11,7 @@ export type SettingCode =
   | 'STORE_CATEGORY_ORDER'
   | 'MENU_CATEGORY_ORDER'
   | 'OPERATING_HOURS'
+  | 'RSV_SCHEDULER'
 
 /**
  * 정렬 setting config — `{ order: [seq, ...] }`.
@@ -32,6 +33,14 @@ export interface OperatingHoursConfig {
 }
 
 /**
+ * 예약 스케줄러 — 템플릿 → 인스턴스 자동 생성 동작 파라미터.
+ */
+export interface RsvSchedulerConfig {
+  /** 트리거 시점 기준 — 예약 시각이 얼마나 미래인지 (분). cron 주기(10분) 이상 권장. */
+  leadMinutes: number
+}
+
+/**
  * SettingCode → config shape 매핑.
  * 코드 별로 config / userConfig / defaultConfig 의 shape 가 결정됨.
  */
@@ -41,6 +50,7 @@ export type ConfigByCode = {
   STORE_CATEGORY_ORDER: OrderConfig
   MENU_CATEGORY_ORDER: OrderConfig
   OPERATING_HOURS: OperatingHoursConfig
+  RSV_SCHEDULER: RsvSchedulerConfig
 }
 
 /**
