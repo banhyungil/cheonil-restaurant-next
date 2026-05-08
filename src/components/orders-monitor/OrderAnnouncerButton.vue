@@ -17,7 +17,14 @@
     <div class="flex w-72 flex-col gap-3 p-1">
       <!-- 음성 알림 섹션 -->
       <section class="flex flex-col gap-2.5">
-        <h4 class="text-xs font-bold uppercase tracking-wide text-surface-500">음성 알림</h4>
+        <div class="flex items-center gap-1.5">
+          <h4 class="text-xs font-bold uppercase tracking-wide text-surface-500">음성 알림</h4>
+          <Info
+            :size="12"
+            class="text-surface-400"
+            v-tooltip="'음성이 안 들리면 화면을 한 번 클릭해주세요 (브라우저 자동재생 정책)'"
+          />
+        </div>
         <label class="flex items-center justify-between gap-3">
           <span class="text-sm font-medium text-surface-700">활성화</span>
           <div class="flex items-center gap-1.5">
@@ -186,7 +193,7 @@
 
 <script setup lang="ts">
 import { vTooltip } from 'floating-vue'
-import { BookmarkPlus, Play, Volume2, VolumeX, X } from 'lucide-vue-next'
+import { BookmarkPlus, Info, Play, Volume2, VolumeX, X } from 'lucide-vue-next'
 import type Popover from 'primevue/popover'
 import { VueDraggable } from 'vue-draggable-plus'
 

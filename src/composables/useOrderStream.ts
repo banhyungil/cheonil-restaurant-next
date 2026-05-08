@@ -37,7 +37,7 @@ export function useOrderStream() {
     eventSource.addEventListener('order:created', (e) => {
       const order = JSON.parse((e as MessageEvent<string>).data) as OrderExt
       // 수동 데이터 갱신, 각 사용처 서버 호출이 아닌 갱신 데이터로 업데이트 받음
-      queryClient.setQueryData<OrderExt[]>(QUERY_KEYS.ordersMonitor, (old = []) => [...old, order])
+      queryClient.setQueryData<OrderExt[]>(QUERY_KEYS.ordersMonitor, (old = []) => [order, ...old])
       invalidateSales()
       orderCreatedBus.emit(order)
     })
