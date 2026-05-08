@@ -110,7 +110,7 @@ export const routes: RouteRecordRaw[] = [
         name: 'order-rsv-tmpls',
         component: () => import('@/pages/OrderRsvTmplsPage.vue'),
         meta: {
-          nav: { group: NAV_GROUPS.MANAGE, label: '예약 템플릿', icon: CalendarClock, order: 4 },
+          nav: { group: NAV_GROUPS.MANAGE, label: '고정 예약', icon: CalendarClock, order: 4 },
           keepAlive: 'OrderRsvTmplsPage',
         },
       },

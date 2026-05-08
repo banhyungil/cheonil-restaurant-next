@@ -155,12 +155,15 @@ const emit = defineEmits<{
   remove: [seq: number]
 }>()
 
+/** 수동 생성 버튼 활성화 lead time — 서버는 1시간 전 자동 생성, 클라는 30분 전부터 fallback 노출. */
+const MANUAL_GEN_LEAD_MIN = 30
+
 /**
  * 수동 생성 버튼 표시 조건:
  *  1. active 한 템플릿
  *  2. 오늘이 dayTypes 에 포함
  *  3. 오늘이 [startDt, endDt] 기간 내
- *  4. 오늘 rsvTime 이 이미 지났음
+ *  4. 현재 시각이 (오늘 rsvTime - 30분) 이후 — 서버 자동 생성(1시간 전) 누락 대비 fallback
  *  5. lastRsvGenAt 이 오늘 아님 (스케줄러 누락)
  */
 function needsManualGenerate(t: OrderRsvTmplExt): boolean {
@@ -174,11 +177,12 @@ function needsManualGenerate(t: OrderRsvTmplExt): boolean {
   if (todayStr < t.startDt) return false
   if (t.endDt && todayStr > t.endDt) return false
 
-  // 'HH:mm:ss' 의 오늘자 시각 vs 현재
+  // 'HH:mm:ss' 의 오늘자 시각 vs 현재 — rsvTime 30분 전부터 활성화
   const [hh = 0, mm = 0, ss = 0] = t.rsvTime.split(':').map(Number)
   const rsvAt = new Date(now)
   rsvAt.setHours(hh, mm, ss, 0)
-  if (now < rsvAt) return false
+  const enableAt = new Date(rsvAt.getTime() - MANUAL_GEN_LEAD_MIN * 60_000)
+  if (now < enableAt) return false
 
   if (t.lastRsvGenAt && isToday(parseISO(t.lastRsvGenAt))) return false
 
