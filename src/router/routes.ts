@@ -37,6 +37,7 @@ declare module 'vue-router' {
      * 메인/edit 둘 다 같은 값을 가리켜서 진입부터 복귀까지 일관 cache 유지.
      */
     keepAlive?: string
+    label?: string
   }
 }
 
@@ -118,7 +119,10 @@ export const routes: RouteRecordRaw[] = [
         path: 'order-rsv-tmpls/edit',
         name: 'order-rsv-tmpls-edit',
         component: () => import('@/pages/OrderRsvTmplsEditPage.vue'),
-        meta: { keepAlive: 'OrderRsvTmplsPage' },
+        meta: {
+          keepAlive: 'OrderRsvTmplsPage',
+          label: '고정 예약',
+        },
       },
       {
         path: 'menus',

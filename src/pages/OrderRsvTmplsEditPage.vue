@@ -11,7 +11,7 @@
         <span>관리</span>
         <ChevronRight :size="14" />
         <RouterLink to="/order-rsv-tmpls" class="hover:text-primary-600 hover:underline">
-          예약 템플릿
+          {{ route.meta?.label }}
         </RouterLink>
         <ChevronRight :size="14" />
         <span class="text-surface-700">{{ cTitle }}</span>
@@ -80,6 +80,7 @@ import { useStoresQuery } from '@/queries/storesQuery'
 import { useOrderRsvTmplStore } from '@/stores/orderRsvTmplStore'
 import type { Setting } from '@/types/setting'
 
+const route = useRoute()
 const { data: menus } = useMenusQuery()
 const { data: menuCategories } = useMenuCtgsQuery()
 const { data: stores } = useStoresQuery()
@@ -87,7 +88,9 @@ const { data: storeCategories } = useStoreCtgsQuery()
 const { data: settings } = useSettingsQuery()
 
 // 정렬: settings 의 *_ORDER 적용 — 매장/메뉴/카테고리 4종
-const cOrderOf = <C extends 'STORE_ORDER' | 'MENU_ORDER' | 'STORE_CATEGORY_ORDER' | 'MENU_CATEGORY_ORDER'>(
+const cOrderOf = <
+  C extends 'STORE_ORDER' | 'MENU_ORDER' | 'STORE_CATEGORY_ORDER' | 'MENU_CATEGORY_ORDER',
+>(
   code: C,
 ) =>
   computed(
@@ -119,7 +122,10 @@ const {
   editingSeq,
 } = storeToRefs(orderRsvTmplStore)
 
-const cTitle = computed(() => (isEditing.value ? '예약 템플릿 수정' : '예약 템플릿 추가'))
+const cTitle = computed(() => {
+  const pgTxt = route.meta.label ?? ''
+  return `${pgTxt} ` + (isEditing.value ? '수정' : '추가')
+})
 
 // 신규 진입 시 default 값 — 수정 모드(loadFromTmpl) 면 이미 채워져 있어 건드리지 않음
 onMounted(() => {

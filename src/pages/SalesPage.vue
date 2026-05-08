@@ -3,7 +3,7 @@
   <section class="sales-page flex h-full flex-col gap-5 px-8 py-6">
     <!-- 헤더 + 탭 -->
     <header class="flex items-center gap-4">
-      <h1 class="text-2xl font-bold text-surface-900">주문내역관리</h1>
+      <h1 class="text-2xl font-bold text-surface-900">{{ route.meta.nav?.label }}</h1>
       <BTabs
         :model-value="cTab"
         :options="TAB_OPTIONS"

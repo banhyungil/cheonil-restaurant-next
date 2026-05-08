@@ -3,8 +3,8 @@
   <section class="order-rsv-tmpls-page flex h-full flex-col gap-5 px-8 py-6">
     <!-- 헤더 -->
     <header class="flex h-10 items-center gap-3">
-      <h1 class="text-2xl font-bold text-surface-900">예약 템플릿</h1>
-      <span class="text-base text-surface-500">· 반복 예약 관리</span>
+      <h1 class="text-2xl font-bold text-surface-900">{{ route.meta.nav?.label }}</h1>
+      <span class="text-base text-surface-500">· 고정 예약 관리</span>
       <div class="flex-1" />
       <!-- TODO 매장 필터 — storesQuery 연결 -->
       <Select v-model="selStoreSeq" :options="[]" placeholder="매장 전체" class="w-40" />
@@ -101,6 +101,7 @@ const cStats = computed(() => ({
   generatedToday: 0, // TODO 백엔드 endpoint 추가 시 보강
 }))
 
+const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const orderRsvTmplStore = useOrderRsvTmplStore()

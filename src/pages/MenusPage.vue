@@ -3,7 +3,7 @@
   <section class="menus-page flex h-full flex-col gap-5 px-8 py-6">
     <!-- 헤더 -->
     <header class="flex h-10 items-center gap-3">
-      <h1 class="text-2xl font-bold text-surface-900">메뉴 관리</h1>
+      <h1 class="text-2xl font-bold text-surface-900">{{ route.meta.nav?.label }}</h1>
       <div class="flex-1" />
       <IconField class="w-60">
         <InputIcon class="text-surface-500">
@@ -72,6 +72,7 @@ const cByCategory = computed(() =>
 )
 const { cFiltered: cFilteredMenus } = useSearchFilter(cByCategory, searchKeyword, (m) => m.nm)
 
+const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const menuFormStore = useMenuFormStore()
