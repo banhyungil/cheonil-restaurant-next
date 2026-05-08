@@ -39,9 +39,16 @@ import { orderCreatedBus, orderUpdatedBus } from '@/utils/orderEventBus'
 const STORAGE_KEY_ENABLED = 'order-announcer-enabled'
 const STORAGE_KEY_REPEAT = 'order-announcer-repeat'
 const STORAGE_KEY_RATE = 'order-announcer-rate'
+const STORAGE_KEY_PITCH = 'order-announcer-pitch'
 const STORAGE_KEY_ALERT_CRAZY = 'order-announcer-alert-crazy'
 const STORAGE_KEY_ALERT_CLEAR = 'order-announcer-alert-clear'
 const STORAGE_KEY_ALERT_WELCOME = 'order-announcer-alert-welcome'
+const STORAGE_KEY_PRESETS = 'order-announcer-presets'
+
+/** 임의 발화 프리셋 최대 개수. */
+export const PRESET_MAX_COUNT = 10
+/** 프리셋 / 임의 발화 텍스트 최대 길이 (자). */
+export const PRESET_MAX_LEN = 30
 
 const REPEAT_MIN = 1
 const REPEAT_MAX = 5
@@ -51,6 +58,11 @@ const RATE_MAX = 2.0
 const RATE_STEP = 0.1
 const RATE_DEFAULT = 1.2
 
+const PITCH_MIN = 0.5
+const PITCH_MAX = 2.0
+const PITCH_STEP = 0.1
+const PITCH_DEFAULT = 1.0
+
 /** 폭주 알람 임계치 — 추후 설정 화면으로 이관 가능. */
 const THRESHOLD_BUSY = 10
 
@@ -58,9 +70,12 @@ const THRESHOLD_BUSY = 10
 export const announcerEnabled = useLocalStorage(STORAGE_KEY_ENABLED, true)
 export const announcerRepeat = useLocalStorage(STORAGE_KEY_REPEAT, 1)
 export const announcerRate = useLocalStorage(STORAGE_KEY_RATE, RATE_DEFAULT)
+export const announcerPitch = useLocalStorage(STORAGE_KEY_PITCH, PITCH_DEFAULT)
 export const alertCrazyEnabled = useLocalStorage(STORAGE_KEY_ALERT_CRAZY, true)
 export const alertClearEnabled = useLocalStorage(STORAGE_KEY_ALERT_CLEAR, true)
 export const alertWelcomeEnabled = useLocalStorage(STORAGE_KEY_ALERT_WELCOME, true)
+/** 임의 발화 프리셋 — 사용자가 popover 에서 추가/삭제/드래그 정렬. localStorage 단일 소스. */
+export const announcerPresets = useLocalStorage<string[]>(STORAGE_KEY_PRESETS, [])
 
 export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefined>) {
   function announceCreated(order: OrderExt) {
@@ -75,7 +90,9 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
   // OFF 시 큐 + 진행 중 TTS 즉시 정리.
   watch(announcerEnabled, (v) => {
     if (v) {
-      enqueueAnnounce(() => speakAsync('음성 알림 시작', { rate: announcerRate.value }))
+      enqueueAnnounce(() =>
+        speakAsync('음성 알림 시작', { rate: announcerRate.value, pitch: announcerPitch.value }),
+      )
     } else {
       clearAnnounceQueue()
     }
@@ -150,6 +167,7 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
     enabled: announcerEnabled,
     repeatCount: announcerRepeat,
     rate: announcerRate,
+    pitch: announcerPitch,
     alertCrazy: alertCrazyEnabled,
     alertClear: alertClearEnabled,
     alertWelcome: alertWelcomeEnabled,
@@ -158,6 +176,9 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
     RATE_MIN,
     RATE_MAX,
     RATE_STEP,
+    PITCH_MIN,
+    PITCH_MAX,
+    PITCH_STEP,
     THRESHOLD_BUSY,
   }
 }
@@ -181,7 +202,7 @@ function enqueueOrderAnnouncement(text: string) {
     const times = clamp(announcerRepeat.value, REPEAT_MIN, REPEAT_MAX)
     for (let i = 0; i < times; i++) {
       if (!announcerEnabled.value) break
-      await speakAsync(text, { rate: announcerRate.value })
+      await speakAsync(text, { rate: announcerRate.value, pitch: announcerPitch.value })
     }
   })
 }
@@ -193,5 +214,11 @@ function enqueueOrderAnnouncement(text: string) {
 export function announceCustom(text: string) {
   const trimmed = text.trim()
   if (!trimmed) return
-  enqueueAnnounce(() => speakAsync(trimmed, { rate: announcerRate.value }))
+
+  enqueueAnnounce(async () => {
+    const times = clamp(announcerRepeat.value, REPEAT_MIN, REPEAT_MAX)
+    for (let i = 0; i < times; i++) {
+      await speakAsync(trimmed, { rate: announcerRate.value, pitch: announcerPitch.value })
+    }
+  })
 }

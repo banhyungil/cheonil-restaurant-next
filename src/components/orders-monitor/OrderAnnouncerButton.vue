@@ -13,14 +13,25 @@
     <Volume2 v-if="enabled" :size="16" />
     <VolumeX v-else :size="16" />
   </BButton>
-  <Popover ref="popoverRef">
-    <div class="flex min-w-64 flex-col gap-3 p-1">
+  <Popover ref="popoverRef" @show="popoverVisible = true" @hide="popoverVisible = false">
+    <div class="flex w-72 flex-col gap-3 p-1">
       <!-- 음성 알림 섹션 -->
       <section class="flex flex-col gap-2.5">
         <h4 class="text-xs font-bold uppercase tracking-wide text-surface-500">음성 알림</h4>
         <label class="flex items-center justify-between gap-3">
           <span class="text-sm font-medium text-surface-700">활성화</span>
-          <ToggleSwitch v-model="enabled" />
+          <div class="flex items-center gap-1.5">
+            <BButton
+              variant="text"
+              color="secondary"
+              size="sm"
+              v-tooltip="'발화 테스트'"
+              @click="onPreviewSpeech"
+            >
+              <Play :size="14" />
+            </BButton>
+            <ToggleSwitch v-model="enabled" />
+          </div>
         </label>
         <label class="flex items-center justify-between gap-3">
           <span class="text-sm font-medium text-surface-700">반복 횟수</span>
@@ -44,6 +55,21 @@
             :min-fraction-digits="1"
             :max-fraction-digits="2"
             suffix="x"
+            show-buttons
+            button-layout="horizontal"
+            :input-class="'w-18 text-center'"
+            :disabled="!enabled"
+          />
+        </label>
+        <label class="flex items-center justify-between gap-3">
+          <span class="text-sm font-medium text-surface-700">음높이</span>
+          <InputNumber
+            v-model="pitch"
+            :min="PITCH_MIN"
+            :max="PITCH_MAX"
+            :step="PITCH_STEP"
+            :min-fraction-digits="1"
+            :max-fraction-digits="2"
             show-buttons
             button-layout="horizontal"
             :input-class="'w-18 text-center'"
@@ -82,25 +108,49 @@
 
       <!-- 임의 발화 섹션 -->
       <section class="flex flex-col gap-2.5">
-        <h4 class="text-xs font-bold uppercase tracking-wide text-surface-500">임의 발화</h4>
-        <!-- preset chips — 클릭 시 즉시 발화 -->
-        <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="p in CUSTOM_PRESETS"
+        <h4 class="text-xs font-bold uppercase tracking-wide text-surface-500">직접 입력</h4>
+        <!-- preset chips — 클릭 시 발화, ✕ 로 삭제, 드래그로 정렬.
+             가로 배치 + 폭 초과 시 wrap, 6자 초과 시 ellipsis. -->
+        <VueDraggable
+          v-if="announcerPresets.length > 0"
+          v-model="announcerPresets"
+          :animation="200"
+          ghost-class="opacity-40"
+          class="flex flex-wrap gap-1.5"
+        >
+          <span
+            v-for="p in announcerPresets"
             :key="p"
-            type="button"
-            class="rounded-md bg-surface-100 px-2 py-1 text-xs text-surface-700 transition-colors hover:bg-surface-200"
-            @click="onSpeakPreset(p)"
+            class="flex cursor-grab items-center rounded-md bg-surface-100 text-xs"
           >
-            {{ p }}
-          </button>
-        </div>
-        <!-- 직접 입력 — Enter 또는 ▶ 로 발화, 발화 후 클리어 -->
+            <button
+              type="button"
+              class="rounded-l-md px-2 py-1 text-surface-700 hover:bg-surface-200"
+              v-tooltip="p"
+              @click="onSpeakPreset(p)"
+            >
+              {{ truncate(p) }}
+            </button>
+            <button
+              type="button"
+              class="rounded-r-md px-1.5 py-1 text-surface-400 hover:bg-surface-200 hover:text-surface-700"
+              v-tooltip="'삭제'"
+              @click.stop="onRemovePreset(p)"
+            >
+              <X :size="12" />
+            </button>
+          </span>
+        </VueDraggable>
+        <p v-else class="text-xs text-surface-400">
+          ※ 직접 입력 후 <BookmarkPlus :size="11" class="inline" /> 으로 자주 쓰는 멘트 등록
+        </p>
+        <!-- 직접 입력 — Enter 또는 ▶ 로 발화, 발화 후 클리어. ＋ 로 프리셋 등록. -->
         <div class="flex items-center gap-1.5">
           <BInputText
+            ref="customInputRef"
             v-model="customText"
-            placeholder="직접 입력 (최대 30자)"
-            :maxlength="CUSTOM_MAX_LEN"
+            :placeholder="`직접 입력 (최대 ${PRESET_MAX_LEN}자)`"
+            :maxlength="PRESET_MAX_LEN"
             class="flex-1"
             @keyup.enter="onSpeakCustom"
           />
@@ -109,9 +159,24 @@
             color="secondary"
             size="sm"
             :disabled="!customText.trim()"
+            v-tooltip="'발화'"
             @click="onSpeakCustom"
           >
             <Play :size="14" />
+          </BButton>
+          <BButton
+            variant="text"
+            color="secondary"
+            size="sm"
+            :disabled="!customText.trim() || announcerPresets.length >= PRESET_MAX_COUNT"
+            v-tooltip="
+              announcerPresets.length >= PRESET_MAX_COUNT
+                ? `최대 ${PRESET_MAX_COUNT}개`
+                : '프리셋으로 추가'
+            "
+            @click="onAddPreset"
+          >
+            <BookmarkPlus :size="14" />
           </BButton>
         </div>
       </section>
@@ -121,22 +186,19 @@
 
 <script setup lang="ts">
 import { vTooltip } from 'floating-vue'
-import { Play, Volume2, VolumeX } from 'lucide-vue-next'
+import { BookmarkPlus, Play, Volume2, VolumeX, X } from 'lucide-vue-next'
 import type Popover from 'primevue/popover'
+import { VueDraggable } from 'vue-draggable-plus'
 
-import { announceCustom, useOrderAnnouncer } from '@/composables/useOrderAnnouncer'
+import {
+  announceCustom,
+  announcerPresets,
+  PRESET_MAX_COUNT,
+  PRESET_MAX_LEN,
+  useOrderAnnouncer,
+} from '@/composables/useOrderAnnouncer'
 import type { OrderExt } from '@/types/order'
 import { playAlert, type Sounds } from '@/utils/announceQueue'
-
-/** 임의 발화 자주 쓰는 멘트 — 클릭 시 즉시 발화. */
-const CUSTOM_PRESETS = [
-  '잠시만 기다려주세요',
-  '포장 준비됐습니다',
-  '주방 도와주세요',
-  '청소 부탁드립니다',
-] as const
-
-const CUSTOM_MAX_LEN = 30
 
 const props = defineProps<{
   /** 임계치 알람용 — useOrderAnnouncer 가 내부에서 READY 카운트 watch. */
@@ -147,6 +209,7 @@ const {
   enabled,
   repeatCount,
   rate,
+  pitch,
   alertCrazy,
   alertClear,
   alertWelcome,
@@ -155,6 +218,9 @@ const {
   RATE_MIN,
   RATE_MAX,
   RATE_STEP,
+  PITCH_MIN,
+  PITCH_MAX,
+  PITCH_STEP,
   THRESHOLD_BUSY,
 } = useOrderAnnouncer(() => props.orders)
 
@@ -166,13 +232,23 @@ const ALERT_ROWS = [
 ]
 
 const popoverRef = ref<InstanceType<typeof Popover> | null>(null)
+const popoverVisible = ref(false)
 function onTogglePopover(e: Event) {
   popoverRef.value?.toggle(e)
 }
 
+// Popover 열릴 때 직접입력 input 자동 포커스 — 키보드만으로 즉시 발화 입력 가능.
+const customInputRef = ref<{ $el?: HTMLElement }>()
+useAutoFocus(customInputRef, popoverVisible)
+
 /** 미리듣기 — 큐 우회 즉시 재생. 사용자 클릭(user gesture) 이라 autoplay 정책 통과. */
 function onPreview(sound: Sounds) {
   playAlert(sound)
+}
+
+/** 발화 테스트 — 현재 rate/pitch 설정으로 샘플 멘트 발화. master enabled 무관 (announceCustom 정책). */
+function onPreviewSpeech() {
+  announceCustom('음성 알림 테스트')
 }
 
 const customText = ref('')
@@ -187,5 +263,24 @@ function onSpeakCustom() {
   if (!customText.value.trim()) return
   announceCustom(customText.value)
   customText.value = ''
+}
+
+/** 직접 입력 텍스트를 프리셋 끝에 등록. 빈값/최대치 초과는 가드. 등록 후 input 클리어. */
+function onAddPreset() {
+  const trimmed = customText.value.trim()
+  if (!trimmed) return
+  if (announcerPresets.value.length >= PRESET_MAX_COUNT) return
+  announcerPresets.value.push(trimmed)
+  customText.value = ''
+}
+
+function onRemovePreset(text: string) {
+  announcerPresets.value = announcerPresets.value.filter((p) => p !== text)
+}
+
+/** 프리셋 chip 표시 — 6자 초과 시 ellipsis. 전체 텍스트는 hover tooltip 으로. */
+const PRESET_DISPLAY_MAX = 6
+function truncate(text: string) {
+  return text.length > PRESET_DISPLAY_MAX ? text.slice(0, PRESET_DISPLAY_MAX) + '…' : text
 }
 </script>
