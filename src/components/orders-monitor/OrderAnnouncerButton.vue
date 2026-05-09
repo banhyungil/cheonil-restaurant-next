@@ -83,6 +83,22 @@
             :disabled="!enabled"
           />
         </label>
+        <label
+          class="flex items-center justify-between gap-3"
+          v-tooltip="'큐에 이 시간 이상 쌓인 발화는 skip — 폭주 시 시간차 발화 방지'"
+        >
+          <span class="text-sm font-medium text-surface-700">발화 skip 대기시간</span>
+          <InputNumber
+            v-model="staleSec"
+            :min="1"
+            :max="30"
+            :step="1"
+            suffix="초"
+            show-buttons
+            button-layout="horizontal"
+            :input-class="'w-14 text-center'"
+          />
+        </label>
       </section>
 
       <div class="h-px bg-surface-200" />
@@ -223,7 +239,13 @@ import {
 } from '@/composables/useOrderAnnouncer'
 import { alertWarningEnabled as alertWarning } from '@/composables/useOrderElapsedAlarm'
 import type { OrderExt } from '@/types/order'
-import { enqueueAnnounce, playAlert, speakAsync, type Sounds } from '@/utils/announceQueue'
+import {
+  announceStaleMs,
+  enqueueAnnounce,
+  playAlert,
+  speakAsync,
+  type Sounds,
+} from '@/utils/announceQueue'
 
 const props = defineProps<{
   /** 임계치 알람용 — useOrderAnnouncer 가 내부에서 READY 카운트 watch. */
@@ -248,6 +270,14 @@ const {
   PITCH_STEP,
   THRESHOLD_BUSY,
 } = useOrderAnnouncer(() => props.orders)
+
+/** ms 단위 announceStaleMs 를 초 단위 InputNumber 와 양방향 바인딩. */
+const staleSec = computed({
+  get: () => announceStaleMs.value / 1000,
+  set: (v) => {
+    announceStaleMs.value = Math.round(v * 1000)
+  },
+})
 
 /** 임계치 알람 row 데이터 — 라벨/사운드/토글 ref 매핑. v-for 로 일관 렌더. */
 const ALERT_ROWS = [

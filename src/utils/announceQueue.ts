@@ -1,11 +1,17 @@
+import { useLocalStorage } from '@vueuse/core'
+
 /**
  * 주문 알림(mp3 + TTS) 단일 직렬 큐.
  *
- * 여러 알림 소스(`useOrderAnnouncer`, `useOrderThresholdAlert` 등)가 동시에 발화 요청해도
- * 사운드 겹침 없이 enqueue 순서대로 1개씩 처리. 5초 이상 묵은 작업은 폭주 방지를 위해 skip.
+ * 여러 알림 소스(`useOrderAnnouncer`, `useOrderElapsedAlarm` 등)가 동시에 발화 요청해도
+ * 사운드 겹침 없이 enqueue 순서대로 1개씩 처리. 일정 시간 이상 묵은 작업은 폭주 방지를 위해 skip.
  */
 
-const STALE_MS = 5_000
+const STORAGE_KEY_STALE_MS = 'announce-stale-ms'
+const STALE_MS_DEFAULT = 8_000
+
+/** 큐에서 묵은 작업 skip 임계 (ms). localStorage 영속 — 폭주 매장은 값을 줄여 적체 발화 누락 방지. */
+export const announceStaleMs = useLocalStorage(STORAGE_KEY_STALE_MS, STALE_MS_DEFAULT)
 
 interface Task {
   fn: () => Promise<void>
@@ -20,7 +26,7 @@ async function drain() {
   running = true
   while (queue.length > 0) {
     const t = queue.shift()!
-    if (Date.now() - t.createdAt > STALE_MS) continue
+    if (Date.now() - t.createdAt > announceStaleMs.value) continue
     try {
       await t.fn()
     } catch (e) {

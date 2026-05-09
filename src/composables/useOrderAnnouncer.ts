@@ -130,7 +130,7 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
       }
 
       // 첫 주문: 0 → 1 이상
-      if (oldCnt === 0 && newCnt > 0) {
+      if (oldCnt === 0 && newCnt === 1) {
         enqueueAnnounce(async () => {
           if (!announcerEnabled.value || !alertWelcomeEnabled.value) return
           await playAlert('WELCOME')
