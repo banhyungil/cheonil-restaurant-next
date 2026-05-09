@@ -10,7 +10,7 @@ import { useLocalStorage } from '@vueuse/core'
 const STORAGE_KEY_STALE_MS = 'announce-stale-ms'
 const STALE_MS_DEFAULT = 8_000
 
-/** 큐에서 묵은 작업 skip 임계 (ms). localStorage 영속 — 폭주 매장은 값을 줄여 적체 발화 누락 방지. */
+/** 큐에서 대기 작업 skip 임계 (ms). localStorage 영속 — 폭주 매장은 값을 줄여 적체 발화 누락 방지. */
 export const announceStaleMs = useLocalStorage(STORAGE_KEY_STALE_MS, STALE_MS_DEFAULT)
 
 interface Task {
