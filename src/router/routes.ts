@@ -3,7 +3,7 @@ import OrdersPage from '@/pages/OrdersPage.vue'
 
 // prettier-ignore
 import {
-  Blocks, BookOpen, Calculator, CalendarClock, CalendarDays, ClipboardList, Cog, Package, ReceiptText, Settings, Store, Utensils, Wallet,
+  AudioLines, Blocks, BookOpen, Calculator, CalendarClock, CalendarDays, ClipboardList, Cog, FormInput, Mic, Package, Palette, ReceiptText, Settings, Store, Utensils, Wallet,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import type { RouteRecordRaw } from 'vue-router'
@@ -172,16 +172,32 @@ export const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/dev/ComponentsPage.vue'),
         meta: { nav: { group: NAV_GROUPS.DEV, label: '공통 컴포넌트', icon: Blocks, order: 1 } },
       },
+      {
+        path: 'examples/form',
+        name: 'example-form',
+        component: () => import('@/pages/examples/FormExamplePage.vue'),
+        meta: { nav: { group: NAV_GROUPS.DEV, label: 'Form 예제', icon: FormInput, order: 2 } },
+      },
+      {
+        path: 'examples/css',
+        name: 'example-css',
+        component: () => import('@/pages/examples/CssExamplePage.vue'),
+        meta: { nav: { group: NAV_GROUPS.DEV, label: 'CSS 예제', icon: Palette, order: 3 } },
+      },
+      {
+        path: 'examples/recording',
+        name: 'example-recording',
+        component: () => import('@/pages/examples/RecordingExample.vue'),
+        meta: { nav: { group: NAV_GROUPS.DEV, label: '녹음 예제', icon: Mic, order: 4 } },
+      },
+      {
+        path: 'examples/voice-test',
+        name: 'voidce-test',
+        component: () => import('@/pages/examples/VoiceOrderParseExample.vue'),
+        meta: {
+          nav: { group: NAV_GROUPS.DEV, label: '음성 주문 파싱', icon: AudioLines, order: 5 },
+        },
+      },
     ],
-  },
-  {
-    path: '/examples/form',
-    name: 'example-form',
-    component: () => import('@/pages/examples/FormExamplePage.vue'),
-  },
-  {
-    path: '/examples/css',
-    name: 'example-css',
-    component: () => import('@/pages/examples/CssExamplePage.vue'),
   },
 ]
