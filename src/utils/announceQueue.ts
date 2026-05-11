@@ -102,12 +102,14 @@ export function playAlert(sounds: Sounds): Promise<void> {
 }
 
 export interface SpeakOptions {
-  /** 0.5 ~ 2.0. default 1.0. MeloTTS speed 파라미터로 매핑. */
+  /** 0.5 ~ 2.0. default 1.0. Google TTS speakingRate 매핑. */
   rate?: number
   /** 0 ~ 1. default 1. HTMLAudio.volume. */
   volume?: number
-  /** normalize 후 서버측 추가 증폭 (dB). 0=보통, 3=크게, 6=매우크게. */
+  /** Google TTS volumeGainDb. 0=보통, 3=크게, 6=매우크게. */
   gainDb?: number
+  /** 화자 풀네임 (예: ko-KR-Chirp3-HD-Achernar). 미지정 시 서버 기본값. */
+  voice?: string
 }
 
 // ─── Autoplay unlock ─────────────────────────────────────────────────
@@ -193,12 +195,13 @@ export async function speakAsync(text: string, opts: SpeakOptions = {}): Promise
   const speed = opts.rate ?? 1.0
   const volume = opts.volume ?? 1.0
   const gainDb = opts.gainDb ?? 0
-  const key = `${text}|${speed}|${gainDb}`
+  const voice = opts.voice ?? ''
+  const key = `${text}|${speed}|${gainDb}|${voice}`
 
   try {
     let blob = getCachedBlob(key)
     if (!blob) {
-      blob = await synthesize({ text, speed, gainDb })
+      blob = await synthesize({ text, speed, gainDb, voice: voice || undefined })
       setCachedBlob(key, blob)
     }
     await playBlob(blob, volume)

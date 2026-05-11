@@ -33,7 +33,7 @@ import { orderCreatedBus, orderUpdatedBus } from '@/utils/orderEventBus'
  * 다른 페이지 체류 시 SSE 갱신/임계치 변화에 무반응.
  *
  * 설정은 모듈 레벨 singleton (LocalStorage):
- *  - 마스터: enabled / repeat / rate / gainDb
+ *  - 마스터: enabled / repeat / rate / gainDb / voice
  *  - 카운트 임계: alertCrazy / alertClear / alertWelcome
  *
  * 호출 위치: `OrderAnnouncerButton` (매장 모니터 화면 헤더 단일 인스턴스).
@@ -43,6 +43,7 @@ const STORAGE_KEY_ENABLED = 'order-announcer-enabled'
 const STORAGE_KEY_REPEAT = 'order-announcer-repeat'
 const STORAGE_KEY_RATE = 'order-announcer-rate'
 const STORAGE_KEY_GAIN_DB = 'order-announcer-gain-db'
+const STORAGE_KEY_VOICE = 'order-announcer-voice'
 const STORAGE_KEY_ALERT_CRAZY = 'order-announcer-alert-crazy'
 const STORAGE_KEY_ALERT_CLEAR = 'order-announcer-alert-clear'
 const STORAGE_KEY_ALERT_WELCOME = 'order-announcer-alert-welcome'
@@ -61,13 +62,24 @@ const RATE_MAX = 2.0
 const RATE_STEP = 0.1
 const RATE_DEFAULT = 1.2
 
-/** 음량 단계 (서버 측 normalize 후 추가 dB). UI Select 3단으로 매핑. */
+/** 음량 단계 (Google TTS volumeGainDb 매핑). UI Select 3단. */
 export const GAIN_OPTIONS: { label: string; value: number }[] = [
   { label: '보통', value: 0 },
   { label: '크게', value: 3 },
   { label: '매우 크게', value: 6 },
 ]
 const GAIN_DB_DEFAULT = 0
+
+/** 화자 선택 (Google Chirp 3 HD 한국어). 큐레이션 6개. 더 늘리려면 여기에 추가. */
+export const VOICE_OPTIONS: { label: string; value: string }[] = [
+  { label: 'Achernar (여, 차분)', value: 'ko-KR-Chirp3-HD-Achernar' },
+  { label: 'Aoede (여, 밝음)', value: 'ko-KR-Chirp3-HD-Aoede' },
+  { label: 'Kore (여, 친근)', value: 'ko-KR-Chirp3-HD-Kore' },
+  { label: 'Charon (남, 깊음)', value: 'ko-KR-Chirp3-HD-Charon' },
+  { label: 'Puck (남, 친근)', value: 'ko-KR-Chirp3-HD-Puck' },
+  { label: 'Algieba (남, 안정)', value: 'ko-KR-Chirp3-HD-Algieba' },
+]
+const VOICE_DEFAULT = VOICE_OPTIONS[0]!.value
 
 /** 폭주 알람 임계치 — 추후 설정 화면으로 이관 가능. */
 const THRESHOLD_BUSY = 10
@@ -77,6 +89,7 @@ export const announcerEnabled = useLocalStorage(STORAGE_KEY_ENABLED, true)
 export const announcerRepeat = useLocalStorage(STORAGE_KEY_REPEAT, 1)
 export const announcerRate = useLocalStorage(STORAGE_KEY_RATE, RATE_DEFAULT)
 export const announcerGainDb = useLocalStorage(STORAGE_KEY_GAIN_DB, GAIN_DB_DEFAULT)
+export const announcerVoice = useLocalStorage(STORAGE_KEY_VOICE, VOICE_DEFAULT)
 export const alertCrazyEnabled = useLocalStorage(STORAGE_KEY_ALERT_CRAZY, true)
 export const alertClearEnabled = useLocalStorage(STORAGE_KEY_ALERT_CLEAR, true)
 export const alertWelcomeEnabled = useLocalStorage(STORAGE_KEY_ALERT_WELCOME, true)
@@ -96,7 +109,7 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
   // OFF 시 큐 + 진행 중 TTS 즉시 정리.
   watch(announcerEnabled, (v) => {
     if (v) {
-      enqueueAnnounce(() => speakAsync('음성 알림 시작', { rate: announcerRate.value, gainDb: announcerGainDb.value }))
+      enqueueAnnounce(() => speakAsync('음성 알림 시작', { rate: announcerRate.value, gainDb: announcerGainDb.value, voice: announcerVoice.value }))
     } else {
       clearAnnounceQueue()
     }
@@ -175,6 +188,7 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
     repeatCount: announcerRepeat,
     rate: announcerRate,
     gainDb: announcerGainDb,
+    voice: announcerVoice,
     alertCrazy: alertCrazyEnabled,
     alertClear: alertClearEnabled,
     alertWelcome: alertWelcomeEnabled,
@@ -206,7 +220,7 @@ function enqueueOrderAnnouncement(text: string) {
     const times = clamp(announcerRepeat.value, REPEAT_MIN, REPEAT_MAX)
     for (let i = 0; i < times; i++) {
       if (!announcerEnabled.value) break
-      await speakAsync(text, { rate: announcerRate.value, gainDb: announcerGainDb.value })
+      await speakAsync(text, { rate: announcerRate.value, gainDb: announcerGainDb.value, voice: announcerVoice.value })
     }
   })
 }
@@ -222,7 +236,7 @@ export function announceCustom(text: string) {
   enqueueAnnounce(async () => {
     const times = clamp(announcerRepeat.value, REPEAT_MIN, REPEAT_MAX)
     for (let i = 0; i < times; i++) {
-      await speakAsync(trimmed, { rate: announcerRate.value, gainDb: announcerGainDb.value })
+      await speakAsync(trimmed, { rate: announcerRate.value, gainDb: announcerGainDb.value, voice: announcerVoice.value })
     }
   })
 }

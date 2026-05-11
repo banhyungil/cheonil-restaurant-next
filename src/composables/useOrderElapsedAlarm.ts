@@ -7,7 +7,12 @@ import {
   RSV_LEAD_TIME_MIN,
   WARN_THRESHOLD_MIN,
 } from '@/composables/useElapsedTime'
-import { announcerEnabled, announcerGainDb, announcerRate } from '@/composables/useOrderAnnouncer'
+import {
+  announcerEnabled,
+  announcerGainDb,
+  announcerRate,
+  announcerVoice,
+} from '@/composables/useOrderAnnouncer'
 import type { OrderExt } from '@/types/order'
 import { enqueueAnnounce, playAlert, speakAsync } from '@/utils/announceQueue'
 
@@ -105,7 +110,11 @@ export function useOrderElapsedAlarm(orders: MaybeRefOrGetter<OrderExt[] | undef
           if (!announcerEnabled.value || !alertWarningEnabled.value) return
           playAlert(sound)
           await promiseTimeout(delay)
-          await speakAsync(text, { rate: announcerRate.value, gainDb: announcerGainDb.value })
+          await speakAsync(text, {
+            rate: announcerRate.value,
+            gainDb: announcerGainDb.value,
+            voice: announcerVoice.value,
+          })
         })
       }
     }

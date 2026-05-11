@@ -75,9 +75,34 @@
             :options="GAIN_OPTIONS"
             option-label="label"
             option-value="value"
+            append-to="self"
             class="w-28"
             :disabled="!enabled"
           />
+        </label>
+        <label class="flex items-center justify-between gap-3">
+          <span class="text-sm font-medium text-surface-700">화자</span>
+          <div class="flex items-center gap-1.5">
+            <BButton
+              variant="text"
+              color="secondary"
+              size="sm"
+              v-tooltip="'미리듣기'"
+              :disabled="!enabled"
+              @click="onPreviewVoice"
+            >
+              <Play :size="14" />
+            </BButton>
+            <Select
+              v-model="voice"
+              :options="VOICE_OPTIONS"
+              option-label="label"
+              option-value="value"
+              append-to="self"
+              class="w-44"
+              :disabled="!enabled"
+            />
+          </div>
         </label>
         <label
           class="flex items-center justify-between gap-3"
@@ -233,6 +258,7 @@ import {
   PRESET_MAX_COUNT,
   PRESET_MAX_LEN,
   useOrderAnnouncer,
+  VOICE_OPTIONS,
 } from '@/composables/useOrderAnnouncer'
 import { alertWarningEnabled as alertWarning } from '@/composables/useOrderElapsedAlarm'
 import type { OrderExt } from '@/types/order'
@@ -254,6 +280,7 @@ const {
   repeatCount,
   rate,
   gainDb,
+  voice,
   alertCrazy,
   alertClear,
   alertWelcome,
@@ -295,9 +322,20 @@ function onPreview(sound: Sounds) {
   playAlert(sound)
 }
 
-/** 발화 테스트 — 현재 rate/pitch 설정으로 샘플 멘트 발화. master enabled 무관 (announceCustom 정책). */
+/** 발화 테스트 — 현재 rate/gainDb/voice 설정으로 샘플 멘트 발화. master enabled 무관 (announceCustom 정책). */
 function onPreviewSpeech() {
   announceCustom('음성 알림 테스트')
+}
+
+/** 화자 미리듣기 — Select 옆 ▶. 현재 선택된 화자로만 발화 (rate/gainDb 도 함께). */
+function onPreviewVoice() {
+  enqueueAnnounce(async () => {
+    await speakAsync('안녕하세요, 음성 테스트입니다', {
+      rate: rate.value,
+      gainDb: gainDb.value,
+      voice: voice.value,
+    })
+  })
 }
 
 /** 지연 알람 미리듣기 — 실제 발화 시퀀스(BELL + TTS) 그대로 큐 enqueue. master 무관. */
@@ -308,6 +346,7 @@ function onPreviewWarn() {
     await speakAsync('테스트 매장, 25분 지연', {
       rate: rate.value,
       gainDb: gainDb.value,
+      voice: voice.value,
     })
   })
 }
