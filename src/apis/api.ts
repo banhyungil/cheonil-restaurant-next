@@ -26,9 +26,6 @@ declare module 'axios' {
 export const api = axios.create({
   baseURL: '/api',
   timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
   paramsSerializer: {
     serialize: (params) => qs.stringify(params, { arrayFormat: 'comma', skipNulls: true }),
   },
@@ -38,6 +35,14 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken')
   if (token) config.headers.Authorization = `Bearer ${token}`
+
+  // FormData 는 브라우저가 boundary 포함 Content-Type 을 자동 생성해야 한다.
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type']
+  } else if (!config.headers['Content-Type']) {
+    config.headers['Content-Type'] = 'application/json'
+  }
+
   return config
 })
 

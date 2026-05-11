@@ -69,17 +69,13 @@
           />
         </label>
         <label class="flex items-center justify-between gap-3">
-          <span class="text-sm font-medium text-surface-700">음높이</span>
-          <InputNumber
-            v-model="pitch"
-            :min="PITCH_MIN"
-            :max="PITCH_MAX"
-            :step="PITCH_STEP"
-            :min-fraction-digits="1"
-            :max-fraction-digits="2"
-            show-buttons
-            button-layout="horizontal"
-            :input-class="'w-18 text-center'"
+          <span class="text-sm font-medium text-surface-700">음량</span>
+          <Select
+            v-model="gainDb"
+            :options="GAIN_OPTIONS"
+            option-label="label"
+            option-value="value"
+            class="w-28"
             :disabled="!enabled"
           />
         </label>
@@ -233,6 +229,7 @@ import { VueDraggable } from 'vue-draggable-plus'
 import {
   announceCustom,
   announcerPresets,
+  GAIN_OPTIONS,
   PRESET_MAX_COUNT,
   PRESET_MAX_LEN,
   useOrderAnnouncer,
@@ -256,7 +253,7 @@ const {
   enabled,
   repeatCount,
   rate,
-  pitch,
+  gainDb,
   alertCrazy,
   alertClear,
   alertWelcome,
@@ -265,9 +262,6 @@ const {
   RATE_MIN,
   RATE_MAX,
   RATE_STEP,
-  PITCH_MIN,
-  PITCH_MAX,
-  PITCH_STEP,
   THRESHOLD_BUSY,
 } = useOrderAnnouncer(() => props.orders)
 
@@ -313,7 +307,7 @@ function onPreviewWarn() {
     await promiseTimeout(1000)
     await speakAsync('테스트 매장, 25분 지연', {
       rate: rate.value,
-      pitch: pitch.value,
+      gainDb: gainDb.value,
     })
   })
 }

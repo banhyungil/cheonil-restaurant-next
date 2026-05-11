@@ -7,7 +7,7 @@ import {
   RSV_LEAD_TIME_MIN,
   WARN_THRESHOLD_MIN,
 } from '@/composables/useElapsedTime'
-import { announcerEnabled, announcerPitch, announcerRate } from '@/composables/useOrderAnnouncer'
+import { announcerEnabled, announcerGainDb, announcerRate } from '@/composables/useOrderAnnouncer'
 import type { OrderExt } from '@/types/order'
 import { enqueueAnnounce, playAlert, speakAsync } from '@/utils/announceQueue'
 
@@ -17,7 +17,7 @@ import { enqueueAnnounce, playAlert, speakAsync } from '@/utils/announceQueue'
  * 매분 폴링(`useIntervalFn`). 첫 폴링은 발화 X — 이미 단계 도달한 주문은 Map 에 등록만
  * (재진입/새로고침 시 무더기 발화 방지).
  *
- * 단계별 mp3 + TTS "<매장명>, <분>분 경과". 마스터 enabled / rate / pitch 는 useOrderAnnouncer 공유.
+ * 단계별 mp3 + TTS "<매장명>, <분>분 경과". 마스터 enabled / rate 는 useOrderAnnouncer 공유.
  *
  * `OrdersMonitorPage` keepAlive — `onActivated` / `onDeactivated` 로 lifecycle 제어.
  * 호출 위치: `useOrderAnnouncer` 내부에서 한 줄.
@@ -105,7 +105,7 @@ export function useOrderElapsedAlarm(orders: MaybeRefOrGetter<OrderExt[] | undef
           if (!announcerEnabled.value || !alertWarningEnabled.value) return
           playAlert(sound)
           await promiseTimeout(delay)
-          await speakAsync(text, { rate: announcerRate.value, pitch: announcerPitch.value })
+          await speakAsync(text, { rate: announcerRate.value, gainDb: announcerGainDb.value })
         })
       }
     }

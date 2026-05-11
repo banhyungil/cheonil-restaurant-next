@@ -1,10 +1,15 @@
 import { useLocalStorage } from '@vueuse/core'
 
+import { synthesize } from '@/apis/ttsApi'
+
 /**
  * 주문 알림(mp3 + TTS) 단일 직렬 큐.
  *
  * 여러 알림 소스(`useOrderAnnouncer`, `useOrderElapsedAlarm` 등)가 동시에 발화 요청해도
  * 사운드 겹침 없이 enqueue 순서대로 1개씩 처리. 일정 시간 이상 묵은 작업은 폭주 방지를 위해 skip.
+ *
+ * TTS 는 자체 호스팅 MeloTTS (Spring → /api/tts) 호출 후 HTMLAudio 로 재생.
+ * 합성 실패는 silent fail — 큐 진행을 막지 않음 (BELL 등 다른 알림은 계속 들림).
  */
 
 const STORAGE_KEY_STALE_MS = 'announce-stale-ms'
@@ -42,11 +47,17 @@ export function enqueueAnnounce(fn: () => Promise<void>) {
   drain()
 }
 
-/** 큐 + 진행 중 TTS 모두 즉시 정리. 토글 OFF / unmount 시 호출.
- *  진행 중 mp3 (Audio 인스턴스) 는 자체 lifecycle 종료까지 두는 정책. */
+/** 진행 중인 모든 HTMLAudio 인스턴스 — clearAnnounceQueue 에서 즉시 정지용. */
+const activeAudios = new Set<HTMLAudioElement>()
+
+/** 큐 + 진행 중 TTS/알림음 모두 즉시 정리. 토글 OFF / unmount 시 호출. */
 export function clearAnnounceQueue() {
   queue.length = 0
-  speechSynthesis.cancel()
+  for (const a of activeAudios) {
+    a.pause()
+    a.src = ''
+  }
+  activeAudios.clear()
 }
 
 // ─── 알림 primitives ─────────────────────────────────────────────────
@@ -79,21 +90,24 @@ function getURL(sounds: Sounds): string {
 export function playAlert(sounds: Sounds): Promise<void> {
   return new Promise((resolve) => {
     const audio = new Audio(getURL(sounds))
-    audio.addEventListener('ended', () => resolve(), { once: true })
-    audio.addEventListener('error', () => resolve(), { once: true })
-    audio.play().catch(() => resolve())
+    activeAudios.add(audio)
+    const cleanup = () => {
+      activeAudios.delete(audio)
+      resolve()
+    }
+    audio.addEventListener('ended', cleanup, { once: true })
+    audio.addEventListener('error', cleanup, { once: true })
+    audio.play().catch(cleanup)
   })
 }
 
 export interface SpeakOptions {
-  /** 0.1 ~ 10. default 1. */
+  /** 0.5 ~ 2.0. default 1.0. MeloTTS speed 파라미터로 매핑. */
   rate?: number
-  /** 0 ~ 2. default 1. */
-  pitch?: number
-  /** 0 ~ 1. default 1. */
+  /** 0 ~ 1. default 1. HTMLAudio.volume. */
   volume?: number
-  /** 미지정 시 OS 기본 한국어 화자. */
-  voice?: SpeechSynthesisVoice | null
+  /** normalize 후 서버측 추가 증폭 (dB). 0=보통, 3=크게, 6=매우크게. */
+  gainDb?: number
 }
 
 // ─── Autoplay unlock ─────────────────────────────────────────────────
@@ -101,10 +115,9 @@ export interface SpeakOptions {
 let unlocked = false
 
 /**
- * 브라우저 autoplay 정책 우회 — 첫 user gesture 시점에 호출해 HTMLAudio + SpeechSynthesis 를 잠금 해제.
+ * 브라우저 autoplay 정책 우회 — 첫 user gesture 시점에 호출해 HTMLAudio 잠금 해제.
  *
- * - HTMLAudio: 기존 Door Bell mp3 를 volume=0 로 짧게 play+pause → 이후 `new Audio().play()` 허용
- * - SpeechSynthesis: 빈 utterance(volume=0) speak → 이후 `speak()` 발화 허용
+ * - 기존 Door Bell mp3 를 volume=0 로 짧게 play+pause → 이후 `new Audio().play()` 허용
  *
  * idempotent — 이미 unlock 됐으면 no-op.
  */
@@ -121,28 +134,75 @@ export function unlockAudio() {
       audio.currentTime = 0
     })
     .catch(() => {})
-
-  const u = new SpeechSynthesisUtterance(' ')
-  u.volume = 0
-  speechSynthesis.speak(u)
 }
 
-/** TTS 1회 발화 후 onend/onerror 까지 대기. 이전 발화 cancel 시도 즉시 resolve. */
-export function speakAsync(text: string, opts: SpeakOptions = {}): Promise<void> {
+// ─── TTS (server-synthesized mp3) ────────────────────────────────────
+
+/**
+ * 단기 메모리 캐시 — 같은 (text, speed) 가 짧은 간격으로 반복 발화될 때 (announcerRepeat) 네트워크 0회.
+ * 서버 캐시 hit 으로도 빠르지만 로컬에 두면 왕복 자체 제거.
+ *
+ * 정책: TTL 30s, max 30 entries. 첫 항목부터 (FIFO) 만료/축출.
+ */
+const BLOB_CACHE_TTL = 30_000
+const BLOB_CACHE_MAX = 30
+const blobCache = new Map<string, { blob: Blob; expiresAt: number }>()
+
+function getCachedBlob(key: string): Blob | null {
+  const e = blobCache.get(key)
+  if (!e) return null
+  if (e.expiresAt < Date.now()) {
+    blobCache.delete(key)
+    return null
+  }
+  return e.blob
+}
+
+function setCachedBlob(key: string, blob: Blob) {
+  if (blobCache.size >= BLOB_CACHE_MAX) {
+    const firstKey = blobCache.keys().next().value
+    if (firstKey !== undefined) blobCache.delete(firstKey)
+  }
+  blobCache.set(key, { blob, expiresAt: Date.now() + BLOB_CACHE_TTL })
+}
+
+function playBlob(blob: Blob, volume: number): Promise<void> {
   return new Promise((resolve) => {
-    const ssu = new SpeechSynthesisUtterance(text)
-    ssu.lang = 'ko-KR'
-    /** 발화 속도 — 1.0 = 보통. 범위 0.1 ~ 10. default: 1
-     *  매장 시끄러우면 0.9 정도로 천천히 발화 권장. UI 슬라이더로 조절. */
-    ssu.rate = opts.rate ?? 1.0
-    /** 음높이 — 1.0 = 보통. 범위 0 ~ 2. default: 1
-     *  값↑ = 여성/높은 톤, 값↓ = 남성/낮은 톤 느낌. */
-    ssu.pitch = opts.pitch ?? 1.0
-    /** 볼륨 — 0 ~ 1. default: 1 (시스템 볼륨에 곱해짐) */
-    ssu.volume = opts.volume ?? 1.0
-    ssu.voice = opts.voice ?? null
-    ssu.onend = () => resolve()
-    ssu.onerror = () => resolve()
-    speechSynthesis.speak(ssu)
+    const url = URL.createObjectURL(blob)
+    const audio = new Audio(url)
+    audio.volume = volume
+    activeAudios.add(audio)
+    const cleanup = () => {
+      activeAudios.delete(audio)
+      URL.revokeObjectURL(url)
+      resolve()
+    }
+    audio.addEventListener('ended', cleanup, { once: true })
+    audio.addEventListener('error', cleanup, { once: true })
+    audio.play().catch(cleanup)
   })
+}
+
+/**
+ * TTS 1회 발화 후 재생 종료까지 대기.
+ *
+ * 합성/재생 실패는 console.warn 만 남기고 resolve — 큐 진행 차단 X.
+ * 동일 (text, speed) 반복 호출은 단기 메모리 캐시 적중으로 네트워크 0회.
+ */
+export async function speakAsync(text: string, opts: SpeakOptions = {}): Promise<void> {
+  const speed = opts.rate ?? 1.0
+  const volume = opts.volume ?? 1.0
+  const gainDb = opts.gainDb ?? 0
+  const key = `${text}|${speed}|${gainDb}`
+
+  try {
+    let blob = getCachedBlob(key)
+    if (!blob) {
+      blob = await synthesize({ text, speed, gainDb })
+      setCachedBlob(key, blob)
+    }
+    await playBlob(blob, volume)
+  } catch (e) {
+    console.warn('[tts] synthesis/playback failed', e)
+  }
 }

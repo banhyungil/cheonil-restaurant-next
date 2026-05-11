@@ -39,12 +39,25 @@
 
     <!-- 비고 -->
     <div class="flex flex-col gap-1.5">
-      <label for="order-memo" class="text-sm font-semibold text-surface-900">비고</label>
+      <div class="flex items-center justify-between">
+        <label for="order-memo" class="text-sm font-semibold text-surface-900">비고</label>
+        <BButton
+          variant="text"
+          color="secondary"
+          size="sm"
+          :loading="transcribing"
+          v-tooltip="recording ? '녹음 종료' : '음성 입력 (마이크)'"
+          @click="onMicToggle"
+        >
+          <Square v-if="recording" :size="14" class="text-red-500" />
+          <Mic v-else :size="14" />
+        </BButton>
+      </div>
       <Textarea
         id="order-memo"
         :model-value="memo"
         rows="3"
-        placeholder="덜맵게, 포장 여부 등 요청사항…"
+        :placeholder="recording ? '🎙 녹음 중… 종료 버튼 클릭' : '덜맵게, 포장 여부 등 요청사항…'"
         class="h-20 resize-none text-sm"
         :disabled="cState !== 'has-items'"
         @update:model-value="(v) => emit('update:memo', String(v ?? ''))"
@@ -74,11 +87,16 @@
 </template>
 
 <script setup lang="ts">
+import { vTooltip } from 'floating-vue'
 import _ from 'lodash'
+import { Mic, Square } from 'lucide-vue-next'
 import { computed } from 'vue'
 
+import { useSpeechRecorder } from '@/composables/useSpeechRecorder'
 import type { CartItem } from '@/types/cart'
 import type { Store } from '@/types/store'
+import { getErrorMessage } from '@/apis/api'
+import { useToast } from 'primevue/usetoast'
 
 const props = defineProps<{
   store: Pick<Store, 'seq' | 'nm'> | null
@@ -108,4 +126,32 @@ const cState = computed<'no-store' | 'no-menu' | 'has-items'>(() =>
 
 const cTotalCount = computed(() => _.sumBy(props.items, 'cnt'))
 const cTotalAmount = computed(() => _.sumBy(props.items, (i) => i.price * i.cnt))
+
+const toast = useToast()
+const { recording, transcribing, start, stop } = useSpeechRecorder()
+
+/** 녹음 시작/종료 토글 — 종료 시 텍스트를 기존 memo 뒤에 append. */
+async function onMicToggle() {
+  if (recording.value) {
+    try {
+      const text = await stop()
+      if (!text) return
+      const next = props.memo ? `${props.memo} ${text}` : text
+      emit('update:memo', next)
+    } catch (e) {
+      toast.add({ severity: 'error', summary: '음성 변환 실패', detail: getErrorMessage(e), life: 3000 })
+    }
+  } else {
+    try {
+      await start()
+    } catch {
+      toast.add({
+        severity: 'error',
+        summary: '마이크 권한 필요',
+        detail: '브라우저 마이크 사용 권한을 허용해주세요',
+        life: 3000,
+      })
+    }
+  }
+}
 </script>
