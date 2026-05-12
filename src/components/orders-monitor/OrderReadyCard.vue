@@ -30,7 +30,7 @@
       >
         <CalendarCheck :size="12" />
       </span>
-      <vTooltip v-if="cIsAll && order.storeCmt">
+      <Tooltip v-if="cIsAll && order.storeCmt">
         <span
           class="flex size-5 cursor-help items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-blue-600"
           tabindex="0"
@@ -40,7 +40,7 @@
         <template #popper>
           <p class="whitespace-pre-wrap text-base text-surface-900">{{ order.storeCmt }}</p>
         </template>
-      </vTooltip>
+      </Tooltip>
       <div v-if="cIsAll" class="flex-1" />
       <template v-if="cIsAll">
         <BButton
@@ -52,7 +52,7 @@
         >
           <EllipsisVertical :size="18" />
         </BButton>
-        <Menu ref="eltMenu" :model="cMenuItems" :popup="true" />
+        <Menu ref="eltMenu" :model="cMenuItems" :popup="true" append-to="self" />
       </template>
     </div>
 
@@ -111,7 +111,7 @@ import { computed, ref } from 'vue'
 import { STATUS_CLASSES, useElapsedTime } from '@/composables/useElapsedTime'
 import type { OrderExt } from '@/types/order'
 import type { MenuItem } from 'primevue/menuitem'
-import { vTooltip } from 'floating-vue'
+import { Tooltip, vTooltip } from 'floating-vue'
 
 const props = withDefaults(
   defineProps<{

@@ -123,7 +123,13 @@ export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefine
   // OFF 시 큐 + 진행 중 TTS 즉시 정리.
   watch(announcerEnabled, (v) => {
     if (v) {
-      enqueueAnnounce(() => speakAsync('음성 알림 시작', { rate: announcerRate.value, gainDb: announcerGainDb.value, voice: announcerVoice.value }))
+      enqueueAnnounce(() =>
+        speakAsync('음성 알림 시작', {
+          rate: announcerRate.value,
+          gainDb: announcerGainDb.value,
+          voice: announcerVoice.value,
+        }),
+      )
     } else {
       clearAnnounceQueue()
     }
@@ -220,7 +226,7 @@ function clamp(v: number, min: number, max: number) {
 }
 
 function buildMenuText(order: OrderExt) {
-  return order.menus.map((m) => m.menuNm + m.cnt + '개').join(', ')
+  return order.menus.map((m) => m.menuNm + m.cnt + '개').join(', ') + ' 해주세요'
 }
 
 /**
