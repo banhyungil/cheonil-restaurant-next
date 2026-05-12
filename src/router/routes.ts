@@ -3,7 +3,7 @@ import OrdersPage from '@/pages/OrdersPage.vue'
 
 // prettier-ignore
 import {
-  AudioLines, Blocks, BookOpen, Calculator, CalendarClock, CalendarDays, ClipboardList, Cog, FormInput, Mic, Package, Palette, ReceiptText, Settings, Store, Utensils, Wallet,
+  AudioLines, Blocks, BookOpen, Calculator, CalendarClock, CalendarDays, ClipboardList, Cog, FormInput, History, Mic, Package, Palette, ReceiptText, Settings, Store, Utensils, Wallet,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import type { RouteRecordRaw } from 'vue-router'
@@ -93,6 +93,14 @@ export const routes: RouteRecordRaw[] = [
         name: 'sales',
         component: () => import('@/pages/SalesPage.vue'),
         meta: { nav: { group: '관리', label: '주문내역관리', icon: ReceiptText, order: 1 } },
+      },
+      {
+        path: 'voice-order-logs',
+        name: 'voice-order-logs',
+        component: () => import('@/pages/VoiceOrderLogsPage.vue'),
+        meta: {
+          nav: { group: NAV_GROUPS.MANAGE, label: '음성 주문 로그', icon: History, order: 8 },
+        },
       },
       {
         path: 'expenses',

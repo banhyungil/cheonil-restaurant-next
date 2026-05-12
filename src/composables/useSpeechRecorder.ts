@@ -78,6 +78,34 @@ export function useSpeechRecorder() {
     })
   }
 
+  /**
+   * 녹음 종료 후 STT 호출 없이 **raw Blob** 만 반환.
+   *
+   * 서버가 STT + 후속 처리를 한 번에 하는 엔드포인트(예: /voice-order/create-order) 에 보낼 때 사용.
+   * 녹음 중이 아닐 때 호출하면 reject.
+   */
+  function stopBlob(): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      if (!recorder || !recording.value) {
+        reject(new Error('not recording'))
+        return
+      }
+      const r = recorder
+      const mime = r.mimeType || 'audio/webm'
+      r.addEventListener(
+        'stop',
+        () => {
+          recording.value = false
+          const blob = new Blob(chunks, { type: mime })
+          cleanupStream()
+          resolve(blob)
+        },
+        { once: true },
+      )
+      r.stop()
+    })
+  }
+
   /** 녹음 중단 + 업로드 skip — 컴포넌트 unmount 등 cleanup 용. */
   function cancel() {
     if (recorder && recording.value) {
@@ -94,5 +122,5 @@ export function useSpeechRecorder() {
 
   onBeforeUnmount(cancel)
 
-  return { recording, transcribing, lastText, start, stop, cancel }
+  return { recording, transcribing, lastText, start, stop, stopBlob, cancel }
 }
