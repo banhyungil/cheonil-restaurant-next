@@ -14,7 +14,7 @@ import {
   announcerVoice,
 } from '@/composables/useOrderAnnouncer'
 import type { OrderExt } from '@/types/order'
-import { enqueueAnnounce, playAlert, speakAsync } from '@/utils/announceQueue'
+import { enqueueAnnounce, playAlert, speakSequence } from '@/utils/announceQueue'
 
 /**
  * 주문 지연 알람 — READY 주문이 caution / warning / danger 단계 진입 시 1회씩 발화.
@@ -104,17 +104,25 @@ export function useOrderElapsedAlarm(orders: MaybeRefOrGetter<OrderExt[] | undef
         (o.stage === 'danger' && last !== 'danger')
       if (escalated) {
         orderAlarmedStage.set(o.seq, o.stage)
-        const text = `${o.storeNm}, ${o.minutes}분 경과`
+        // 매장명 / "N분 경과" 분할 — 매장명 1종 + 분 단위 6~8종 만 캐싱되면 거의 100% HIT.
+        const minutesText = `${o.minutes}분 경과`
         const { sound, delay } = O_STAGE_SOUNDS[o.stage]
         enqueueAnnounce(async () => {
           if (!announcerEnabled.value || !alertWarningEnabled.value) return
           playAlert(sound)
           await promiseTimeout(delay)
-          await speakAsync(text, {
-            rate: announcerRate.value,
-            gainDb: announcerGainDb.value,
-            voice: announcerVoice.value,
-          })
+          // 매장명 + "N분 경과" 모두 변동 없는 텍스트 → pinned 영구 캐시.
+          await speakSequence(
+            [
+              { text: o.storeNm, tier: 'pinned' },
+              { text: minutesText, tier: 'pinned' },
+            ],
+            {
+              rate: announcerRate.value,
+              gainDb: announcerGainDb.value,
+              voice: announcerVoice.value,
+            },
+          )
         })
       }
     }

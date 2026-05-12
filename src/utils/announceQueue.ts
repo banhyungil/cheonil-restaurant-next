@@ -110,6 +110,8 @@ export interface SpeakOptions {
   gainDb?: number
   /** 화자 풀네임 (예: ko-KR-Chirp3-HD-Achernar). 미지정 시 서버 기본값. */
   voice?: string
+  /** 클라이언트 메모리 캐시 정책. default 'transient'. */
+  tier?: CacheTier
 }
 
 // ─── Autoplay unlock ─────────────────────────────────────────────────
@@ -141,31 +143,64 @@ export function unlockAudio() {
 // ─── TTS (server-synthesized mp3) ────────────────────────────────────
 
 /**
- * 단기 메모리 캐시 — 같은 (text, speed) 가 짧은 간격으로 반복 발화될 때 (announcerRepeat) 네트워크 0회.
- * 서버 캐시 hit 으로도 빠르지만 로컬에 두면 왕복 자체 제거.
+ * 클라이언트 메모리 캐시 — 3-tier.
  *
- * 정책: TTL 30s, max 30 entries. 첫 항목부터 (FIFO) 만료/축출.
+ * - {@link pinnedBlobCache}: 변동 없는 텍스트 (매장명, "N분 경과", "주문 수정" 등). 축출 없음, 페이지 reload 까지 영구.
+ * - {@link warmBlobCache}: 가끔 쓰는 고정 텍스트 (발화 프리셋 등). max 10 entries **LRU**.
+ * - {@link blobCache}: 가변 텍스트 (메뉴 조합 등). max 30 entries **LRU** — 자주 나가는 메뉴가 상위에 남음.
+ *
+ * 모두 miss 시 서버(Spring 디스크 캐시 200MB) → Google. 서버 hit 도 빠르지만 메모리는 왕복 자체 제거.
  */
-const BLOB_CACHE_TTL = 30_000
 const BLOB_CACHE_MAX = 30
-const blobCache = new Map<string, { blob: Blob; expiresAt: number }>()
+const WARM_CACHE_MAX = 10
+const blobCache = new Map<string, Blob>()
+const warmBlobCache = new Map<string, Blob>()
+const pinnedBlobCache = new Map<string, Blob>()
+
+export type CacheTier = 'pinned' | 'warm' | 'transient'
 
 function getCachedBlob(key: string): Blob | null {
-  const e = blobCache.get(key)
-  if (!e) return null
-  if (e.expiresAt < Date.now()) {
-    blobCache.delete(key)
-    return null
+  const pinned = pinnedBlobCache.get(key)
+  if (pinned) return pinned
+
+  const warm = warmBlobCache.get(key)
+  if (warm) {
+    // LRU 갱신 — 끝으로 이동
+    warmBlobCache.delete(key)
+    warmBlobCache.set(key, warm)
+    return warm
   }
-  return e.blob
+
+  const transient = blobCache.get(key)
+  if (transient) {
+    // LRU 갱신
+    blobCache.delete(key)
+    blobCache.set(key, transient)
+    return transient
+  }
+
+  return null
 }
 
-function setCachedBlob(key: string, blob: Blob) {
-  if (blobCache.size >= BLOB_CACHE_MAX) {
+function setCachedBlob(key: string, blob: Blob, tier: CacheTier) {
+  if (tier === 'pinned') {
+    pinnedBlobCache.set(key, blob)
+    return
+  }
+  if (tier === 'warm') {
+    if (warmBlobCache.size >= WARM_CACHE_MAX && !warmBlobCache.has(key)) {
+      const oldest = warmBlobCache.keys().next().value
+      if (oldest !== undefined) warmBlobCache.delete(oldest)
+    }
+    warmBlobCache.delete(key)
+    warmBlobCache.set(key, blob)
+    return
+  }
+  if (blobCache.size >= BLOB_CACHE_MAX && !blobCache.has(key)) {
     const firstKey = blobCache.keys().next().value
     if (firstKey !== undefined) blobCache.delete(firstKey)
   }
-  blobCache.set(key, { blob, expiresAt: Date.now() + BLOB_CACHE_TTL })
+  blobCache.set(key, blob)
 }
 
 function playBlob(blob: Blob, volume: number): Promise<void> {
@@ -185,27 +220,76 @@ function playBlob(blob: Blob, volume: number): Promise<void> {
   })
 }
 
+/** 단일 (text, opts) 의 mp3 blob 확보 — 메모리 캐시 hit 또는 서버 합성. */
+async function fetchSpeechBlob(
+  text: string,
+  speed: number,
+  gainDb: number,
+  voice: string,
+  tier: CacheTier,
+): Promise<Blob> {
+  const key = `${text}|${speed}|${gainDb}|${voice}`
+  const cached = getCachedBlob(key)
+  if (cached) return cached
+  const blob = await synthesize({ text, speed, gainDb, voice: voice || undefined })
+  setCachedBlob(key, blob, tier)
+  return blob
+}
+
+/** 발화 파트 정의. {@link speakSequence} 의 단위. */
+export interface SpeechPart {
+  text: string
+  /** 캐시 정책. default 'transient'. */
+  tier?: CacheTier
+}
+
 /**
  * TTS 1회 발화 후 재생 종료까지 대기.
  *
  * 합성/재생 실패는 console.warn 만 남기고 resolve — 큐 진행 차단 X.
- * 동일 (text, speed) 반복 호출은 단기 메모리 캐시 적중으로 네트워크 0회.
+ * {@link SpeakOptions.tier} 로 캐시 정책 지정 — 프리셋/직접입력 같은 재사용 텍스트는 'warm', 일회성은 default.
  */
 export async function speakAsync(text: string, opts: SpeakOptions = {}): Promise<void> {
   const speed = opts.rate ?? 1.0
   const volume = opts.volume ?? 1.0
   const gainDb = opts.gainDb ?? 0
   const voice = opts.voice ?? ''
-  const key = `${text}|${speed}|${gainDb}|${voice}`
-
+  const tier = opts.tier ?? 'transient'
   try {
-    let blob = getCachedBlob(key)
-    if (!blob) {
-      blob = await synthesize({ text, speed, gainDb, voice: voice || undefined })
-      setCachedBlob(key, blob)
-    }
+    const blob = await fetchSpeechBlob(text, speed, gainDb, voice, tier)
     await playBlob(blob, volume)
   } catch (e) {
     console.warn('[tts] synthesis/playback failed', e)
+  }
+}
+
+/**
+ * 여러 파트를 순서대로 합성 → mp3 binary 이어붙여 **단일 Audio 로 재생**.
+ *
+ * 각 파트는 독립 캐시 항목이라 hit 율 ↑ (예: 매장명은 1종, 메뉴 조합만 변동).
+ * 파트별 {@link SpeechPart.tier} 로 메모리 캐시 정책 분리 — 매장명/경과시간 'pinned', 메뉴 default(transient).
+ * 재생은 단일 HTMLAudio 라 세그먼트 사이 setup latency 없음 — 통문장과 동일한 매끄러움.
+ * mp3 frame self-contained 특성으로 binary concat 후 재인코딩 불필요.
+ */
+export async function speakSequence(
+  parts: SpeechPart[],
+  opts: SpeakOptions = {},
+): Promise<void> {
+  if (parts.length === 0) return
+  const speed = opts.rate ?? 1.0
+  const volume = opts.volume ?? 1.0
+  const gainDb = opts.gainDb ?? 0
+  const voice = opts.voice ?? ''
+  try {
+    const blobs: Blob[] = []
+    for (const p of parts) {
+      if (!p.text) continue
+      blobs.push(await fetchSpeechBlob(p.text, speed, gainDb, voice, p.tier ?? 'transient'))
+    }
+    if (blobs.length === 0) return
+    const combined = blobs.length === 1 ? blobs[0]! : new Blob(blobs, { type: 'audio/mpeg' })
+    await playBlob(combined, volume)
+  } catch (e) {
+    console.warn('[tts] sequence failed', e)
   }
 }

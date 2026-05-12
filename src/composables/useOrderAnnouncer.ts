@@ -11,7 +11,14 @@ import {
 
 import { useOrderElapsedAlarm } from '@/composables/useOrderElapsedAlarm'
 import type { OrderExt } from '@/types/order'
-import { clearAnnounceQueue, enqueueAnnounce, playAlert, speakAsync } from '@/utils/announceQueue'
+import {
+  clearAnnounceQueue,
+  enqueueAnnounce,
+  playAlert,
+  speakAsync,
+  speakSequence,
+  type SpeechPart,
+} from '@/utils/announceQueue'
 import { orderCreatedBus, orderUpdatedBus } from '@/utils/orderEventBus'
 
 /**
@@ -98,11 +105,18 @@ export const announcerPresets = useLocalStorage<string[]>(STORAGE_KEY_PRESETS, [
 
 export function useOrderAnnouncer(orders: MaybeRefOrGetter<OrderExt[] | undefined>) {
   function announceCreated(order: OrderExt) {
-    enqueueOrderAnnouncement(`${order.storeNm}, ${buildMenuText(order)}`)
+    enqueueOrderAnnouncement([
+      { text: order.storeNm, tier: 'pinned' },
+      { text: buildMenuText(order) },
+    ])
   }
 
   function announceUpdated(order: OrderExt) {
-    enqueueOrderAnnouncement(`주문 수정, ${order.storeNm}, ${buildMenuText(order)}`)
+    enqueueOrderAnnouncement([
+      { text: '주문 수정', tier: 'pinned' },
+      { text: order.storeNm, tier: 'pinned' },
+      { text: buildMenuText(order) },
+    ])
   }
 
   // 토글 전환 — ON 시 사용자 클릭(user gesture) 직후 첫 발화로 autoplay 정책 통과 확인 겸 확신,
@@ -209,18 +223,29 @@ function buildMenuText(order: OrderExt) {
   return order.menus.map((m) => m.menuNm + m.cnt + '개').join(', ')
 }
 
-/** Door Bell + TTS(반복 N회) 1개 task 로 enqueue. 진행 도중 OFF 되면 즉시 중단. */
-function enqueueOrderAnnouncement(text: string) {
+/**
+ * Door Bell + TTS(반복 N회) 1개 task 로 enqueue. 진행 도중 OFF 되면 즉시 중단.
+ *
+ * <p>parts 분할 호출 — 매장명/"주문 수정" 등 변동 없는 텍스트는 {@link SpeechPart.pin pin=true} 로
+ * 메모리 영구 캐시. 메뉴 조합은 transient 캐시(축출 OK).
+ */
+function enqueueOrderAnnouncement(parts: SpeechPart[]) {
   if (!announcerEnabled.value) return
   enqueueAnnounce(async () => {
     if (!announcerEnabled.value) return
     playAlert('BELL')
     await promiseTimeout(1000)
 
+    const opts = {
+      rate: announcerRate.value,
+      gainDb: announcerGainDb.value,
+      voice: announcerVoice.value,
+    }
     const times = clamp(announcerRepeat.value, REPEAT_MIN, REPEAT_MAX)
     for (let i = 0; i < times; i++) {
       if (!announcerEnabled.value) break
-      await speakAsync(text, { rate: announcerRate.value, gainDb: announcerGainDb.value, voice: announcerVoice.value })
+      // parts 별 캐시 hit 율 ↑ + mp3 concat 단일 재생으로 세그먼트 갭 0.
+      await speakSequence(parts, opts)
     }
   })
 }
@@ -228,6 +253,8 @@ function enqueueOrderAnnouncement(text: string) {
 /**
  * 임의 텍스트 발화 — 사용자 능동 조작이라 master `enabled` 무관.
  * 큐 enqueue 로 다른 발화와 직렬화. rate 적용, repeat 미적용.
+ *
+ * 프리셋/직접 입력은 같은 텍스트 재사용 빈도 높음 → 'warm' tier 로 메모리 캐시 (LRU 10).
  */
 export function announceCustom(text: string) {
   const trimmed = text.trim()
@@ -236,7 +263,12 @@ export function announceCustom(text: string) {
   enqueueAnnounce(async () => {
     const times = clamp(announcerRepeat.value, REPEAT_MIN, REPEAT_MAX)
     for (let i = 0; i < times; i++) {
-      await speakAsync(trimmed, { rate: announcerRate.value, gainDb: announcerGainDb.value, voice: announcerVoice.value })
+      await speakAsync(trimmed, {
+        rate: announcerRate.value,
+        gainDb: announcerGainDb.value,
+        voice: announcerVoice.value,
+        tier: 'warm',
+      })
     }
   })
 }
