@@ -224,10 +224,12 @@ function playBlob(blob: Blob, volume: number): Promise<void> {
 async function fetchSpeechBlob(
   text: string,
   speed: number,
+  /** 데시벨 증폭률 */
   gainDb: number,
   voice: string,
   tier: CacheTier,
 ): Promise<Blob> {
+  // 화자, ㅂ
   const key = `${text}|${speed}|${gainDb}|${voice}`
   const cached = getCachedBlob(key)
   if (cached) return cached
@@ -271,10 +273,7 @@ export async function speakAsync(text: string, opts: SpeakOptions = {}): Promise
  * 재생은 단일 HTMLAudio 라 세그먼트 사이 setup latency 없음 — 통문장과 동일한 매끄러움.
  * mp3 frame self-contained 특성으로 binary concat 후 재인코딩 불필요.
  */
-export async function speakSequence(
-  parts: SpeechPart[],
-  opts: SpeakOptions = {},
-): Promise<void> {
+export async function speakSequence(parts: SpeechPart[], opts: SpeakOptions = {}): Promise<void> {
   if (parts.length === 0) return
   const speed = opts.rate ?? 1.0
   const volume = opts.volume ?? 1.0
