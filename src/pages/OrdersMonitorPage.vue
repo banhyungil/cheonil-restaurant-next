@@ -7,6 +7,7 @@
       <span class="text-base text-surface-500">· 실시간 주문 상태를 확인하세요</span>
       <div class="flex-1" />
       <OrderAnnouncerButton :orders="orders" />
+      <BTabs v-if="selMode === 'KITCHEN'" v-model="selSize" :options="SIZE_OPTIONS" />
       <BTabs v-model="selMode" :options="MODE_OPTIONS" />
     </header>
 
@@ -23,15 +24,16 @@
           </span>
         </div>
         <div class="grid gap-4" :class="cReadyGridColsClass">
-          <OrderReadyCard
-            v-for="order in cReadyOrders"
-            :key="order.seq"
-            :order="order"
-            :mode="selMode"
-            @complete="onComplete"
-            @edit="onEdit"
-            @remove="onRemove"
-          />
+          <template v-for="order in cReadyOrders" :key="order.seq">
+            <OrderReadyKitchenCard v-if="selMode === 'KITCHEN'" :order="order" :size="selSize" />
+            <OrderReadyCard
+              v-else
+              :order="order"
+              @complete="onComplete"
+              @edit="onEdit"
+              @remove="onRemove"
+            />
+          </template>
         </div>
       </div>
 
@@ -83,17 +85,38 @@ const MODE_OPTIONS = [
 // 배열/튜플 타입에서 number는 "유효한 모든 인덱스"를 의미
 type ModeVal = (typeof MODE_OPTIONS)[number]['val']
 
+const SIZE_OPTIONS = [
+  { val: 'sm', label: '작게' },
+  { val: 'md', label: '보통' },
+  { val: 'lg', label: '크게' },
+] as const
+type SizeVal = (typeof SIZE_OPTIONS)[number]['val']
+
 const selMode = ref<ModeVal>('ALL')
+const selSize = useLocalStorage<SizeVal>('orders-monitor-size', 'md')
 
 const sidebarCollapsed = useSidebarCollapsed()
 
-/** 진행중 카드 grid 폭 — 사이드바 접힘 우선, 그 외엔 모드별 분기. */
-const cReadyGridColsClass = computed(() => {
-  if (selMode.value === 'KITCHEN' && sidebarCollapsed.value)
-    return 'grid-cols-[repeat(auto-fill,minmax(380px,1fr))]'
+/** KITCHEN 모드 size 별 카드 최소 폭 (사이드바 접힘 시 +20px). */
+const READY_GRID_KITCHEN: Record<SizeVal, { default: string; sidebarCollapsed: string }> = {
+  sm: {
+    default: 'grid-cols-[repeat(auto-fill,minmax(360px,1fr))]',
+    sidebarCollapsed: 'grid-cols-[repeat(auto-fill,minmax(380px,1fr))]',
+  },
+  md: {
+    default: 'grid-cols-[repeat(auto-fill,minmax(420px,1fr))]',
+    sidebarCollapsed: 'grid-cols-[repeat(auto-fill,minmax(440px,1fr))]',
+  },
+  lg: {
+    default: 'grid-cols-[repeat(auto-fill,minmax(480px,1fr))]',
+    sidebarCollapsed: 'grid-cols-[repeat(auto-fill,minmax(500px,1fr))]',
+  },
+}
 
-  if (selMode.value === 'KITCHEN') return 'grid-cols-[repeat(auto-fill,minmax(360px,1fr))]'
-  return 'grid-cols-[repeat(auto-fill,minmax(320px,1fr))]'
+/** 진행중 카드 grid 폭 — ALL 은 고정, KITCHEN 은 size × 사이드바 분기. */
+const cReadyGridColsClass = computed(() => {
+  if (selMode.value !== 'KITCHEN') return 'grid-cols-[repeat(auto-fill,minmax(320px,1fr))]'
+  return READY_GRID_KITCHEN[selSize.value][sidebarCollapsed.value ? 'sidebarCollapsed' : 'default']
 })
 
 const { data: orders } = useOrdersMonitorQuery()
