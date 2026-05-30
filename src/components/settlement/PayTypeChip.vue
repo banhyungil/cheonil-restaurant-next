@@ -11,6 +11,7 @@ import { vTooltip } from 'floating-vue'
 import { Banknote, CreditCard, SplitSquareHorizontal, TriangleAlert } from 'lucide-vue-next'
 import { computed } from 'vue'
 
+import { paymentGross } from '@/apis/paymentsApi'
 import type { PaymentEntry } from '@/types/sales'
 
 type Kind = 'UNPAID' | 'CASH' | 'CARD' | 'SPLIT'
@@ -50,7 +51,7 @@ const cClass = computed(() => {
 const cTooltip = computed(() => {
   if (cKind.value !== 'SPLIT') return undefined
   return props.payments
-    .map((p) => `${p.payType === 'CASH' ? '현금' : '카드'} ${p.amount.toLocaleString()}원`)
+    .map((p) => `${p.payType === 'CASH' ? '현금' : '카드'} ${paymentGross(p).toLocaleString()}원`)
     .join(' · ')
 })
 </script>

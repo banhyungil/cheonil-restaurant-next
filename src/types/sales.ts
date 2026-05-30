@@ -1,9 +1,10 @@
 import type { OrderStatus } from './order'
 import type { PayType } from './payment'
 
-/** 결제 수단별 합계 / 건수. */
+/** 결제 수단별 합계 / 건수. amount=공급가, vat=부가세. 표시 실수령액 = amount + vat. */
 export interface PayMethodSummary {
   amount: number
+  vat: number
   count: number
 }
 
@@ -39,6 +40,7 @@ export interface SalesSummary {
 export interface PaymentEntry {
   payType: PayType
   amount: number
+  vat: number
   payAt: string
 }
 

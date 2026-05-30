@@ -93,6 +93,7 @@ import _ from 'lodash'
 import { Trash2 } from 'lucide-vue-next'
 import { computed } from 'vue'
 
+import { payAmountSum } from '@/apis/paymentsApi'
 import type { OrderRow, PaymentEntry } from '@/types/sales'
 
 import PayTypeChip from '@/components/settlement/PayTypeChip.vue'
@@ -128,9 +129,6 @@ function lastPayAt(payments: readonly PaymentEntry[]): string | null {
   return _.maxBy([...payments], (p) => p.payAt)?.payAt ?? null
 }
 
-function payAmountSum(payments: readonly PaymentEntry[]): number {
-  return _.sumBy([...payments], (p) => p.amount)
-}
 </script>
 
 <style scoped>

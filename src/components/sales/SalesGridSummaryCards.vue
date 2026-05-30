@@ -24,7 +24,7 @@
         현금
       </div>
       <div class="text-2xl font-bold text-surface-900">
-        {{ cFmt(summary?.cash.amount ?? 0) }}원
+        {{ cFmt((summary?.cash.amount ?? 0) + (summary?.cash.vat ?? 0)) }}원
       </div>
       <div class="text-xs text-surface-500">{{ summary?.cash.count ?? 0 }}건</div>
     </div>
@@ -36,7 +36,7 @@
         카드
       </div>
       <div class="text-2xl font-bold text-surface-900">
-        {{ cFmt(summary?.card.amount ?? 0) }}원
+        {{ cFmt((summary?.card.amount ?? 0) + (summary?.card.vat ?? 0)) }}원
       </div>
       <div class="text-xs text-surface-500">{{ summary?.card.count ?? 0 }}건</div>
     </div>

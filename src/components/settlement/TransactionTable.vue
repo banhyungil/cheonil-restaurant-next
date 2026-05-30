@@ -94,6 +94,7 @@ import _ from 'lodash'
 import { Search } from 'lucide-vue-next'
 import { computed } from 'vue'
 
+import { payAmountSum } from '@/apis/paymentsApi'
 import { useSearchFilter } from '@/composables/useSearchFilter'
 import type { PayType } from '@/types/payment'
 import type { PaymentEntry, Transaction } from '@/types/sales'
@@ -148,10 +149,6 @@ const cTotalSum = computed(() => _.sumBy(cFiltered.value, (t) => t.orderAmount))
 function lastPayAt(payments: readonly PaymentEntry[]): string | null {
   if (payments.length === 0) return null
   return _.maxBy([...payments], (p) => p.payAt)?.payAt ?? null
-}
-
-function payAmountSum(payments: readonly PaymentEntry[]): number {
-  return _.sumBy([...payments], (p) => p.amount)
 }
 
 function fmtTime(s: string | null): string {

@@ -6,6 +6,7 @@ export interface Payment {
   seq: number
   orderSeq: number
   amount: number
+  vat: number
   payType: PayType
   payAt: string
 }

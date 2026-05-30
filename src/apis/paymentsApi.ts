@@ -60,3 +60,15 @@ export interface PaymentBatchDeletePayload {
 export async function batchDelete(payload: PaymentBatchDeletePayload): Promise<void> {
   return api.post('/orders/payments/batch-delete', payload).then(() => undefined)
 }
+
+/* ---- 표시용 헬퍼 ---- */
+
+/** 단일 결제 실수령액 = 공급가 + 부가세(카드). 화면엔 부가세를 따로 표기하지 않고 합산 표시. */
+export function paymentGross(p: { amount: number; vat: number }): number {
+  return p.amount + p.vat
+}
+
+/** 결제 entry 합계 — 분할 결제 시 여러 entry 의 실수령액(공급가+부가세) 합산. */
+export function payAmountSum(payments: readonly { amount: number; vat: number }[]): number {
+  return payments.reduce((sum, p) => sum + paymentGross(p), 0)
+}
