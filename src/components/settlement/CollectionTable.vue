@@ -40,7 +40,13 @@
       @update:selection="emit('update:selection', $event as Transaction[])"
     >
       <Column selection-mode="multiple" :pt="{ headerCell: { style: 'width:3rem' } }" />
-      <Column header="#" :pt="{ headerCell: { style: 'width:3rem' }, bodyCell: { class: 'text-center text-sm text-surface-500' } }">
+      <Column
+        header="#"
+        :pt="{
+          headerCell: { style: 'width:3rem' },
+          bodyCell: { class: 'text-center text-sm text-surface-500' },
+        }"
+      >
         <template #body="{ index }">{{ index + 1 }}</template>
       </Column>
       <Column field="storeNm" header="매장" />
@@ -48,6 +54,14 @@
       <Column field="orderAmount" header="주문금액">
         <template #body="{ data }">
           <span class="font-semibold">{{ data.orderAmount.toLocaleString() }}원</span>
+        </template>
+      </Column>
+      <Column header="결제금액">
+        <template #body="{ data }">
+          <span v-if="data.payments.length" class="font-semibold">
+            {{ payAmountSum(data.payments).toLocaleString() }}원
+          </span>
+          <span v-else class="text-surface-400">-</span>
         </template>
       </Column>
       <Column header="주문일자">
@@ -140,6 +154,7 @@ import _ from 'lodash'
 import { Banknote, CreditCard, Search, SplitSquareHorizontal, Undo2 } from 'lucide-vue-next'
 import { computed } from 'vue'
 
+import { payAmountSum } from '@/apis/paymentsApi'
 import { useSearchFilter } from '@/composables/useSearchFilter'
 import type { PayType } from '@/types/payment'
 import type { Transaction } from '@/types/sales'
