@@ -34,6 +34,7 @@
               hour-format="12"
               class="flex-1"
               @update:model-value="onUpdateDate"
+              @input="onRsvAtInput"
             />
           </div>
         </div>
@@ -98,6 +99,7 @@ import _ from 'lodash'
 
 import type { CartItem } from '@/types/cart'
 import type { Store } from '@/types/store'
+import { isValid, parse } from 'date-fns'
 
 const props = defineProps<{
   store: Pick<Store, 'seq' | 'nm'> | null
@@ -136,4 +138,13 @@ function onUpdateDate(d: Date | Date[] | (Date | null)[] | null | undefined) {
   if (!(d instanceof Date)) return
   rsvAt.value = d.toISOString()
 }
+
+const RSV_REG = /^\d{4}\.\d{2}\.\d{2}$/
+const onRsvAtInput = _.debounce((e: Event) => {
+  const value = (e.target as HTMLInputElement | null)?.value?.trim()
+  if (!value || !RSV_REG.test(value)) return
+
+  const d = parse(value, 'HH:mm', new Date())
+  if (isValid(d)) rsvAt.value = value
+}, 200)
 </script>

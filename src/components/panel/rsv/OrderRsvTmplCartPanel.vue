@@ -64,12 +64,12 @@
               🕐 예약 시각 <span class="text-red-500">*</span>
             </label>
             <DatePicker
-              :model-value="mRsvTime"
+              v-model="mRsvTime"
               time-only
               hour-format="24"
               show-icon
               icon-display="input"
-              @update:model-value="(v) => (mRsvTime = v as Date | null)"
+              @input="onRsvTimeInput"
             />
           </div>
           <div class="flex flex-1 flex-col gap-1.5">
@@ -159,7 +159,7 @@
 </template>
 
 <script setup lang="ts">
-import { format } from 'date-fns'
+import { format, isValid, parse } from 'date-fns'
 import _ from 'lodash'
 
 import { useDateModel } from '@/composables/useDateModel'
@@ -251,4 +251,13 @@ const mIsEndless = computed<boolean>({
     endDt.value = v ? null : format(new Date(), DATE_FMT)
   },
 })
+
+const RSVTIME_REG = /^\d{2}:\d{2}$/
+const onRsvTimeInput = _.debounce((e: Event) => {
+  const value = (e.target as HTMLInputElement | null)?.value?.trim()
+  if (!value || !RSVTIME_REG.test(value)) return
+
+  const d = parse(value, 'HH:mm', new Date())
+  if (isValid(d)) mRsvTime.value = d
+}, 200)
 </script>
