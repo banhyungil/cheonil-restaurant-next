@@ -9,6 +9,8 @@ import { api } from './api'
 export interface PaymentCreatePayload {
   orderSeq: number
   payType: PayType
+  /** 수금 일시 (ISO). 미지정 시 서버 현재시각. */
+  payAt?: string
 }
 
 /** 단건 결제. */
@@ -37,6 +39,8 @@ export interface PaymentSplit {
 export interface PaymentSplitPayload {
   orderSeq: number
   splits: PaymentSplit[]
+  /** 수금 일시 (ISO). 미지정 시 서버 현재시각. 분할 행 전체 동일 적용. */
+  payAt?: string
 }
 
 /**

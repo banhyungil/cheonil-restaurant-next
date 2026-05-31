@@ -12,33 +12,24 @@
       @today="today"
     />
 
-    <!-- 정산 탭 -->
-    <template v-if="cTab === 'settle'">
-      <SalesSummaryCards :summary="summary" />
-      <div class="min-h-0 flex-1 Poverflow-auto">
-        <TransactionTable
-          v-model:pay-filter="settleFilter"
-          v-model:store-keyword="settleKeyword"
-          :transactions="transactions ?? []"
-        />
-      </div>
-    </template>
+    <TransactionTab
+      v-show="cTab === 'settle'"
+      :summary="summary"
+      :transactions="transactions ?? []"
+    />
 
-    <!-- 수금 탭 — 기본: 선택 날짜 거래 (paid + unpaid) / 토글 ON: 모든 미수 (날짜 무관) -->
-    <template v-else>
-      <div class="min-h-0 flex-1 overflow-auto">
-        <CollectionTable
-          v-model:selection="collectSelection"
-          v-model:store-keyword="collectKeyword"
-          v-model:show-all-unpaid="showAllUnpaid"
-          :rows="cCollectionRows"
-          :date="date"
-          @pay-all="onPayAll"
-          @pay-split="onPaySplit"
-          @cancel-all="onCancelAll"
-        />
-      </div>
-    </template>
+    <CollectionTab
+      v-show="cTab === 'collect'"
+      :rows="cCollectionRows"
+      v-model:selRows="collectionSelRows"
+      v-model:show-all-unpaid="showAllUnpaid"
+      v-model:collect-at="collectAt"
+      :date="date"
+      @pay-all="onPayAll"
+      @pay-split="onPaySplit"
+      @cancel-all="onCancelAll"
+      class="min-h-0 flex-1 overflow-auto"
+    />
 
     <SplitPaymentDialog
       v-model:visible="showSplitDialog"
@@ -52,7 +43,7 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
-import { computed, ref } from 'vue'
+import { computed, ref, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useDateNav } from '@/composables/useDateNav'
@@ -65,8 +56,9 @@ import { useSalesSummaryQuery, useTransactionsQuery, useUnpaidQuery } from '@/qu
 import type { PayType } from '@/types/payment'
 import type { Transaction } from '@/types/sales'
 
+import TransactionTab from '@/components/settlement/TransactionTab.vue'
+
 import type { SettlementTab } from '@/components/settlement/SettlementHeader.vue'
-import type { TxPayFilter } from '@/components/settlement/TransactionTable.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -82,18 +74,17 @@ function onChangeTab(t: SettlementTab) {
 // --- date nav (정산 탭 전용) ---
 const { date, cIsToday, prev, next, today, setDate } = useDateNav()
 
-// --- 정산 탭 상태 ---
-const settleFilter = ref<TxPayFilter>('ALL')
-const settleKeyword = ref('')
-
+// --- 정산 탭 데이터 (필터/검색 상태는 TransactionTab 내부로 이동) ---
 const { data: summary } = useSalesSummaryQuery(date)
 const { data: transactions } = useTransactionsQuery(computed(() => ({ date: date.value })))
 
 // --- 수금 탭 상태 ---
-const collectSelection = ref<Transaction[]>([])
-const collectKeyword = ref('')
+/** 선택된 수금 목록 */
+const collectionSelRows = shallowRef<Transaction[]>([])
 /** true: 모든 미수 (날짜 무관) / false: 선택 날짜 거래 (paid + unpaid). */
 const showAllUnpaid = ref(false)
+/** 수금 처리 일시 — 기본 현재. 나중에 몰아서 입력 시 과거 일시 선택 가능. */
+const collectAt = ref(new Date())
 
 const { data: unpaid } = useUnpaidQuery()
 
@@ -114,9 +105,10 @@ const splitLoading = computed(() => isSplitPending.value)
 
 function onPayAll(payType: PayType) {
   // 선택 중 미수만 — PAID row 가 섞여 있어도 안전.
-  const targets = collectSelection.value.filter((t) => t.payments.length === 0)
+  const targets = collectionSelRows.value.filter((t) => t.payments.length === 0)
   if (targets.length === 0) return
-  const payloads = targets.map((t) => ({ orderSeq: t.orderSeq, payType }))
+  const payAt = collectAt.value.toISOString()
+  const payloads = targets.map((t) => ({ orderSeq: t.orderSeq, payType, payAt }))
   payBatch(payloads, {
     onSuccess: () => {
       toast.add({
@@ -124,7 +116,7 @@ function onPayAll(payType: PayType) {
         summary: `${payType === 'CASH' ? '현금' : '카드'} 결제 ${payloads.length}건`,
         life: 2500,
       })
-      collectSelection.value = []
+      collectionSelRows.value = []
     },
   })
   // isBatchPending: 추후 버튼 loading 연결 가능
@@ -133,7 +125,7 @@ function onPayAll(payType: PayType) {
 
 function onCancelAll() {
   // 선택 중 PAID row 만 — 결제 취소 (PAID → COOKED).
-  const targets = collectSelection.value.filter((t) => t.payments.length > 0)
+  const targets = collectionSelRows.value.filter((t) => t.payments.length > 0)
   if (targets.length === 0) return
   confirm.require({
     message: `선택한 ${targets.length}건의 결제를 취소하시겠습니까?`,
@@ -149,7 +141,7 @@ function onCancelAll() {
               summary: `결제 취소 ${targets.length}건`,
               life: 2500,
             })
-            collectSelection.value = []
+            collectionSelRows.value = []
           },
         },
       )
@@ -164,16 +156,15 @@ function onPaySplit(tx: Transaction) {
 
 function onSubmitSplit(orderSeq: number, splits: { payType: PayType; amount: number }[]) {
   paySplit(
-    { orderSeq, splits },
+    { orderSeq, splits, payAt: collectAt.value.toISOString() },
     {
       onSuccess: () => {
         toast.add({ severity: 'success', summary: '분할 결제 완료', life: 2500 })
         showSplitDialog.value = false
         splitTarget.value = null
-        collectSelection.value = []
+        collectionSelRows.value = []
       },
     },
   )
 }
-
 </script>

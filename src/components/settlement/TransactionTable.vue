@@ -59,9 +59,9 @@
           <PayTypeChip :payments="data.payments" />
         </template>
       </Column>
-      <Column header="결제시간">
+      <Column header="결제일시">
         <template #body="{ data }">
-          <span class="text-sm text-surface-600">{{ fmtTime(lastPayAt(data.payments)) }}</span>
+          <span class="text-sm text-surface-600">{{ fmtDateTime(lastPayAt(data.payments)) }}</span>
         </template>
       </Column>
       <Column header="결제금액">
@@ -154,5 +154,10 @@ function lastPayAt(payments: readonly PaymentEntry[]): string | null {
 function fmtTime(s: string | null): string {
   if (!s) return '-'
   return format(parseISO(s), 'HH:mm')
+}
+
+function fmtDateTime(s: string | null): string {
+  if (!s) return '-'
+  return format(parseISO(s), 'MM/dd HH:mm')
 }
 </script>
