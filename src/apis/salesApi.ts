@@ -22,10 +22,12 @@ export interface SalesSummaryParams {
   date: string
 }
 
-/** 정산 탭 거래 내역 조회 — 단일 날짜 (전체 응답, 클라 페이징/필터). */
+/** 정산/수금 탭 거래 내역 조회 — 날짜 범위(from~to) (전체 응답, 클라 페이징/필터). */
 export interface TransactionsParams {
   /** 'YYYY-MM-DD'. */
-  date: string
+  from: string
+  /** 'YYYY-MM-DD'. */
+  to: string
   storeSeq?: number
 }
 
@@ -41,7 +43,7 @@ export async function fetchSummary(params: SalesSummaryParams): Promise<SalesSum
   return api.get<SalesSummary>('/sales/summary', { params }).then((r) => r.data)
 }
 
-/** 정산 탭 — 그날 거래 내역 (전체 응답, 클라 페이징/필터/가상스크롤). */
+/** 정산/수금 탭 — 기간 거래 내역 (전체 응답, 클라 페이징/필터/가상스크롤). */
 export async function fetchTransactions(params: TransactionsParams): Promise<Transaction[]> {
   return api.get<Transaction[]>('/sales/transactions', { params }).then((r) => r.data)
 }

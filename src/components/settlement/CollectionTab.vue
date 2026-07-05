@@ -1,7 +1,7 @@
 <!-- 수금 탭 — 날짜 기반 거래 (paid + unpaid) / 토글 ON 시 모든 미수 (날짜 무관) -->
 <template>
   <div class="collection-table flex flex-col gap-3">
-    <!-- 헤더 정보 + 토글 + 매장 검색 -->
+    <!-- 헤더 정보 + 범위/필터 토글 + 매장 검색 -->
     <div class="flex items-center gap-3">
       <span class="text-base font-semibold text-surface-900">
         {{ cHeaderLabel }}
@@ -10,7 +10,37 @@
 
       <label class="flex items-center gap-2 text-sm text-surface-700">
         모든 미수 보기
-        <ToggleSwitch :model-value="showAllUnpaid" />
+        <ToggleSwitch v-model="showAllUnpaid" />
+      </label>
+      <!-- 조회 범위 — '모든 미수 보기' 모드에선 비활성. [검색] 클릭 시에만 조회. -->
+      <DatePicker
+        :model-value="cDateRange"
+        selection-mode="range"
+        date-format="yy-mm-dd"
+        show-icon
+        :max-date="cToday"
+        :disabled="showAllUnpaid"
+        placeholder="📅 날짜 범위 선택"
+        class="w-72"
+        @update:model-value="(v) => (cDateRange = v as (Date | null)[] | null)"
+        @keydown.enter="onSearch"
+      />
+      <BButton
+        v-tooltip="'선택한 기간으로 조회'"
+        color="primary"
+        :disabled="!cCanSearch"
+        @click="onSearch"
+      >
+        <Search :size="16" />
+        검색
+      </BButton>
+    </div>
+    <!-- 미수만 보기 — 프론트 필터 (모든 미수 모드에선 무의미하여 숨김) -->
+    <div class="flex gap-2">
+      <div class="flex-1" />
+      <label v-if="!showAllUnpaid" class="flex items-center gap-2 text-sm text-surface-700">
+        미수만
+        <Checkbox v-model="unpaidOnly" binary />
       </label>
 
       <IconField class="w-60">
@@ -18,7 +48,7 @@
           <Search :size="16" />
         </InputIcon>
         <InputText
-          :model-value="storeKeyword"
+          v-model="storeKeyword"
           placeholder="매장 검색"
           class="h-10 w-full"
           @keydown.esc="() => (storeKeyword = '')"
@@ -29,7 +59,7 @@
     <!-- :selection="selRows"
     @update:selection="() => console.log('update')" -->
     <DataTable
-      :value="cFiltered"
+      :value="cRows"
       v-model:selection="selRows"
       striped-rows
       data-key="orderSeq"
@@ -182,19 +212,20 @@ import DatePicker from 'primevue/datepicker'
 const props = defineProps<{
   /** 모드별 데이터 — 호출처(SettlementPage) 가 토글에 따라 적절한 list 전달. */
   rows: readonly Transaction[]
-  /** 'YYYY-MM-DD' — 날짜 모드일 때 헤더 표시용. */
-  date: string
-  // selection: Transaction[]
-  // storeKeyword: string
-  // showAllUnpaid: boolean
-  /** 수금 처리 일시 — 일괄/분할 결제에 공통 적용. SettlementPage 소유. */
-  // collectAt: Date
 }>()
 
 const selRows = defineModel<Transaction[]>('selRows', { default: [] })
 const storeKeyword = ref<string>('')
 const showAllUnpaid = defineModel<boolean>('showAllUnpaid', { default: false })
 const collectAt = defineModel<Date>('collectAt', { default: new Date() })
+/** 조회 범위(applied) 'YYYY-MM-DD' — SettlementPage 소유(range 쿼리 구동). [검색] 시에만 갱신. */
+const from = defineModel<string>('from', { default: '' })
+const to = defineModel<string>('to', { default: '' })
+/** 입력 중(draft) 범위 — DatePicker 바인딩. [검색] 클릭 시 applied(from/to)로 커밋. */
+const draftFrom = ref(from.value)
+const draftTo = ref(to.value)
+/** 미수만 보기 — 서버 재조회 없이 프론트 필터. */
+const unpaidOnly = ref(false)
 
 const emit = defineEmits<{
   // 'update:storeKeyword': [val: string]
@@ -221,24 +252,75 @@ const onCollectAtInput = _.debounce((e: Event) => {
   if (isValid(d)) collectAt.value = d
 }, 200)
 
+// range DatePicker 어댑터 — Date[] ↔ 'YYYY-MM-DD' draft. (조회는 [검색] 시 커밋)
+const cDateRange = computed<(Date | null)[] | null>({
+  get: () => {
+    const f = draftFrom.value ? parse(draftFrom.value, 'yyyy-MM-dd', new Date()) : null
+    const t = draftTo.value ? parse(draftTo.value, 'yyyy-MM-dd', new Date()) : null
+    if (!f && !t) return null
+    return [f, t]
+  },
+  set: (v) => {
+    // 선택 중엔 [start, null] — start 확정 즉시 draft 반영, end 미선택이면 단일일로 유지.
+    if (!Array.isArray(v) || !(v[0] instanceof Date)) return
+    const [f, t] = v
+    draftFrom.value = format(f, 'yyyy-MM-dd')
+    draftTo.value = format(t instanceof Date ? t : f, 'yyyy-MM-dd')
+  },
+})
+
+const cToday = computed(() => {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d
+})
+
+/** draft 가 유효(from/to 모두 존재)하고 applied 와 다를 때만 검색 활성. */
+const cCanSearch = computed(
+  () =>
+    !showAllUnpaid.value &&
+    !!draftFrom.value &&
+    !!draftTo.value &&
+    (draftFrom.value !== from.value || draftTo.value !== to.value),
+)
+
+/** [검색] — draft 범위를 applied(from/to)로 커밋 → range 쿼리 refetch. */
+function onSearch() {
+  from.value = draftFrom.value
+  to.value = draftTo.value
+}
+
 const { cFiltered } = useSearchFilter(
   () => props.rows,
   () => storeKeyword.value,
   (t) => t.storeNm,
 )
 
+// 매장 검색 후 '미수만' 프론트 필터 적용 (모든 미수 모드에선 이미 전부 미수라 무의미).
+const cRows = computed<readonly Transaction[]>(() =>
+  unpaidOnly.value && !showAllUnpaid.value
+    ? cFiltered.value.filter((t) => t.payments.length === 0)
+    : cFiltered.value,
+)
+
 const cHeaderLabel = computed(() => {
-  const total = cFiltered.value.length
-  const sum = _.sumBy(cFiltered.value, (t) => t.orderAmount).toLocaleString()
+  const total = cRows.value.length
+  const sum = _.sumBy(cRows.value, (t) => t.orderAmount).toLocaleString()
   if (showAllUnpaid.value) return `모든 미수 ${total}건 · 합계 ${sum}원`
-  const [y, m, d] = props.date.split('-').map(Number) as [number, number, number]
-  const lbl = format(new Date(y, m - 1, d), 'yyyy.MM.dd')
-  return `${lbl} 거래 ${total}건 · 합계 ${sum}원`
+  const fromLbl = fmtRangeLabel(from.value)
+  const toLbl = fmtRangeLabel(to.value)
+  const range = fromLbl === toLbl ? fromLbl : `${fromLbl} ~ ${toLbl}`
+  return `${range} 거래 ${total}건 · 합계 ${sum}원`
 })
 
 const cEmptyLabel = computed(() =>
-  showAllUnpaid.value ? '미수 내역이 없습니다.' : '해당 날짜의 거래가 없습니다.',
+  showAllUnpaid.value ? '미수 내역이 없습니다.' : '해당 기간의 거래가 없습니다.',
 )
+
+function fmtRangeLabel(s: string): string {
+  if (!s) return '-'
+  return format(parse(s, 'yyyy-MM-dd', new Date()), 'yyyy.MM.dd')
+}
 
 const cSelectedSum = computed(() => _.sumBy(selRows.value, (t) => t.orderAmount))
 const cSelectedUnpaidCount = computed(

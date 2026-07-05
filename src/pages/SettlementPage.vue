@@ -1,22 +1,9 @@
 <!-- 정산 페이지 — [정산][수금] 두 탭 통합 -->
 <template>
   <section class="settlement-page flex h-full flex-col gap-5 px-8 py-6">
-    <SettlementHeader
-      :tab="cTab"
-      :date="date"
-      :is-today="cIsToday"
-      @update:tab="onChangeTab"
-      @update:date="setDate"
-      @prev="prev"
-      @next="next"
-      @today="today"
-    />
+    <SettlementHeader :tab="cTab" @update:tab="onChangeTab" />
 
-    <TransactionTab
-      v-show="cTab === 'settle'"
-      :summary="summary"
-      :transactions="transactions ?? []"
-    />
+    <TransactionTab v-show="cTab === 'settle'" />
 
     <CollectionTab
       v-show="cTab === 'collect'"
@@ -24,7 +11,8 @@
       v-model:selRows="collectionSelRows"
       v-model:show-all-unpaid="showAllUnpaid"
       v-model:collect-at="collectAt"
-      :date="date"
+      v-model:from="collectFrom"
+      v-model:to="collectTo"
       @pay-all="onPayAll"
       @pay-split="onPaySplit"
       @cancel-all="onCancelAll"
@@ -41,18 +29,18 @@
 </template>
 
 <script setup lang="ts">
+import { format } from 'date-fns'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { computed, ref, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { useDateNav } from '@/composables/useDateNav'
 import {
   usePaymentBatchCreateMutation,
   usePaymentBatchDeleteMutation,
   usePaymentSplitMutation,
 } from '@/queries/paymentsQuery'
-import { useSalesSummaryQuery, useTransactionsQuery, useUnpaidQuery } from '@/queries/salesQuery'
+import { useTransactionsQuery, useUnpaidQuery } from '@/queries/salesQuery'
 import type { PayType } from '@/types/payment'
 import type { Transaction } from '@/types/sales'
 
@@ -71,26 +59,29 @@ function onChangeTab(t: SettlementTab) {
   router.replace({ query: { ...route.query, tab: t } })
 }
 
-// --- date nav (정산 탭 전용) ---
-const { date, cIsToday, prev, next, today, setDate } = useDateNav()
-
-// --- 정산 탭 데이터 (필터/검색 상태는 TransactionTab 내부로 이동) ---
-const { data: summary } = useSalesSummaryQuery(date)
-const { data: transactions } = useTransactionsQuery(computed(() => ({ date: date.value })))
+// 정산 탭 데이터/날짜 네비는 TransactionTab 내부로 이동 (탭 자기완결형).
 
 // --- 수금 탭 상태 ---
 /** 선택된 수금 목록 */
 const collectionSelRows = shallowRef<Transaction[]>([])
-/** true: 모든 미수 (날짜 무관) / false: 선택 날짜 거래 (paid + unpaid). */
+/** true: 모든 미수 (날짜 무관) / false: 범위(from~to) 거래 (paid + unpaid). */
 const showAllUnpaid = ref(false)
 /** 수금 처리 일시 — 기본 현재. 나중에 몰아서 입력 시 과거 일시 선택 가능. */
 const collectAt = ref(new Date())
+/** 수금 탭 조회 범위 — 정산 탭 날짜 네비와 독립. 기본 오늘 하루. */
+const todayStr = format(new Date(), 'yyyy-MM-dd')
+const collectFrom = ref(todayStr)
+const collectTo = ref(todayStr)
 
 const { data: unpaid } = useUnpaidQuery()
+// 수금 탭 전용 range 쿼리 — 정산 탭 transactions 와 별개 인스턴스.
+const { data: collectTx } = useTransactionsQuery(
+  computed(() => ({ from: collectFrom.value, to: collectTo.value })),
+)
 
-/** 수금 탭 데이터 — 토글에 따라 unpaid (모든 미수) 또는 transactions (선택 날짜 거래) */
+/** 수금 탭 데이터 — 토글에 따라 unpaid (모든 미수) 또는 collectTx (범위 거래) */
 const cCollectionRows = computed<readonly Transaction[]>(() =>
-  showAllUnpaid.value ? (unpaid.value?.content ?? []) : (transactions.value ?? []),
+  showAllUnpaid.value ? (unpaid.value?.content ?? []) : (collectTx.value ?? []),
 )
 
 // --- mutation ---
