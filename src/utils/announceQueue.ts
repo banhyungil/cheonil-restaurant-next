@@ -112,6 +112,22 @@ export interface SpeakOptions {
   voice?: string
   /** 클라이언트 메모리 캐시 정책. default 'transient'. */
   tier?: CacheTier
+  /**
+   * 메모리 캐시 조회/저장 모두 skip. default false.
+   *
+   * TTS 관리 페이지의 "다시 합성" 전용 — 서버 캐시를 지운 뒤 같은 파라미터로 재요청할 때
+   * 메모리에 남은 옛 blob 이 반환되면 재합성 결과를 확인할 수 없다.
+   *
+   * 브라우저 HTTP 캐시(`max-age=86400`) 도 함께 우회한다 ({@link synthesize}).
+   */
+  bypassCache?: boolean
+  /**
+   * 합성/재생 실패 콜백. 미지정 시 기존대로 silent fail (console.warn 만).
+   *
+   * 주문 알림은 실패해도 조용히 넘어가야 하지만, 관리 화면처럼 사용자가 결과를 기다리는
+   * 화면에서는 실패를 알려야 한다.
+   */
+  onError?: (e: unknown) => void
 }
 
 // ─── Autoplay unlock ─────────────────────────────────────────────────
@@ -203,6 +219,13 @@ function setCachedBlob(key: string, blob: Blob, tier: CacheTier) {
   blobCache.set(key, blob)
 }
 
+/** 3-tier 전체에서 해당 key 제거 — 재합성 시 옛 blob 잔존 방지. */
+function invalidateCachedBlob(key: string) {
+  pinnedBlobCache.delete(key)
+  warmBlobCache.delete(key)
+  blobCache.delete(key)
+}
+
 function playBlob(blob: Blob, volume: number): Promise<void> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(blob)
@@ -228,13 +251,22 @@ async function fetchSpeechBlob(
   gainDb: number,
   voice: string,
   tier: CacheTier,
+  bypassCache = false,
 ): Promise<Blob> {
   // 화자, ㅂ
   const key = `${text}|${speed}|${gainDb}|${voice}`
-  const cached = getCachedBlob(key)
-  if (cached) return cached
-  const blob = await synthesize({ text, speed, gainDb, voice: voice || undefined })
-  setCachedBlob(key, blob, tier)
+  if (bypassCache) {
+    // 모든 tier 에서 제거 — 안 그러면 pinned 에 남은 옛 blob 이 이후 조회에서 계속 이긴다.
+    invalidateCachedBlob(key)
+  } else {
+    const cached = getCachedBlob(key)
+    if (cached) return cached
+  }
+
+  const blob = await synthesize({ text, speed, gainDb, voice: voice || undefined, bypassCache })
+  // bypass 요청은 저장도 하지 않는다 — 어차피 다음에도 서버까지 가므로 LRU 자리만 차지하고,
+  // 무엇보다 관리 화면 발화가 프리셋/알림용 blob 을 밀어내면 안 된다.
+  if (!bypassCache) setCachedBlob(key, blob, tier)
   return blob
 }
 
@@ -258,10 +290,11 @@ export async function speakAsync(text: string, opts: SpeakOptions = {}): Promise
   const voice = opts.voice ?? ''
   const tier = opts.tier ?? 'transient'
   try {
-    const blob = await fetchSpeechBlob(text, speed, gainDb, voice, tier)
+    const blob = await fetchSpeechBlob(text, speed, gainDb, voice, tier, opts.bypassCache)
     await playBlob(blob, volume)
   } catch (e) {
     console.warn('[tts] synthesis/playback failed', e)
+    opts.onError?.(e)
   }
 }
 

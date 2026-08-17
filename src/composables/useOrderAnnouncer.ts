@@ -64,10 +64,11 @@ export const PRESET_MAX_LEN = 30
 const REPEAT_MIN = 1
 const REPEAT_MAX = 5
 
-const RATE_MIN = 0.9
-const RATE_MAX = 2.0
-const RATE_STEP = 0.1
-const RATE_DEFAULT = 1.2
+/** 속도 범위 — popover / TTS 관리 페이지가 공유. */
+export const RATE_MIN = 0.9
+export const RATE_MAX = 2.0
+export const RATE_STEP = 0.1
+export const RATE_DEFAULT = 1.2
 
 /** 음량 단계 (Google TTS volumeGainDb 매핑). UI Select 3단. */
 export const GAIN_OPTIONS: { label: string; value: number }[] = [
@@ -75,7 +76,7 @@ export const GAIN_OPTIONS: { label: string; value: number }[] = [
   { label: '크게', value: 3 },
   { label: '매우 크게', value: 6 },
 ]
-const GAIN_DB_DEFAULT = 0
+export const GAIN_DB_DEFAULT = 0
 
 /** 화자 선택 (Google Chirp 3 HD 한국어). 큐레이션 6개. 더 늘리려면 여기에 추가. */
 export const VOICE_OPTIONS: { label: string; value: string }[] = [
@@ -86,7 +87,7 @@ export const VOICE_OPTIONS: { label: string; value: string }[] = [
   { label: 'Puck (남, 친근)', value: 'ko-KR-Chirp3-HD-Puck' },
   { label: 'Algieba (남, 안정)', value: 'ko-KR-Chirp3-HD-Algieba' },
 ]
-const VOICE_DEFAULT = VOICE_OPTIONS[0]!.value
+export const VOICE_DEFAULT = VOICE_OPTIONS[0]!.value
 
 /** 폭주 알람 임계치 — 추후 설정 화면으로 이관 가능. */
 const THRESHOLD_BUSY = 10

@@ -3,7 +3,7 @@ import OrdersPage from '@/pages/OrdersPage.vue'
 
 // prettier-ignore
 import {
-  AudioLines, Blocks, BookOpen, Calculator, CalendarClock, CalendarDays, ClipboardList, Cog, FormInput, History, Mic, Package, Palette, ReceiptText, Settings, Store, Utensils, Wallet,
+  AudioLines, Blocks, BookOpen, Calculator, CalendarClock, CalendarDays, ClipboardList, Cog, FormInput, History, Mic, Package, Palette, ReceiptText, Settings, Store, Utensils, Volume2, Wallet,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import type { RouteRecordRaw } from 'vue-router'
@@ -167,6 +167,14 @@ export const routes: RouteRecordRaw[] = [
         name: 'master',
         component: () => import('@/pages/MasterPage.vue'),
         meta: { nav: { group: NAV_GROUPS.MANAGE, label: '마스터 관리', icon: Settings, order: 7 } },
+      },
+      {
+        path: 'tts',
+        name: 'tts',
+        component: () => import('@/pages/TtsPage.vue'),
+        meta: {
+          nav: { group: NAV_GROUPS.MANAGE, label: 'TTS 음성 관리', icon: Volume2, order: 9 },
+        },
       },
       {
         path: 'settings',
