@@ -2,7 +2,6 @@ import type { PayType } from '@/types/payment'
 import type {
   OrderRow,
   OrdersSummary,
-  PageRes,
   SalesSummary,
   Transaction,
 } from '@/types/sales'
@@ -31,11 +30,9 @@ export interface TransactionsParams {
   storeSeq?: number
 }
 
-/** 수금 탭 미수 조회 — 날짜 무관 모든 미수 (운영자가 누적 미수 일괄 처리). */
+/** 수금 탭 미수 조회 — 날짜 무관 모든 미수 (운영자가 누적 미수 일괄 처리). 전체 응답, 클라 페이징. */
 export interface UnpaidParams {
   storeSeq?: number
-  page?: number
-  size?: number
 }
 
 /** 정산 KPI — 그날 매출/전일/순매출/현금/카드/미수. */
@@ -52,8 +49,8 @@ export async function fetchTransactions(params: TransactionsParams): Promise<Tra
  * 수금 탭 — 모든 미수 (날짜 무관).
  * `/sales/transactions` 와 분리한 이유: 의미 명확 + 정산은 단일 날짜라 시그니처 다름.
  */
-export async function fetchUnpaid(params?: UnpaidParams): Promise<PageRes<Transaction>> {
-  return api.get<PageRes<Transaction>>('/sales/unpaid', { params }).then((r) => r.data)
+export async function fetchUnpaid(params?: UnpaidParams): Promise<Transaction[]> {
+  return api.get<Transaction[]>('/sales/unpaid', { params }).then((r) => r.data)
 }
 
 /* ────────────────────────────────────────────────────────────────────

@@ -81,7 +81,7 @@ const { data: collectTx } = useTransactionsQuery(
 
 /** 수금 탭 데이터 — 토글에 따라 unpaid (모든 미수) 또는 collectTx (범위 거래) */
 const cCollectionRows = computed<readonly Transaction[]>(() =>
-  showAllUnpaid.value ? (unpaid.value?.content ?? []) : (collectTx.value ?? []),
+  showAllUnpaid.value ? (unpaid.value ?? []) : (collectTx.value ?? []),
 )
 
 // --- mutation ---

@@ -35,6 +35,9 @@
         검색
       </BButton>
     </div>
+    <BInfoBanner v-if="cRangeWarn" severity="warn">
+      {{ cRangeWarn }}
+    </BInfoBanner>
     <!-- 미수만 보기 — 프론트 필터 (모든 미수 모드에선 무의미하여 숨김) -->
     <div class="flex gap-2">
       <div class="flex-1" />
@@ -61,8 +64,12 @@
     <DataTable
       :value="cRows"
       v-model:selection="selRows"
+      v-model:first="first"
       striped-rows
       data-key="orderSeq"
+      paginator
+      v-model:rows="pageSize"
+      :rows-per-page-options="[20, 50, 100, 200]"
       :pt="{ thead: { class: 'bg-surface-50' } }"
       :row-class="(d: Transaction) => (d.payments.length === 0 ? 'bg-red-50!' : '')"
     >
@@ -74,7 +81,8 @@
           bodyCell: { class: 'text-center text-sm text-surface-500' },
         }"
       >
-        <template #body="{ index }">{{ index + 1 }}</template>
+        <!-- index 는 페이지 내 0-based → first 오프셋 더해 전체 기준 번호 -->
+        <template #body="{ index }">{{ first + index + 1 }}</template>
       </Column>
       <Column field="storeNm" header="매장" />
       <Column field="menuSummary" header="메뉴" />
@@ -198,7 +206,7 @@ import { differenceInCalendarDays, format, isValid, parse, parseISO } from 'date
 import { vTooltip } from 'floating-vue'
 import _ from 'lodash'
 import { Banknote, CreditCard, Search, SplitSquareHorizontal, Undo2 } from 'lucide-vue-next'
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { payAmountSum } from '@/apis/paymentsApi'
 import { useSearchFilter } from '@/composables/useSearchFilter'
@@ -226,6 +234,10 @@ const draftFrom = ref(from.value)
 const draftTo = ref(to.value)
 /** 미수만 보기 — 서버 재조회 없이 프론트 필터. */
 const unpaidOnly = ref(false)
+/** 페이지네이터 시작 offset (클라 페이징 — 전체 응답을 DataTable 이 slice). */
+const first = ref(0)
+/** 페이지 크기 — rows-per-page 선택 반영. */
+const pageSize = ref(50)
 
 const emit = defineEmits<{
   // 'update:storeKeyword': [val: string]
@@ -275,17 +287,37 @@ const cToday = computed(() => {
   return d
 })
 
-/** draft 가 유효(from/to 모두 존재)하고 applied 와 다를 때만 검색 활성. */
+/** 조회 범위 최대 일수 — 전체 응답(클라 페이징) 이라 과도한 범위 차단. */
+const MAX_RANGE_DAYS = 90
+
+/** draft 범위 일수 (양 끝 포함). 미지정이면 null. */
+const cRangeDays = computed<number | null>(() => {
+  if (!draftFrom.value || !draftTo.value) return null
+  const f = parse(draftFrom.value, 'yyyy-MM-dd', new Date())
+  const t = parse(draftTo.value, 'yyyy-MM-dd', new Date())
+  return differenceInCalendarDays(t, f) + 1
+})
+
+const cRangeWarn = computed(() => {
+  if (showAllUnpaid.value || cRangeDays.value == null) return null
+  if (cRangeDays.value > MAX_RANGE_DAYS)
+    return `최대 ${MAX_RANGE_DAYS}일 (3개월) 까지만 조회할 수 있습니다. 현재 ${cRangeDays.value}일.`
+  return null
+})
+
+/** draft 가 유효(from/to 모두 존재, 최대 일수 이내)하고 applied 와 다를 때만 검색 활성. */
 const cCanSearch = computed(
   () =>
     !showAllUnpaid.value &&
     !!draftFrom.value &&
     !!draftTo.value &&
+    (cRangeDays.value ?? 0) <= MAX_RANGE_DAYS &&
     (draftFrom.value !== from.value || draftTo.value !== to.value),
 )
 
 /** [검색] — draft 범위를 applied(from/to)로 커밋 → range 쿼리 refetch. */
 function onSearch() {
+  if (!cCanSearch.value) return
   from.value = draftFrom.value
   to.value = draftTo.value
 }
@@ -301,6 +333,18 @@ const cRows = computed<readonly Transaction[]>(() =>
   unpaidOnly.value && !showAllUnpaid.value
     ? cFiltered.value.filter((t) => t.payments.length === 0)
     : cFiltered.value,
+)
+
+// 조회 조건 변경 시 첫 페이지로 (DataTable 은 value 변경 시 first 를 리셋하지 않음).
+watch([showAllUnpaid, from, to, storeKeyword, unpaidOnly], () => (first.value = 0))
+
+// 결제/취소 후 refetch 로 row 가 줄어 현재 페이지가 범위를 벗어나면 마지막 페이지로 보정.
+watch(
+  () => cRows.value.length,
+  (len) => {
+    if (first.value < len) return
+    first.value = len === 0 ? 0 : Math.floor((len - 1) / pageSize.value) * pageSize.value
+  },
 )
 
 const cHeaderLabel = computed(() => {

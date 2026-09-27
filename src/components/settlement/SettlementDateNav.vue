@@ -22,7 +22,7 @@
     </button>
 
     <Popover ref="popoverRef">
-      <DatePicker inline :model-value="cDateObj" @update:model-value="onSelectDate" />
+      <DatePicker inline :model-value="cDateObj" @update:model-value="onSelectDate" manual-input />
     </Popover>
 
     <BButton
