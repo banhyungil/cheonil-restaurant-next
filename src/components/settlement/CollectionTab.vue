@@ -1,6 +1,6 @@
 <!-- 수금 탭 — 날짜 기반 거래 (paid + unpaid) / 토글 ON 시 모든 미수 (날짜 무관) -->
 <template>
-  <div class="collection-table flex flex-col gap-3">
+  <div class="collection-table flex h-full min-h-0 flex-col gap-3">
     <!-- 헤더 정보 + 범위/필터 토글 + 매장 검색 -->
     <div class="flex items-center gap-3">
       <span class="text-base font-semibold text-surface-900">
@@ -18,11 +18,12 @@
         selection-mode="range"
         date-format="yy-mm-dd"
         show-icon
-        :max-date="cToday"
+        :max-date="cMaxDate"
         :disabled="showAllUnpaid"
         placeholder="📅 날짜 범위 선택"
         class="w-72"
         @update:model-value="(v) => (cDateRange = v as (Date | null)[] | null)"
+        @hide="onRangeHide"
         @keydown.enter="onSearch"
       />
       <BButton
@@ -61,7 +62,9 @@
 
     <!-- :selection="selRows"
     @update:selection="() => console.log('update')" -->
+    <!-- 본문만 스크롤 (scroll-height="flex") — 헤더 / 페이지네이터 / 액션 바는 항상 노출 -->
     <DataTable
+      ref="tableRef"
       :value="cRows"
       v-model:selection="selRows"
       v-model:first="first"
@@ -70,6 +73,10 @@
       paginator
       v-model:rows="pageSize"
       :rows-per-page-options="[20, 50, 100, 200]"
+      scrollable
+      scroll-height="flex"
+      class="min-h-0 flex-1"
+      @page="scrollTableTop"
       :pt="{ thead: { class: 'bg-surface-50' } }"
       :row-class="(d: Transaction) => (d.payments.length === 0 ? 'bg-red-50!' : '')"
     >
@@ -128,7 +135,7 @@
 
     <!-- 액션 바 — 미수에는 결제, PAID 에는 결제 취소 -->
     <div
-      class="sticky bottom-0 flex items-center justify-between rounded-lg border border-surface-200 bg-surface-0 px-4 py-3 shadow-sm"
+      class="flex items-center justify-between rounded-lg border border-surface-200 bg-surface-0 px-4 py-3 shadow-sm"
     >
       <span class="text-sm text-surface-700">
         <span class="font-semibold text-surface-900">{{ selRows.length }}건</span>
@@ -202,11 +209,11 @@
 </template>
 
 <script setup lang="ts">
-import { differenceInCalendarDays, format, isValid, parse, parseISO } from 'date-fns'
+import { addDays, differenceInCalendarDays, format, isValid, min, parse, parseISO } from 'date-fns'
 import { vTooltip } from 'floating-vue'
 import _ from 'lodash'
 import { Banknote, CreditCard, Search, SplitSquareHorizontal, Undo2 } from 'lucide-vue-next'
-import { computed, ref, watch } from 'vue'
+import { type ComponentPublicInstance, computed, ref, useTemplateRef, watch } from 'vue'
 
 import { payAmountSum } from '@/apis/paymentsApi'
 import { useSearchFilter } from '@/composables/useSearchFilter'
@@ -238,6 +245,13 @@ const unpaidOnly = ref(false)
 const first = ref(0)
 /** 페이지 크기 — rows-per-page 선택 반영. */
 const pageSize = ref(50)
+const tableRef = useTemplateRef<ComponentPublicInstance>('tableRef')
+
+/** 페이지 이동 시 본문 스크롤 맨 위로 — DataTable 은 자체 리셋 X. */
+function scrollTableTop() {
+  const el = tableRef.value?.$el as HTMLElement | undefined
+  el?.querySelector('.p-datatable-table-container')?.scrollTo({ top: 0 })
+}
 
 const emit = defineEmits<{
   // 'update:storeKeyword': [val: string]
@@ -273,13 +287,19 @@ const cDateRange = computed<(Date | null)[] | null>({
     return [f, t]
   },
   set: (v) => {
-    // 선택 중엔 [start, null] — start 확정 즉시 draft 반영, end 미선택이면 단일일로 유지.
+    // 선택 중엔 [start, null] — end 를 비워둬야 DatePicker 가 다음 클릭을 종료일로 받음.
+    // (end 를 start 로 채우면 범위 완료로 인식해 다음 클릭이 새 시작일이 됨)
     if (!Array.isArray(v) || !(v[0] instanceof Date)) return
     const [f, t] = v
     draftFrom.value = format(f, 'yyyy-MM-dd')
-    draftTo.value = format(t instanceof Date ? t : f, 'yyyy-MM-dd')
+    draftTo.value = t instanceof Date ? format(t, 'yyyy-MM-dd') : ''
   },
 })
+
+/** 시작일만 고르고 닫으면 단일일 범위로 확정. */
+function onRangeHide() {
+  if (draftFrom.value && !draftTo.value) draftTo.value = draftFrom.value
+}
 
 const cToday = computed(() => {
   const d = new Date()
@@ -289,6 +309,13 @@ const cToday = computed(() => {
 
 /** 조회 범위 최대 일수 — 전체 응답(클라 페이징) 이라 과도한 범위 차단. */
 const MAX_RANGE_DAYS = 90
+
+/** DatePicker max — 종료일 선택 중(시작일만 확정)엔 시작일 + (MAX-1)일 로 제한, 그 외엔 오늘. */
+const cMaxDate = computed(() => {
+  if (!draftFrom.value || draftTo.value) return cToday.value
+  const limit = addDays(parse(draftFrom.value, 'yyyy-MM-dd', new Date()), MAX_RANGE_DAYS - 1)
+  return min([limit, cToday.value])
+})
 
 /** draft 범위 일수 (양 끝 포함). 미지정이면 null. */
 const cRangeDays = computed<number | null>(() => {

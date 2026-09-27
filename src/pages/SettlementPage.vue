@@ -16,7 +16,7 @@
       @pay-all="onPayAll"
       @pay-split="onPaySplit"
       @cancel-all="onCancelAll"
-      class="min-h-0 flex-1 overflow-auto"
+      class="min-h-0 flex-1"
     />
 
     <SplitPaymentDialog
