@@ -23,6 +23,18 @@ export interface ExpenseSavePayload {
   /** 'YYYY-MM-DD'. */
   expenseDt: string
   cmt: string | null
+  /** 구입목록 — PUT 에서는 전체 교체. 같은 (제품, 규격) 은 한 줄만. */
+  products: ExpenseProductPayload[]
+}
+
+/** 구입목록 한 줄. */
+export interface ExpenseProductPayload {
+  prdSeq: number
+  cnt: number
+  /** 단가. */
+  price: number
+  unitCnt: number | null
+  cmt: string | null
 }
 
 /** 지출 목록 — 전체 응답 (클라 페이징), 최신 일자순. */

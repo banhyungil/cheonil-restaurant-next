@@ -71,7 +71,10 @@ test.describe('제품 관리', () => {
     const dialog = page.getByRole('dialog', { name: '제품 등록' })
     // 기존 식자재는 자동완성 목록에서 고른다
     await dialog.locator('.p-autocomplete input').pressSequentially(`쌀${id}`)
-    await page.locator('.p-autocomplete-overlay').getByRole('option', { name: `쌀${id}` }).click()
+    await page
+      .locator('.p-autocomplete-overlay')
+      .getByRole('option', { name: `쌀${id}` })
+      .click()
     await dialog.getByPlaceholder('예: 오뚜기 알뜰당면').fill(`경기미${id}`)
     await dialog.locator('.p-select').click()
     await page.getByRole('option', { name: kg.nm, exact: true }).click()

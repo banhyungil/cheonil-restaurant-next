@@ -53,18 +53,40 @@ export function createProduct(
   request: APIRequestContext,
   data: { ingdNm: string; nm: string; unitSeq: number; unitCnts?: number[] },
 ) {
-  return post<{ seq: number }>(request, '/products', { unitCnts: [], ...data })
+  return post<{ seq: number; nm: string }>(request, '/products', { unitCnts: [], ...data })
 }
 
 export function createStore(request: APIRequestContext, data: { nm: string }) {
   return post<{ seq: number; nm: string }>(request, '/stores', { ctgSeq: 1, ...data })
 }
 
+export interface ExpenseLine {
+  prdSeq: number
+  cnt: number
+  price: number
+  unitCnt: number | null
+}
 export function createExpense(
   request: APIRequestContext,
-  data: { ctgSeq: number; nm: string; amount: number; expenseDt: string; storeSeq?: number },
+  data: {
+    ctgSeq: number
+    nm: string
+    amount: number
+    expenseDt: string
+    storeSeq?: number
+    products?: ExpenseLine[]
+  },
 ) {
   return post<{ seq: number }>(request, '/expenses', { storeSeq: null, cmt: null, ...data })
+}
+/** 오늘 지출 중 지출명이 일치하는 것. */
+export async function fetchTodayExpense(request: APIRequestContext, nm: string) {
+  const res = await request.get(`${API}/expenses`, {
+    params: { from: today(), to: today(), q: nm },
+  })
+  const list: { nm: string; amount: number; products: (ExpenseLine & { cmt: string | null })[] }[] =
+    await res.json()
+  return list.find((e) => e.nm === nm)
 }
 
 /** 오늘 'YYYY-MM-DD' (로컬 = 브라우저와 같은 TZ). */

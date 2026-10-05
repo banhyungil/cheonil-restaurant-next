@@ -21,4 +21,18 @@ export interface Expense {
   cmt: string | null
   regAt: string
   modAt: string
+  /** 구입목록. 금액만 입력한 지출은 빈 배열. */
+  products: ExpenseProduct[]
+}
+
+/** 지출 품목 (t_expense_product) — 제품명 / 단위명은 제품 목록(캐시)으로 매핑. */
+export interface ExpenseProduct {
+  seq: number
+  prdSeq: number
+  cnt: number
+  /** 단가 (줄 합계 = cnt * price). */
+  price: number
+  /** 구입한 규격 (예: 600g 의 600). 단위수량 미사용 단위면 null. */
+  unitCnt: number | null
+  cmt: string | null
 }
