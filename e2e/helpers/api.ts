@@ -56,6 +56,22 @@ export function createProduct(
   return post<{ seq: number }>(request, '/products', { unitCnts: [], ...data })
 }
 
+export function createStore(request: APIRequestContext, data: { nm: string }) {
+  return post<{ seq: number; nm: string }>(request, '/stores', { ctgSeq: 1, ...data })
+}
+
+export function createExpense(
+  request: APIRequestContext,
+  data: { ctgSeq: number; nm: string; amount: number; expenseDt: string; storeSeq?: number },
+) {
+  return post<{ seq: number }>(request, '/expenses', { storeSeq: null, cmt: null, ...data })
+}
+
+/** 오늘 'YYYY-MM-DD' (로컬 = 브라우저와 같은 TZ). */
+export function today() {
+  return new Date().toLocaleDateString('sv-SE')
+}
+
 /** 셀 텍스트가 정확히 일치하는 테이블 행 — 부분 일치면 '채소' 가 '잎채소' 행까지 잡는다. */
 export function row(page: Page, text: string) {
   return page.getByRole('row').filter({ has: page.getByText(text, { exact: true }) })

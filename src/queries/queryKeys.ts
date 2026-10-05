@@ -39,4 +39,7 @@ export const QUERY_KEYS = {
   expenseCtgs: ['expenseCtgs'] as const,
   products: ['products'] as const,
   ingredients: ['ingredients'] as const,
+  expenses: ['expenses'] as const,
+  /** 카테고리별 지출명 추천. */
+  expenseNames: ['expenseNames'] as const,
 } as const
