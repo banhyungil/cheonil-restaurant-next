@@ -34,6 +34,7 @@
               variant="outlined"
               color="secondary"
               size="sm"
+              aria-label="하위 카테고리 추가"
               @click="onAdd(node.data.seq)"
             >
               <Plus :size="14" />
@@ -43,11 +44,18 @@
               variant="outlined"
               color="secondary"
               size="sm"
+              aria-label="수정"
               @click="onEdit(node.data)"
             >
               <Pencil :size="14" />
             </BButton>
-            <BButton variant="outlined" color="danger" size="sm" @click="onRemove(node.data)">
+            <BButton
+              variant="outlined"
+              color="danger"
+              size="sm"
+              aria-label="삭제"
+              @click="onRemove(node.data)"
+            >
               <Trash2 :size="14" />
             </BButton>
           </div>
@@ -55,9 +63,7 @@
       </Column>
 
       <template #empty>
-        <div class="py-8 text-center text-sm text-surface-500">
-          등록된 카테고리가 없습니다.
-        </div>
+        <div class="py-8 text-center text-sm text-surface-500">등록된 카테고리가 없습니다.</div>
       </template>
     </TreeTable>
 

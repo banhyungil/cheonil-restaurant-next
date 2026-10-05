@@ -1,4 +1,11 @@
 {
   "extends": "@tsconfig/node24/tsconfig.json",
-  "include": ["./**/*"]
+  "include": ["./**/*"],
+  // tsconfig.node.json 과 같은 해석 방식 — 확장자 없는 상대 import, Node 타입
+  "compilerOptions": {
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "noEmit": true
+  }
 }

@@ -45,10 +45,22 @@
       <Column header="작업" :pt="{ headerCell: { style: 'width:7rem' } }">
         <template #body="{ data }">
           <div class="flex gap-1">
-            <BButton variant="outlined" color="secondary" size="sm" @click="onEdit(data)">
+            <BButton
+              variant="outlined"
+              color="secondary"
+              size="sm"
+              aria-label="수정"
+              @click="onEdit(data)"
+            >
               <Pencil :size="14" />
             </BButton>
-            <BButton variant="outlined" color="danger" size="sm" @click="onRemove(data)">
+            <BButton
+              variant="outlined"
+              color="danger"
+              size="sm"
+              aria-label="삭제"
+              @click="onRemove(data)"
+            >
               <Trash2 :size="14" />
             </BButton>
           </div>

@@ -54,6 +54,7 @@
             :min="0"
             placeholder="0.001"
             :input-class="'text-right'"
+            @input="(e) => (form.baseFactor = e.value as number | null)"
           />
           <InputGroupAddon>{{ cBaseNm }}</InputGroupAddon>
         </InputGroup>
@@ -91,6 +92,10 @@ const emit = defineEmits<{
   saved: [unit: Unit]
 }>()
 
+/**
+ * baseFactor — InputNumber 는 v-model 이 blur 시에만 갱신되므로 @input 으로 타이핑 중 값도 반영.
+ * (안 하면 입력 직후 저장 버튼이 비활성 상태로 남고, 비활성 버튼 클릭은 blur 를 일으키지 않아 값이 끝내 반영 안 됨)
+ */
 const form = reactive<UnitSavePayload>({
   nm: '',
   isUnitCnt: false,
@@ -119,9 +124,7 @@ const cBaseOptions = computed(() =>
   props.units.filter((u) => u.baseUnitSeq == null && u.seq !== props.unit?.seq),
 )
 
-const cBaseNm = computed(
-  () => props.units.find((u) => u.seq === form.baseUnitSeq)?.nm ?? '',
-)
+const cBaseNm = computed(() => props.units.find((u) => u.seq === form.baseUnitSeq)?.nm ?? '')
 
 const cCanSave = computed(
   () =>

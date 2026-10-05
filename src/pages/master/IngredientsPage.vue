@@ -36,7 +36,13 @@
       <Column header="작업" :pt="{ headerCell: { style: 'width:7rem' } }">
         <template #body="{ data }">
           <div class="flex gap-1">
-            <BButton variant="outlined" color="secondary" size="sm" @click="onEdit(data)">
+            <BButton
+              variant="outlined"
+              color="secondary"
+              size="sm"
+              aria-label="수정"
+              @click="onEdit(data)"
+            >
               <Pencil :size="14" />
             </BButton>
             <BButton
@@ -44,6 +50,7 @@
               color="danger"
               size="sm"
               :disabled="data.productCnt > 0"
+              aria-label="삭제"
               @click="onRemove(data)"
             >
               <Trash2 :size="14" />
