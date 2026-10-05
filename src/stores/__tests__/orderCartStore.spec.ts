@@ -8,7 +8,14 @@ import type { Store } from '@/types/store'
 
 // ---------- fixtures ----------
 
-const aStore: Store = { seq: 10, ctgSeq: 1, nm: '본점' }
+const aStore: Store = {
+  seq: 10,
+  ctgSeq: 1,
+  nm: '본점',
+  active: true,
+  isSale: true,
+  isPurchase: false,
+}
 
 const menuKimchi: Pick<Menu, 'seq' | 'nm' | 'price'> = { seq: 101, nm: '김치찌개', price: 9000 }
 const menuBibim: Pick<Menu, 'seq' | 'nm' | 'price'> = { seq: 102, nm: '비빔밥', price: 10000 }

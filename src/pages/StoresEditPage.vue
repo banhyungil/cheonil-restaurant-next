@@ -22,7 +22,7 @@
     <div
       class="flex flex-col gap-4 overflow-auto rounded-xl border border-surface-200 bg-white p-6"
     >
-      <!-- row 1: 카테고리 / 활성 -->
+      <!-- row 1: 카테고리 / 구분 / 활성 -->
       <div class="flex gap-4">
         <div class="flex max-w-80 flex-1 flex-col gap-1.5">
           <label class="text-sm font-semibold text-surface-900">
@@ -36,6 +36,25 @@
             placeholder="카테고리 선택"
             class="w-full"
           />
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-sm font-semibold text-surface-900">
+            구분 <span class="text-red-500">*</span>
+          </label>
+          <div class="flex h-10 items-center gap-4">
+            <label class="flex items-center gap-1.5 text-sm">
+              <Checkbox v-model="isSale" binary input-id="store-is-sale" />
+              판매처
+            </label>
+            <label class="flex items-center gap-1.5 text-sm">
+              <Checkbox v-model="isPurchase" binary input-id="store-is-purchase" />
+              구매처
+            </label>
+          </div>
+          <p class="text-xs" :class="cHasType ? 'text-surface-500' : 'text-red-600'">
+            판매처 = 주문 매장 선택 / 구매처 = 지출 구입처 선택
+          </p>
         </div>
 
         <div class="flex flex-col gap-1.5">
@@ -111,11 +130,17 @@ const { data: categories } = useStoreCtgsQuery()
 const { data: storesAll } = useStoresQuery(true)
 
 const storeFormStore = useStoreFormStore()
-const { ctgSeq, nm, addr, cmt, active, isEditing, editingSeq } = storeToRefs(storeFormStore)
+const { ctgSeq, nm, addr, cmt, active, isSale, isPurchase, isEditing, editingSeq } =
+  storeToRefs(storeFormStore)
 
 const cTitle = computed(() => (isEditing.value ? '매장 수정' : '매장 추가'))
 
-const cCanSave = computed(() => ctgSeq.value != null && nm.value.trim().length > 0)
+/** 판매처 / 구매처 중 하나 이상 선택 — 백엔드 check 제약과 동일. */
+const cHasType = computed(() => isSale.value || isPurchase.value)
+
+const cCanSave = computed(
+  () => ctgSeq.value != null && nm.value.trim().length > 0 && cHasType.value,
+)
 
 /** 매장명 inline 에러 — 409 (중복) 응답 시 / blur 검증에서 표시. nm 입력 변경 시 자동 clear. */
 const nmError = ref('')
@@ -143,6 +168,8 @@ function onSave() {
     addr: addr.value.trim() || undefined,
     cmt: cmt.value || undefined,
     active: active.value,
+    isSale: isSale.value,
+    isPurchase: isPurchase.value,
   }
 
   if (isEditing.value && editingSeq.value != null) {

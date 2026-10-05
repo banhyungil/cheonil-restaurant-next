@@ -101,7 +101,11 @@ const cOrderOf = <
   )
 
 // 정렬은 read-only — 변경은 영업 페이지(OrdersPage)에서만 가능
-const cSortedStores = useSortedItems(stores, cOrderOf('STORE_ORDER'))
+// 매장 선택은 판매처만 — 구매 전용 매장 제외
+const cSortedStores = useSortedItems(
+  () => stores.value?.filter((s) => s.isSale),
+  cOrderOf('STORE_ORDER'),
+)
 const cSortedMenus = useSortedItems(menus, cOrderOf('MENU_ORDER'))
 const cSortedStoreCtgs = useSortedItems(storeCategories, cOrderOf('STORE_CATEGORY_ORDER'))
 const cSortedMenuCtgs = useSortedItems(menuCategories, cOrderOf('MENU_CATEGORY_ORDER'))

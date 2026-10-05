@@ -24,6 +24,25 @@
       </template>
     </Column>
 
+    <Column header="구분">
+      <template #body="{ data }">
+        <div class="flex gap-1">
+          <span
+            v-if="data.isSale"
+            class="rounded bg-emerald-50 px-2 py-0.5 text-sm text-emerald-700"
+          >
+            판매
+          </span>
+          <span
+            v-if="data.isPurchase"
+            class="rounded bg-amber-50 px-2 py-0.5 text-sm text-amber-700"
+          >
+            구매
+          </span>
+        </div>
+      </template>
+    </Column>
+
     <Column field="addr" header="주소">
       <template #body="{ data }">
         <span class="text-sm text-surface-600">{{ data.addr ?? '-' }}</span>

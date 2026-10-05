@@ -16,6 +16,8 @@ export const useStoreFormStore = defineStore('storeForm', () => {
   const addr = ref('')
   const cmt = ref('')
   const active = ref(true)
+  const isSale = ref(true)
+  const isPurchase = ref(false)
   const editingSeq = ref<number | null>(null)
 
   const isEditing = computed(() => editingSeq.value != null)
@@ -26,6 +28,8 @@ export const useStoreFormStore = defineStore('storeForm', () => {
     addr.value = s.addr ?? ''
     cmt.value = s.cmt ?? ''
     active.value = s.active
+    isSale.value = s.isSale
+    isPurchase.value = s.isPurchase
     editingSeq.value = s.seq
   }
 
@@ -35,8 +39,22 @@ export const useStoreFormStore = defineStore('storeForm', () => {
     addr.value = ''
     cmt.value = ''
     active.value = true
+    isSale.value = true
+    isPurchase.value = false
     editingSeq.value = null
   }
 
-  return { ctgSeq, nm, addr, cmt, active, editingSeq, isEditing, loadFromStore, reset }
+  return {
+    ctgSeq,
+    nm,
+    addr,
+    cmt,
+    active,
+    isSale,
+    isPurchase,
+    editingSeq,
+    isEditing,
+    loadFromStore,
+    reset,
+  }
 })

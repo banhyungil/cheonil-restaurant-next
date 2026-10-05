@@ -130,7 +130,9 @@ const cDateRange = computed<(Date | null)[] | null>({
 const { data: stores } = useStoresQuery()
 const { data: menus } = useMenusQuery(true)
 
-const cStoreOptions = computed(() => (stores.value ?? []).map((s) => ({ val: s.seq, label: s.nm })))
+const cStoreOptions = computed(() =>
+  (stores.value ?? []).filter((s) => s.isSale).map((s) => ({ val: s.seq, label: s.nm })),
+)
 const cMenuOptions = computed(() => (menus.value ?? []).map((m) => ({ val: m.seq, label: m.nm })))
 
 /** 오늘 자정 — DatePicker `max-date` 로 미래 날짜 선택 차단. */

@@ -26,22 +26,14 @@
         auto-filter-focus
         class="w-40"
       />
-      <BButton
-        v-if="selTab === 'current'"
-        color="primary"
-        class="w-fit! px-2!"
-        @click="onAdd"
-      >
+      <BButton v-if="selTab === 'current'" color="primary" class="w-fit! px-2!" @click="onAdd">
         <Plus :size="16" />
         예약 추가
       </BButton>
     </header>
 
     <!-- 본문 — 현황 탭 -->
-    <div
-      v-if="selTab === 'current'"
-      class="flex flex-1 flex-col gap-6 overflow-auto min-h-0"
-    >
+    <div v-if="selTab === 'current'" class="flex flex-1 flex-col gap-6 overflow-auto min-h-0">
       <!-- 진행 중 예약 -->
       <section class="flex flex-1 flex-col gap-3">
         <div class="flex h-7 items-center gap-2.5">
@@ -124,11 +116,7 @@
 
       <!-- 테이블 -->
       <div class="min-h-0 flex-1 overflow-auto">
-        <OrderRsvHistoryTable
-          :rsvs="cHistoryListRsvs"
-          @restore="onRestore"
-          @remove="onRemove"
-        />
+        <OrderRsvHistoryTable :rsvs="cHistoryListRsvs" @restore="onRestore" @remove="onRemove" />
       </div>
     </div>
   </section>
@@ -199,12 +187,14 @@ const cHistoryListTotal = computed(() => cHistoryListRsvs.value.length)
 
 const { data: stores } = useStoresQuery()
 
-/** 매장명 + 초성을 합친 검색용 필드 추가 — Select 의 filter-fields 가 contains 매칭 */
+/** 판매처 매장명 + 초성을 합친 검색용 필드 추가 — Select 의 filter-fields 가 contains 매칭 */
 const cStoresWithSearch = computed(() =>
-  (stores.value ?? []).map((s) => ({
-    ...s,
-    _searchKey: `${s.nm} ${getChoseong(s.nm)}`,
-  })),
+  (stores.value ?? [])
+    .filter((s) => s.isSale)
+    .map((s) => ({
+      ...s,
+      _searchKey: `${s.nm} ${getChoseong(s.nm)}`,
+    })),
 )
 
 const cReadyRsvs = computed(() => rsvs.value?.ready ?? [])

@@ -76,7 +76,9 @@ const { data: storeCategories } = useStoreCtgsQuery()
 const { data: settings } = useSettingsQuery()
 
 // 정렬: settings 의 *_ORDER 적용 — 매장/메뉴/카테고리 4종
-const cOrderOf = <C extends 'STORE_ORDER' | 'MENU_ORDER' | 'STORE_CATEGORY_ORDER' | 'MENU_CATEGORY_ORDER'>(
+const cOrderOf = <
+  C extends 'STORE_ORDER' | 'MENU_ORDER' | 'STORE_CATEGORY_ORDER' | 'MENU_CATEGORY_ORDER',
+>(
   code: C,
 ) =>
   computed(
@@ -87,7 +89,11 @@ const cOrderOf = <C extends 'STORE_ORDER' | 'MENU_ORDER' | 'STORE_CATEGORY_ORDER
   )
 
 // 정렬은 read-only — 변경은 영업 페이지(OrdersPage)에서만 가능
-const cSortedStores = useSortedItems(stores, cOrderOf('STORE_ORDER'))
+// 매장 선택은 판매처만 — 구매 전용 매장 제외
+const cSortedStores = useSortedItems(
+  () => stores.value?.filter((s) => s.isSale),
+  cOrderOf('STORE_ORDER'),
+)
 const cSortedMenus = useSortedItems(menus, cOrderOf('MENU_ORDER'))
 const cSortedStoreCtgs = useSortedItems(storeCategories, cOrderOf('STORE_CATEGORY_ORDER'))
 const cSortedMenuCtgs = useSortedItems(menuCategories, cOrderOf('MENU_CATEGORY_ORDER'))

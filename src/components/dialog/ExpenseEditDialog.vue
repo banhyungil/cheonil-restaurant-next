@@ -27,7 +27,7 @@
           </label>
           <Select
             v-model="form.storeSeq"
-            :options="stores ?? []"
+            :options="cStoreOptions"
             option-label="nm"
             option-value="seq"
             placeholder="구입처 — 없으면 비움"
@@ -258,6 +258,9 @@ const form = reactive({
   amount: null as number | null,
   cmt: '',
 })
+
+/** 구입처 후보 — 전체 매장, 구매처를 위로. 저장하면 선택한 매장은 구매처로 바뀐다 (백엔드). */
+const cStoreOptions = computed(() => _.sortBy(stores.value ?? [], (s) => (s.isPurchase ? 0 : 1)))
 
 const today = () => format(new Date(), 'yyyy-MM-dd')
 

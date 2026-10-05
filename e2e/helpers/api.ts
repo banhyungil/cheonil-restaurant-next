@@ -56,8 +56,17 @@ export function createProduct(
   return post<{ seq: number; nm: string }>(request, '/products', { unitCnts: [], ...data })
 }
 
-export function createStore(request: APIRequestContext, data: { nm: string }) {
-  return post<{ seq: number; nm: string }>(request, '/stores', { ctgSeq: 1, ...data })
+/** 매장 생성 — 기본은 구매처 (지출 구입처 선택에 노출). */
+export function createStore(
+  request: APIRequestContext,
+  data: { nm: string; isSale?: boolean; isPurchase?: boolean },
+) {
+  return post<{ seq: number; nm: string }>(request, '/stores', {
+    ctgSeq: 1,
+    isSale: false,
+    isPurchase: true,
+    ...data,
+  })
 }
 
 export interface ExpenseLine {

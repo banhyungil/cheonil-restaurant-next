@@ -38,9 +38,16 @@ function useInvalidate() {
     ])
 }
 
+/** 저장 후 무효화 — 구입처 매장이 구매처로 바뀔 수 있어 매장 목록도 갱신. */
+function useInvalidateWithStores() {
+  const qc = useQueryClient()
+  const invalidate = useInvalidate()
+  return () => Promise.all([invalidate(), qc.invalidateQueries({ queryKey: QUERY_KEYS.stores })])
+}
+
 /** 지출 생성. */
 export function useExpenseCreateMutation() {
-  const invalidate = useInvalidate()
+  const invalidate = useInvalidateWithStores()
   return useMutation({
     mutationFn: (payload: ExpenseSavePayload) => expensesApi.create(payload),
     onSuccess: invalidate,
@@ -49,7 +56,7 @@ export function useExpenseCreateMutation() {
 
 /** 지출 전체 수정 (PUT 교체). */
 export function useExpenseUpdateMutation() {
-  const invalidate = useInvalidate()
+  const invalidate = useInvalidateWithStores()
   return useMutation({
     mutationFn: ({ seq, payload }: { seq: number; payload: ExpenseSavePayload }) =>
       expensesApi.update(seq, payload),

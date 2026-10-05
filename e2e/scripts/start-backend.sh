@@ -30,9 +30,11 @@ JAR=$(ls build/libs/*.jar | grep -v -- '-plain.jar' | head -1)
 JAVA_HOME_25="${E2E_JAVA_HOME:-$(/usr/libexec/java_home -v 25 2>/dev/null || true)}"
 JAVA="${JAVA_HOME_25:+$JAVA_HOME_25/bin/}java"
 
+# 마스터 seed(db/seed) 는 제외 — 시나리오가 단위 / 제품 등을 직접 만들어 검증하므로 빈 DB 에서 시작.
 exec env \
   SERVER_PORT=18081 \
   SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:15433/cheonil \
   SPRING_DATASOURCE_USERNAME=postgres \
   SPRING_DATASOURCE_PASSWORD=e2e \
+  SPRING_FLYWAY_LOCATIONS=classpath:db/migration \
   "$JAVA" -jar "$JAR"

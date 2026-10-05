@@ -22,7 +22,7 @@
       />
       <Select
         v-model="draft.storeSeq"
-        :options="stores ?? []"
+        :options="cPurchaseStores"
         option-label="nm"
         option-value="seq"
         placeholder="매장 전체"
@@ -152,6 +152,8 @@ const toast = useToast()
 
 const { data: ctgs } = useExpenseCtgsQuery()
 const { data: stores } = useStoresQuery(true)
+/** 구입처 필터 후보 — 구매처만. */
+const cPurchaseStores = computed(() => (stores.value ?? []).filter((s) => s.isPurchase))
 
 // --- 필터: draft(편집 중) → [검색] 시 applied 로 커밋. 기본 = 이번 달 1일 ~ 오늘 ---
 interface Filter {

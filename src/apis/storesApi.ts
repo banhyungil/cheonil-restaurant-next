@@ -10,7 +10,7 @@ export interface StoresListParams {
 
 /**
  * 매장 생성/수정 페이로드 (PUT 전체 교체).
- * active 미지정 시 백엔드 default(true) 사용.
+ * active / isSale 미지정 시 default true, isPurchase 미지정 시 default false. 판매처 / 구매처 중 하나 이상 필수.
  */
 export interface StoreCreatePayload {
   ctgSeq: number
@@ -19,6 +19,10 @@ export interface StoreCreatePayload {
   addr?: string
   cmt?: string
   active?: boolean
+  /** 판매처 — 주문 / 예약 매장 선택 대상. */
+  isSale?: boolean
+  /** 구매처 — 지출 구입처 선택 대상. */
+  isPurchase?: boolean
 }
 
 export type StoreUpdatePayload = StoreCreatePayload
