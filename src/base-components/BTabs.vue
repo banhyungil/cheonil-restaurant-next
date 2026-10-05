@@ -67,7 +67,8 @@ const CONTAINER_SIZE: Record<Size, string> = {
 }
 
 const TAB_SIZE: Record<Size, string> = {
-  md: 'h-10 w-23 rounded-lg text-base',
+  // min-w — 짧은 라벨은 기존 고정폭 유지, 긴 라벨("지출 카테고리")만 늘어나고 줄바꿈 X
+  md: 'h-10 min-w-23 px-3 whitespace-nowrap rounded-lg text-base',
 }
 
 /**

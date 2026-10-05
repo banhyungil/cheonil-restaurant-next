@@ -36,4 +36,5 @@ export const QUERY_KEYS = {
   /** TTS 서버 디스크 캐시 목록 — TTS 음성 관리 페이지. */
   ttsCache: ['ttsCache'] as const,
   units: ['units'] as const,
+  expenseCtgs: ['expenseCtgs'] as const,
 } as const
