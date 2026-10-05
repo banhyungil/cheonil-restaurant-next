@@ -37,4 +37,6 @@ export const QUERY_KEYS = {
   ttsCache: ['ttsCache'] as const,
   units: ['units'] as const,
   expenseCtgs: ['expenseCtgs'] as const,
+  products: ['products'] as const,
+  ingredients: ['ingredients'] as const,
 } as const

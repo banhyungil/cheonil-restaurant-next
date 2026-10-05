@@ -15,17 +15,20 @@
     <div class="min-h-0 flex-1">
       <UnitsPage v-if="cTab === 'units'" />
       <ExpenseCtgsPage v-else-if="cTab === 'expenseCtgs'" />
+      <IngredientsPage v-else-if="cTab === 'ingredients'" />
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import ExpenseCtgsPage from '@/pages/master/ExpenseCtgsPage.vue'
+import IngredientsPage from '@/pages/master/IngredientsPage.vue'
 import UnitsPage from '@/pages/master/UnitsPage.vue'
 
 const TAB_OPTIONS = [
   { val: 'units' as const, label: '단위' },
   { val: 'expenseCtgs' as const, label: '지출 카테고리' },
+  { val: 'ingredients' as const, label: '식자재' },
 ]
 type MasterTab = (typeof TAB_OPTIONS)[number]['val']
 
