@@ -63,7 +63,7 @@
     >
       <Column field="expenseDt" header="지출일자" sortable class="w-32" />
 
-      <Column header="카테고리">
+      <Column header="카테고리" class="w-48">
         <template #body="{ data }">
           <span class="text-surface-700">{{ ctgNm(data.ctgSeq) }}</span>
         </template>
@@ -75,7 +75,7 @@
         </template>
       </Column>
 
-      <Column header="매장">
+      <Column header="매장" class="w-48">
         <template #body="{ data }">
           <span v-if="data.storeSeq != null" class="text-surface-700">
             {{ storeNm(data.storeSeq) }}
@@ -84,7 +84,14 @@
         </template>
       </Column>
 
-      <Column field="amount" header="금액" sortable class="text-right">
+      <!-- 헤더 내용은 flex 라 text-right 가 안 먹음 → columnHeaderContent 를 justify-end 로 맞춤 -->
+      <Column
+        field="amount"
+        header="금액"
+        sortable
+        class="w-36 text-right"
+        :pt="{ columnHeaderContent: { class: 'justify-end' } }"
+      >
         <template #body="{ data }">
           <span class="font-semibold text-surface-900">{{ formatWon(data.amount) }}</span>
         </template>
@@ -96,7 +103,7 @@
         </template>
       </Column>
 
-      <Column header="작업" :pt="{ headerCell: { style: 'width:7rem' } }">
+      <Column header="작업" class="w-28">
         <template #body="{ data }">
           <div class="flex gap-1">
             <BButton
